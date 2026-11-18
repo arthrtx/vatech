@@ -2,11 +2,23 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateFuncionarioRequest extends FormRequest
 {
+    // Corre antes da validacao: 404 (e nao 422) para alheio, nao-funcionario ou inexistente.
+    public function authorize(): bool
+    {
+        abort_unless(
+            User::where('empresa_id', $this->user()->empresa_id)->where('papel', 'funcionario')->whereKey($this->route('id'))->exists(),
+            404,
+        );
+
+        return true;
+    }
+
     public function rules(): array
     {
         return [

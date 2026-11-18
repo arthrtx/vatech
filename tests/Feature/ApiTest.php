@@ -224,3 +224,22 @@ it('oculta os pedidos de funcionarios apagados ao admin', function () {
     $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
     $this->getJson('/api/pedidos')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.user_id', $ativo->id);
 });
+
+it('nao deixa criar funcionario com o email de um apagado', function () {
+    $admin = User::factory()->admin()->create();
+    $func = User::factory()->create(['empresa_id' => $admin->empresa_id, 'email' => 'f@x.test']);
+    Sanctum::actingAs($admin);
+    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
+
+    $this->postJson('/api/funcionarios', ['nome' => 'Outro', 'email' => 'f@x.test', 'password' => 'segredo123'])
+        ->assertStatus(422)->assertJsonValidationErrors('email');
+});
+
+it('devolve 404 antes de validar o body no PUT de funcionario alheio ou inexistente', function () {
+    $admin = User::factory()->admin()->create();
+    $alheio = User::factory()->create();
+    Sanctum::actingAs($admin);
+
+    $this->putJson("/api/funcionarios/{$alheio->id}", [])->assertStatus(404);
+    $this->putJson('/api/funcionarios/99999', ['email' => 'invalido'])->assertStatus(404);
+});
