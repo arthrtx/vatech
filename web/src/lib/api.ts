@@ -131,6 +131,9 @@ export const api = {
   funcionarios: async () => (await request<{ data: User[] }>("GET", "/funcionarios")).data,
   criarFuncionario: async (b: { nome: string; email: string; password: string }) =>
     (await request<{ data: User }>("POST", "/funcionarios", b)).data,
+  editarFuncionario: async (id: number, b: { nome: string; email: string; password?: string }) =>
+    (await request<{ data: User }>("PUT", `/funcionarios/${id}`, b)).data,
+  apagarFuncionario: (id: number) => request<void>("DELETE", `/funcionarios/${id}`),
   pedidos: async (estado?: EstadoPedido) =>
     (await request<{ data: Pedido[] }>("GET", `/pedidos${estado ? `?estado=${estado}` : ""}`)).data,
   criarPedido: (b: NovoPedido) =>

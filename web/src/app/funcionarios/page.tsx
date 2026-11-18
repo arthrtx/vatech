@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api, mensagemDeErro, type User } from "@/lib/api";
+import FuncionarioLinha from "@/components/FuncionarioLinha";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 
 function Conteudo() {
@@ -44,10 +45,18 @@ function Conteudo() {
       <h1 className="text-2xl font-semibold">Funcionários</h1>
       <ul className="flex flex-col gap-2">
         {lista.map((u) => (
-          <li key={u.id} className="rounded-md border border-zinc-300 bg-white p-3">
-            <p className="font-medium">{u.nome}</p>
-            <p className="break-all text-sm text-zinc-700">{u.email}</p>
-          </li>
+          <FuncionarioLinha
+            key={u.id}
+            user={u}
+            onGuardar={async (dados) => {
+              await api.editarFuncionario(u.id, dados);
+              await carregar();
+            }}
+            onApagar={async () => {
+              await api.apagarFuncionario(u.id);
+              await carregar();
+            }}
+          />
         ))}
       </ul>
       <form onSubmit={criar} className="flex max-w-xl flex-col gap-4" aria-labelledby="novo-func">
