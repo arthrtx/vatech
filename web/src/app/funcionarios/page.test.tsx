@@ -43,4 +43,19 @@ describe("Funcionários: lista vazia", () => {
     expect(screen.getByText("Ainda não há funcionários.")).toBeTruthy();
     expect(screen.queryByText(/Nenhum resultado/)).toBeNull();
   });
+
+  it("não mostra a mensagem de vazio enquanto a API não respondeu, mas mantém o campo", async () => {
+    vi.mocked(api.funcionarios).mockReturnValue(new Promise(() => {}));
+    render(<FuncionariosPage />);
+    await screen.findByText("Novo funcionário");
+    expect(screen.getByLabelText("Pesquisar funcionários")).toBeTruthy();
+    expect(screen.queryByText("Ainda não há funcionários.")).toBeNull();
+  });
+
+  it("não mostra a mensagem de vazio se a API falhar", async () => {
+    vi.mocked(api.funcionarios).mockRejectedValue(new Error("falhou"));
+    render(<FuncionariosPage />);
+    await screen.findByRole("alert");
+    expect(screen.queryByText("Ainda não há funcionários.")).toBeNull();
+  });
 });
