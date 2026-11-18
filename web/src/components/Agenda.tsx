@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { Pedido, TipoPedido } from "@/lib/api";
+import type { PedidoAgenda as Pedido, TipoPedido } from "@/lib/api";
 import {
   celulasDoMes,
   cobreDia,
@@ -13,6 +13,9 @@ import {
   mesDe,
   mesesPt,
   mesSeguinte,
+  quemE,
+  reduzido,
+  type Mes,
   tocaMes,
   visiveis,
 } from "@/lib/agenda";
@@ -40,6 +43,7 @@ export default function Agenda({
   hoje = hojeIso(),
   aCarregar = false,
   comErro = false,
+  aoMudarMes,
 }: {
   pedidos: Pedido[];
   admin: boolean;
@@ -47,8 +51,12 @@ export default function Agenda({
   hoje?: string;
   aCarregar?: boolean;
   comErro?: boolean;
+  aoMudarMes?: (m: Mes) => void;
 }) {
   const [mes, setMes] = useState(() => mesDe(hoje));
+  useEffect(() => {
+    aoMudarMes?.(mes);
+  }, [mes, aoMudarMes]);
   const [tipo, setTipo] = useState<TipoPedido | "">("");
   const [userId, setUserId] = useState("");
   const [sel, setSel] = useState<{ iso: string; pedidoId?: number } | null>(null);
@@ -76,7 +84,10 @@ export default function Agenda({
 
   const pessoas = useMemo(() => {
     const m = new Map<number, string>();
-    visiveis(pedidos).forEach((p) => m.set(p.user_id, nomeDe(p, nomeProprio)));
+    visiveis(pedidos).forEach((p) => {
+      const id = quemE(p);
+      if (id !== undefined) m.set(id, nomeDe(p, nomeProprio));
+    });
     return [...m].sort((a, b) => a[1].localeCompare(b[1], "pt"));
   }, [pedidos, nomeProprio]);
 
@@ -229,8 +240,12 @@ export default function Agenda({
                 <dd>{nomeDe(pedidoSel, nomeProprio)}</dd>
                 <dt className="font-medium">Tipo</dt>
                 <dd>{tipos[pedidoSel.tipo]}</dd>
-                <dt className="font-medium">Subtipo</dt>
-                <dd>{pedidoSel.subtipo ? subtipos[pedidoSel.subtipo] : "Sem subtipo"}</dd>
+                {!reduzido(pedidoSel) && (
+                  <>
+                    <dt className="font-medium">Subtipo</dt>
+                    <dd>{pedidoSel.subtipo ? subtipos[pedidoSel.subtipo] : "Sem subtipo"}</dd>
+                  </>
+                )}
                 <dt className="font-medium">Datas</dt>
                 <dd>
                   {pedidoSel.data_inicio} a {pedidoSel.data_fim}
@@ -239,10 +254,14 @@ export default function Agenda({
                 <dd>{diasDoPedido(pedidoSel)}</dd>
                 <dt className="font-medium">Estado</dt>
                 <dd>{pedidoSel.estado === "aprovado" ? "Aprovado" : "Pendente"}</dd>
-                <dt className="font-medium">Observação</dt>
-                <dd>{pedidoSel.observacao || "Sem observação"}</dd>
-                <dt className="font-medium">Decidido em</dt>
-                <dd>{pedidoSel.decidido_em ? pedidoSel.decidido_em.slice(0, 10) : "Ainda não decidido"}</dd>
+                {!reduzido(pedidoSel) && (
+                  <>
+                    <dt className="font-medium">Observação</dt>
+                    <dd>{pedidoSel.observacao || "Sem observação"}</dd>
+                    <dt className="font-medium">Decidido em</dt>
+                    <dd>{pedidoSel.decidido_em ? pedidoSel.decidido_em.slice(0, 10) : "Ainda não decidido"}</dd>
+                  </>
+                )}
               </dl>
               <div>
                 <button type="button" className={botaoSec} onClick={() => setSel({ iso: sel.iso })}>

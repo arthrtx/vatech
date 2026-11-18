@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Agenda from "./Agenda";
-import type { Pedido } from "@/lib/api";
+import type { Pedido, PedidoAgenda } from "@/lib/api";
 
 afterEach(cleanup);
 
@@ -127,5 +127,42 @@ describe("Agenda", () => {
     expect(pend.textContent).toContain("Ainda não decidido");
     fireEvent.click(screen.getByText("Voltar ao dia"));
     expect(screen.getByRole("region", { name: /^Pedidos de 2026-/ })).toBeTruthy();
+  });
+
+  const colega: PedidoAgenda = {
+    id: 20,
+    user: { id: 2, nome: "Rui" },
+    tipo: "ausencia",
+    data_inicio: "2026-12-01",
+    data_fim: "2026-12-02",
+    estado: "aprovado",
+  };
+
+  it("detalhe de pedido de colega mostra so os campos reduzidos", () => {
+    render(<Agenda pedidos={[colega]} admin={false} hoje="2026-12-01" />);
+    fireEvent.click(screen.getAllByTitle(/Rui: .*\(aprovado\)/)[0]);
+    const painel = screen.getByRole("region", { name: "Pedido de Rui" });
+    expect(painel.textContent).toContain("Rui");
+    expect(painel.textContent).toContain("Ausência");
+    expect(painel.textContent).toContain("2026-12-01 a 2026-12-02");
+    expect(painel.textContent).toContain("Dias2");
+    expect(painel.textContent).toContain("Aprovado");
+    expect(painel.textContent).not.toContain("Subtipo");
+    expect(painel.textContent).not.toContain("Sem subtipo");
+    expect(painel.textContent).not.toContain("Observação");
+    expect(painel.textContent).not.toContain("Sem observação");
+    expect(painel.textContent).not.toContain("Decidido em");
+  });
+
+  it("sobreposicao da equipa conta pedido proprio e de colega sem user_id", () => {
+    const meu = p({ id: 21, user_id: 1, user: { id: 1, nome: "Ana" }, data_inicio: "2026-12-01", data_fim: "2026-12-01" });
+    render(<Agenda pedidos={[meu, colega]} admin={false} hoje="2026-12-01" />);
+    expect(screen.getAllByText("Sobreposição").length).toBe(1);
+  });
+
+  it("filtro de funcionario lista colegas pelo user.id", () => {
+    render(<Agenda pedidos={[colega]} admin hoje="2026-12-01" />);
+    fireEvent.change(screen.getByLabelText("Funcionário"), { target: { value: "2" } });
+    expect(screen.getAllByTitle(/Rui:/).length).toBe(2);
   });
 });

@@ -64,4 +64,14 @@ describe("cliente da API", () => {
     await expect(api.apagarFuncionario(1)).resolves.toBeUndefined();
     expect(f.mock.calls[1][1].method).toBe("DELETE");
   });
+
+  it("agenda pede GET /agenda com de e ate e devolve data", async () => {
+    setToken("abc");
+    const lista = [{ id: 5, user: { id: 2, nome: "Rui" }, tipo: "ferias", data_inicio: "2026-12-01", data_fim: "2026-12-02", estado: "aprovado" }];
+    const f = vi.fn().mockResolvedValue(resposta(200, { data: lista }));
+    vi.stubGlobal("fetch", f);
+    expect(await api.agenda("2026-11-30", "2027-01-03")).toEqual(lista);
+    expect(f.mock.calls[0][0]).toMatch(/\/agenda\?de=2026-11-30&ate=2027-01-03$/);
+    expect(f.mock.calls[0][1].method).toBe("GET");
+  });
 });
