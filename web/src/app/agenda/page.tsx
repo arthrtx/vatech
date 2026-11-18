@@ -11,13 +11,15 @@ function Conteudo() {
   const { user } = useAuth();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [aCarregar, setACarregar] = useState(true);
 
   useEffect(() => {
     let vivo = true;
     api
       .pedidos()
       .then((r) => vivo && setPedidos(r))
-      .catch((e) => vivo && setErro(mensagemDeErro(e)));
+      .catch((e) => vivo && setErro(mensagemDeErro(e)))
+      .finally(() => vivo && setACarregar(false));
     return () => {
       vivo = false;
     };
@@ -31,7 +33,7 @@ function Conteudo() {
           {erro}
         </p>
       )}
-      <Agenda pedidos={pedidos} admin={user?.papel === "admin"} nomeProprio={user?.nome} />
+      <Agenda pedidos={pedidos} admin={user?.papel === "admin"} nomeProprio={user?.nome} aCarregar={aCarregar} comErro={erro !== null} />
     </div>
   );
 }

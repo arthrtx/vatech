@@ -13,6 +13,7 @@ import {
   mesesPt,
   mesSeguinte,
   tocaMes,
+  visiveis,
 } from "@/lib/agenda";
 import { subtipos, tipos } from "@/lib/rotulos";
 import { botaoSec, input, label } from "./ui";
@@ -34,11 +35,15 @@ export default function Agenda({
   admin,
   nomeProprio,
   hoje = hojeIso(),
+  aCarregar = false,
+  comErro = false,
 }: {
   pedidos: Pedido[];
   admin: boolean;
   nomeProprio?: string;
   hoje?: string;
+  aCarregar?: boolean;
+  comErro?: boolean;
 }) {
   const [mes, setMes] = useState(() => mesDe(hoje));
   const [tipo, setTipo] = useState<TipoPedido | "">("");
@@ -46,7 +51,7 @@ export default function Agenda({
 
   const pessoas = useMemo(() => {
     const m = new Map<number, string>();
-    pedidos.forEach((p) => m.set(p.user_id, nomeDe(p, nomeProprio)));
+    visiveis(pedidos).forEach((p) => m.set(p.user_id, nomeDe(p, nomeProprio)));
     return [...m].sort((a, b) => a[1].localeCompare(b[1], "pt"));
   }, [pedidos, nomeProprio]);
 
@@ -58,7 +63,10 @@ export default function Agenda({
     () => filtrados.filter((p) => tocaMes(p, mes)).sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)),
     [filtrados, mes],
   );
-  const celulas = useMemo(() => celulasDoMes(mes), [mes]);
+  const semanas = useMemo(() => {
+    const c = celulasDoMes(mes);
+    return Array.from({ length: c.length / 7 }, (_, i) => c.slice(i * 7, i * 7 + 7));
+  }, [mes]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -116,10 +124,11 @@ export default function Agenda({
               </div>
             ))}
           </div>
-          <div className="mt-1 grid grid-cols-7 gap-1">
-            {celulas.map((c) => {
+          {semanas.map((semana) => (
+            <div key={semana[0].iso} role="row" className="mt-1 grid grid-cols-7 gap-1">
+              {semana.map((c) => {
               const doDia = filtrados.filter((p) => cobreDia(p, c.iso));
-              const sobrepoe = haSobreposicao(doDia);
+              const sobrepoe = haSobreposicao(visiveis(pedidos).filter((p) => cobreDia(p, c.iso)));
               const eHoje = c.iso === hoje;
               return (
                 <div
@@ -144,12 +153,14 @@ export default function Agenda({
                       className={`truncate rounded border px-1 text-xs ${estiloEstado[p.estado]}`}
                     >
                       {nomeDe(p, nomeProprio)} · {tipos[p.tipo]}
+                      {p.estado === "pendente" && <span className="sr-only"> (pendente)</span>}
                     </span>
                   ))}
                 </div>
               );
-            })}
-          </div>
+              })}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -157,7 +168,11 @@ export default function Agenda({
         <h3 id="ag-lista" className="text-base font-semibold">
           Pedidos de {mesesPt[mes.mes - 1]} {mes.ano}
         </h3>
-        {doMes.length === 0 ? (
+        {aCarregar ? (
+          <p className="text-zinc-700">A carregar pedidos...</p>
+        ) : comErro ? (
+          <p className="text-zinc-700">Não foi possível carregar os pedidos.</p>
+        ) : doMes.length === 0 ? (
           <p className="text-zinc-700">Sem pedidos neste mês.</p>
         ) : (
           <ul className="flex flex-col gap-2">

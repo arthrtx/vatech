@@ -41,6 +41,50 @@ describe("Agenda", () => {
     expect(screen.queryByText("Sobreposição")).toBeNull();
   });
 
+  it("filtros alteram a grelha e a sobreposicao persiste ao filtrar", () => {
+    render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
+    expect(screen.getAllByTitle(/\((aprovado|pendente)\)/).length).toBe(6);
+    fireEvent.change(screen.getByLabelText("Funcionário"), { target: { value: "2" } });
+    expect(screen.getAllByTitle(/\((aprovado|pendente)\)/).length).toBe(2);
+    expect(screen.getAllByText("Sobreposição").length).toBe(2);
+    fireEvent.change(screen.getByLabelText("Funcionário"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Tipo"), { target: { value: "licenca" } });
+    expect(screen.queryAllByTitle(/\((aprovado|pendente)\)/).length).toBe(0);
+    expect(screen.getAllByText("Sobreposição").length).toBe(2);
+    expect(screen.getByText("Sem pedidos neste mês.")).toBeTruthy();
+  });
+
+  it("destaca hoje, distingue pendente por texto e estilo, e usa linhas ARIA", () => {
+    const { container } = render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
+    const hoje = container.querySelector('[aria-current="date"]');
+    expect(hoje?.textContent).toContain("1");
+    expect(hoje?.textContent).toContain("(hoje)");
+    const pend = screen.getAllByText(/\(pendente\)/);
+    expect(pend.length).toBe(2);
+    expect(pend[0].closest("span.truncate")?.className).toContain("border-dashed");
+    const celulas = [...container.querySelectorAll('[role="gridcell"]')];
+    expect(celulas.length % 7).toBe(0);
+    expect(celulas.every((c) => c.parentElement?.getAttribute("role") === "row")).toBe(true);
+  });
+
+  it("filtro de funcionario ignora quem so tem recusados", () => {
+    const so = [...pedidos, p({ id: 9, user_id: 3, user: { id: 3, nome: "Zé" }, estado: "recusado" })];
+    render(<Agenda pedidos={so} admin hoje="2026-12-01" />);
+    expect(screen.queryByRole("option", { name: "Zé" })).toBeNull();
+    expect(screen.getByRole("option", { name: "Rui" })).toBeTruthy();
+  });
+
+  it("vazio, a carregar e erro sao estados distintos", () => {
+    const { rerender } = render(<Agenda pedidos={[]} admin hoje="2026-12-01" />);
+    expect(screen.getByText("Sem pedidos neste mês.")).toBeTruthy();
+    rerender(<Agenda pedidos={[]} admin hoje="2026-12-01" aCarregar />);
+    expect(screen.getByText("A carregar pedidos...")).toBeTruthy();
+    expect(screen.queryByText("Sem pedidos neste mês.")).toBeNull();
+    rerender(<Agenda pedidos={[]} admin hoje="2026-12-01" comErro />);
+    expect(screen.getByText("Não foi possível carregar os pedidos.")).toBeTruthy();
+    expect(screen.queryByText("Sem pedidos neste mês.")).toBeNull();
+  });
+
   it("filtro de funcionario so para admin", () => {
     const { rerender } = render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
     expect(screen.getByLabelText("Funcionário")).toBeTruthy();
