@@ -5,6 +5,8 @@ import {
   cobreDia,
   filtrar,
   haSobreposicao,
+  intervaloDoMes,
+  reduzido,
   mesAnterior,
   mesSeguinte,
   tocaMes,
@@ -69,5 +71,18 @@ describe("agenda", () => {
   it("navegacao de mes vira o ano", () => {
     expect(mesSeguinte({ ano: 2026, mes: 12 })).toEqual({ ano: 2027, mes: 1 });
     expect(mesAnterior({ ano: 2026, mes: 1 })).toEqual({ ano: 2025, mes: 12 });
+  });
+
+  it("intervaloDoMes cobre o grid completo (segunda a domingo)", () => {
+    expect(intervaloDoMes({ ano: 2026, mes: 12 })).toEqual({ de: "2026-11-30", ate: "2027-01-03" });
+  });
+
+  it("pedido de colega (sem user_id) conta como pessoa distinta e e reduzido", () => {
+    const colega = { id: 7, user: { id: 2, nome: "Rui" }, tipo: "ferias", data_inicio: "2026-12-01", data_fim: "2026-12-02", estado: "aprovado" } as const;
+    expect(reduzido(colega)).toBe(true);
+    expect(reduzido(ped({}))).toBe(false);
+    expect(haSobreposicao([ped({ user_id: 1, user: { id: 1, nome: "Ana" } }), colega])).toBe(true);
+    expect(haSobreposicao([colega, { ...colega, id: 8 }])).toBe(false);
+    expect(filtrar([colega], { userId: 2 }).length).toBe(1);
   });
 });
