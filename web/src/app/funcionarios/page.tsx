@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api, mensagemDeErro, type User } from "@/lib/api";
+import CampoBusca from "@/components/CampoBusca";
 import FuncionarioLinha from "@/components/FuncionarioLinha";
+import { filtrar } from "@/lib/busca";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 
 function Conteudo() {
@@ -12,6 +14,7 @@ function Conteudo() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
 
   const carregar = useCallback(async () => {
     try {
@@ -40,11 +43,19 @@ function Conteudo() {
     }
   }
 
+  const visiveis = filtrar(lista, busca, (u) => [u.nome, u.email]);
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-2xl font-semibold">Funcionários</h1>
+      {lista.length > 0 && (
+        <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
+      )}
+      {lista.length > 0 && visiveis.length === 0 && (
+        <p className="text-zinc-700">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
+      )}
       <ul className="flex flex-col gap-2">
-        {lista.map((u) => (
+        {visiveis.map((u) => (
           <FuncionarioLinha
             key={u.id}
             user={u}
