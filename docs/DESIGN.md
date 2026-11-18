@@ -2,6 +2,7 @@
 
 **Estado:** direcção (do /start). Os tokens medidos e os componentes saem da execução (E2).
 **Fonte da direcção:** capturas de ecrã do projecto HUROH do dono (`C:\Users\arthu\Documents\HUROH\Claude outputs\`: `01-dashboard.png`, `09-dashboard-claro.png`, `cal-claro.png`, `14-menu-lateral.png`). É só **referência de princípios**, nada se copia (logo, nome, cartão, ilustrações).
+**Outras referências visuais:** imagens em `docs/referencias-design/`.
 
 ## Princípios observados na referência
 
