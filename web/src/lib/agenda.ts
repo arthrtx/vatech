@@ -64,6 +64,10 @@ export function celulasDoMes(m: Mes): Celula[] {
 /** Recusados nunca aparecem na agenda. */
 export const visiveis = (pedidos: Pedido[]) => pedidos.filter((p) => p.estado !== "recusado");
 
+/** Dias de calendario do pedido, inclusive (inicio e fim contam). */
+export const diasDoPedido = (p: Pedido) =>
+  Math.round((Date.parse(`${p.data_fim}T00:00:00Z`) - Date.parse(`${p.data_inicio}T00:00:00Z`)) / 86400000) + 1;
+
 export const cobreDia = (p: Pedido, iso: string) => p.data_inicio <= iso && iso <= p.data_fim;
 
 /** Um pedido que atravessa meses conta nos dois. */
