@@ -40,16 +40,25 @@ if errorlevel 1 (
   if errorlevel 1 (
     echo [aviso] Docker Desktop nao esta a correr - a saltar a base de dados.
   ) else (
-    docker compose up -d mysql
+    docker compose up -d --build mysql api
   )
 )
 
 echo.
-echo === a abrir o web em http://localhost:3000 ===
-start "vatech web" cmd /k "cd /d %~dp0web && npm run dev"
-timeout /t 6 >nul
-start "" http://localhost:3000
+echo === dependencias do desktop (Electron) ===
+pushd desktop
+if not exist node_modules (call npm install --no-audit --no-fund)
+popd
 
 echo.
-echo Pronto. Fecha a janela "vatech web" para parar o servidor.
+echo === a iniciar o web (porta 3000) e o Electron ===
+echo API em http://localhost:8000 (a primeira vez demora, a migrar a base de dados).
+echo Conta de desenvolvimento: ver README.md
+start "vatech web" cmd /k "cd /d %~dp0web && npm run dev"
+cd desktop
+call npm start
+cd ..
+
+echo.
+echo Electron fechado. Fecha a janela "vatech web" para parar o servidor.
 endlocal
