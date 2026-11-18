@@ -4,7 +4,7 @@ Gestão de férias, ausências e licenças. Next.js (`web/`), Laravel (API, raiz
 
 ## Arrancar (qualquer máquina com Git, Node e Docker Desktop)
 
-Duplo clique em `iniciar.bat` na raiz. Cada vez que corre, faz `git pull` da última versão, instala as dependências, sobe a API e a base de dados em Docker sobe o web e abre http://localhost:3000 no browser.
+Duplo clique em `iniciar.bat` na raiz. Cada vez que corre, faz `git pull` da última versão, instala as dependências, sobe a API e a base de dados em Docker, sobe o web e abre http://localhost:3000 no browser.
 
 ## Contas de desenvolvimento (só local, nunca em produção)
 
