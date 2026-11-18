@@ -1,4 +1,4 @@
-import type { Pedido, TipoPedido } from "./api";
+import type { PedidoAgenda as Pedido, TipoPedido } from "./api";
 
 // Datas como "YYYY-MM-DD": comparam-se como texto, sem fusos horarios.
 export interface Mes {
@@ -61,6 +61,18 @@ export function celulasDoMes(m: Mes): Celula[] {
   });
 }
 
+/** Id da pessoa: pedidos de colegas chegam sem user_id, so com user.id. */
+export const quemE = (p: Pedido) => p.user_id ?? p.user?.id;
+
+/** Pedido de colega: a API so envia os campos reduzidos (sem user_id). */
+export const reduzido = (p: Pedido) => p.user_id === undefined;
+
+/** Intervalo a pedir a API: o grid completo do mes (inclui dias de fora). */
+export function intervaloDoMes(m: Mes): { de: string; ate: string } {
+  const c = celulasDoMes(m);
+  return { de: c[0].iso, ate: c[c.length - 1].iso };
+}
+
 /** Recusados nunca aparecem na agenda. */
 export const visiveis = (pedidos: Pedido[]) => pedidos.filter((p) => p.estado !== "recusado");
 
@@ -82,11 +94,11 @@ export interface Filtros {
 
 export function filtrar(pedidos: Pedido[], f: Filtros): Pedido[] {
   return visiveis(pedidos).filter(
-    (p) => (!f.tipo || p.tipo === f.tipo) && (f.userId === undefined || p.user_id === f.userId),
+    (p) => (!f.tipo || p.tipo === f.tipo) && (f.userId === undefined || quemE(p) === f.userId),
   );
 }
 
 /** Dia com 2 ou mais pessoas diferentes fora: aviso, nunca bloqueio (DECISIONS: avisos). */
 export function haSobreposicao(pedidosDoDia: Pedido[]): boolean {
-  return new Set(pedidosDoDia.map((p) => p.user_id)).size > 1;
+  return new Set(pedidosDoDia.map(quemE)).size > 1;
 }
