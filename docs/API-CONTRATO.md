@@ -17,7 +17,9 @@ Base: `/api`. Auth: Sanctum, token Bearer. Respostas JSON. Erros de validacao: 4
 | GET `/api/me` | autenticado | - | 200 `{user}` |
 | GET `/api/funcionarios` | admin | - | 200 `{data: [user]}` |
 | POST `/api/funcionarios` | admin | `{nome, email, password}` (papel=funcionario, empresa do admin) | 201 `{data: user}` |
-| GET `/api/pedidos` | autenticado | query `?estado=` opcional | 200 `{data: [pedido]}`; admin ve todos da empresa (com `user: {id, nome}`), funcionario so os seus |
+| PUT `/api/funcionarios/{id}` | admin | `{nome, email, password?}` (email unico ignorando o proprio; password so muda se enviada) | 200 `{data: user}`; 422 validacao; 404 se nao existir, for de outra empresa ou nao for funcionario |
+| DELETE `/api/funcionarios/{id}` | admin | - | 204 (soft delete, tokens revogados); 404 nos mesmos casos do PUT |
+| GET `/api/pedidos` | autenticado | query `?estado=` opcional | 200 `{data: [pedido]}`; admin ve todos da empresa (com `user: {id, nome}`), funcionario so os seus; pedidos de funcionarios apagados ficam ocultos |
 | POST `/api/pedidos` | funcionario | `{tipo, subtipo?, data_inicio, data_fim, observacao?}` | 201 `{data: pedido}` (estado pendente) |
 | POST `/api/pedidos/{id}/aprovar` | admin | - | 200 `{data: pedido}`; so se pendente, senao 409 |
 | POST `/api/pedidos/{id}/recusar` | admin | `{motivo_recusa}` obrigatorio | 200 `{data: pedido}`; so se pendente, senao 409 |
