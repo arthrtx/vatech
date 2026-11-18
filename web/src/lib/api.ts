@@ -31,6 +31,23 @@ export interface Pedido {
   user?: { id: number; nome: string };
 }
 
+/** Pedido na agenda: completo (admin e proprios); de colegas so id, user, tipo, datas e estado. */
+export interface PedidoAgenda {
+  id: number;
+  user?: { id: number; nome: string };
+  tipo: TipoPedido;
+  data_inicio: string;
+  data_fim: string;
+  estado: EstadoPedido;
+  empresa_id?: number;
+  user_id?: number;
+  subtipo?: SubtipoPedido | null;
+  observacao?: string | null;
+  decidido_por?: number | null;
+  decidido_em?: string | null;
+  motivo_recusa?: string | null;
+}
+
 export interface NovoPedido {
   tipo: TipoPedido;
   subtipo?: SubtipoPedido;
@@ -136,6 +153,8 @@ export const api = {
   apagarFuncionario: (id: number) => request<void>("DELETE", `/funcionarios/${id}`),
   pedidos: async (estado?: EstadoPedido) =>
     (await request<{ data: Pedido[] }>("GET", `/pedidos${estado ? `?estado=${estado}` : ""}`)).data,
+  agenda: async (de: string, ate: string) =>
+    (await request<{ data: PedidoAgenda[] }>("GET", `/agenda?de=${de}&ate=${ate}`)).data,
   criarPedido: (b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
   aprovar: async (id: number) =>
