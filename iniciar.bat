@@ -45,20 +45,15 @@ if errorlevel 1 (
 )
 
 echo.
-echo === dependencias do desktop (Electron) ===
-pushd desktop
-if not exist node_modules (call npm install --no-audit --no-fund)
-popd
-
-echo.
-echo === a iniciar o web (porta 3000) e o Electron ===
+echo === a iniciar o web (porta 3000) ===
 echo API em http://localhost:8000 (a primeira vez demora, a migrar a base de dados).
 echo Conta de desenvolvimento: ver README.md
 start "vatech web" cmd /k "cd /d %~dp0web && npm run dev"
-cd desktop
-call npm start
-cd ..
+
+echo A abrir http://localhost:3000 no browser (o web pode demorar uns segundos a arrancar).
+timeout /t 8 /nobreak >nul
+start "" http://localhost:3000
 
 echo.
-echo Electron fechado. Fecha a janela "vatech web" para parar o servidor.
+echo Fecha a janela "vatech web" para parar o servidor.
 endlocal
