@@ -52,6 +52,7 @@ describe.each(listas)("busca em %s", (_nome, montar) => {
     expect(screen.getByText('Nenhum resultado para "xyz"')).toBeTruthy();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Pesquisar pedidos"));
     expect(screen.queryByText(/Nenhum resultado/)).toBeNull();
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
     expect(screen.queryByRole("button", { name: "Limpar" })).toBeNull();
