@@ -35,10 +35,12 @@ describe("Funcionários: busca", () => {
 });
 
 describe("Funcionários: lista vazia", () => {
-  it("esconde o campo de busca", async () => {
+  it("mostra o campo de busca e a mensagem de vazio", async () => {
     vi.mocked(api.funcionarios).mockResolvedValue([]);
     render(<FuncionariosPage />);
     await screen.findByText("Novo funcionário");
-    expect(screen.queryByLabelText("Pesquisar funcionários")).toBeNull();
+    expect(screen.getByLabelText("Pesquisar funcionários")).toBeTruthy();
+    expect(screen.getByText("Ainda não há funcionários.")).toBeTruthy();
+    expect(screen.queryByText(/Nenhum resultado/)).toBeNull();
   });
 });
