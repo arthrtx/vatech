@@ -1,13 +1,23 @@
-import type { Pedido } from "@/lib/api";
-import { subtipos, tipos } from "@/lib/rotulos";
+"use client";
 
-const estados = { pendente: "Pendente", aprovado: "Aprovado", recusado: "Recusado" } as const;
+import { useState } from "react";
+import type { Pedido } from "@/lib/api";
+import { filtrar } from "@/lib/busca";
+import { estados, subtipos, tipos } from "@/lib/rotulos";
+import CampoBusca from "./CampoBusca";
 
 export default function ListaPedidos({ pedidos }: { pedidos: Pedido[] }) {
+  const [busca, setBusca] = useState("");
   if (pedidos.length === 0) return <p className="text-zinc-700">Ainda não há pedidos.</p>;
+  const visiveis = filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo], estados[p.estado]]);
   return (
+    <div className="flex flex-col gap-3">
+      <CampoBusca id="busca-meus-pedidos" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
+      {visiveis.length === 0 ? (
+        <p className="text-zinc-700">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
+      ) : (
     <ul className="flex flex-col gap-3">
-      {pedidos.map((p) => (
+      {visiveis.map((p) => (
         <li key={p.id} className="rounded-md border border-zinc-300 bg-white p-4">
           <p className="font-medium">
             {tipos[p.tipo]}
@@ -23,5 +33,7 @@ export default function ListaPedidos({ pedidos }: { pedidos: Pedido[] }) {
         </li>
       ))}
     </ul>
+      )}
+    </div>
   );
 }
