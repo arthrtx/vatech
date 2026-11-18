@@ -141,7 +141,7 @@ Direcção registada em `docs/DESIGN.md` (referência: capturas do projecto HURO
 | # | Pergunta | Dono | Prazo | Estado |
 |---|---|---|---|---|
 | Q1 | North Star Metric | Arthur | TBD | Aberta |
-| Q2 | Onde corre a API (servidor/IP) já que a app Electron não usa domínio | Arthur | Fase 4 | Fechada: removida, o Electron deixou de existir (D8, #31); a API fica acessível ao website alojado (D5) |
+| Q2 | Onde corre a API (servidor/IP) já que a app Electron não usa domínio | Arthur | Fase 4 | Fechada como Electron (D8, #31); o domínio ou IP da API para o website alojado segue na D5 |
 
 ---
 
