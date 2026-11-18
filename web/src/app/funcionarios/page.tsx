@@ -48,11 +48,11 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-2xl font-semibold">Funcionários</h1>
-      {lista.length > 0 && (
-        <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
-      )}
-      {lista.length > 0 && visiveis.length === 0 && (
-        <p className="text-zinc-700">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
+      <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
+      {visiveis.length === 0 && (
+        <p className="text-zinc-700">
+          {lista.length === 0 ? "Ainda não há funcionários." : `Nenhum resultado para "${busca.trim()}"`}
+        </p>
       )}
       <ul className="flex flex-col gap-2">
         {visiveis.map((u) => (

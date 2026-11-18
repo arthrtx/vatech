@@ -18,7 +18,6 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar }: Props) {
   const [motivo, setMotivo] = useState("");
   const [busca, setBusca] = useState("");
 
-  if (pedidos.length === 0) return <p className="text-zinc-700">Sem pedidos pendentes.</p>;
   const visiveis = filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo], estados[p.estado]]);
 
   async function confirmar(id: number) {
@@ -32,7 +31,9 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar }: Props) {
     <div className="flex flex-col gap-3">
       <CampoBusca id="busca-pedidos-admin" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
       {visiveis.length === 0 ? (
-        <p className="text-zinc-700">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
+        <p className="text-zinc-700">
+          {pedidos.length === 0 ? "Sem pedidos pendentes." : `Nenhum resultado para "${busca.trim()}"`}
+        </p>
       ) : (
         <ul className="flex flex-col gap-3">
           {visiveis.map((p) => (
