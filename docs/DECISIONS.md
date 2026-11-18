@@ -81,3 +81,16 @@
 - `restrictOnDelete` — rejeitada: impediria apagar quem já fez pedidos.
 
 **Consequências:** o email de um funcionário apagado continua ocupado (índice único da BD); reutilizá-lo exige restaurar ou anonimizar, fora do âmbito desta decisão. Restaurar é possível (`restore()`), sem endpoint por agora.
+
+## D7: Agenda da equipa por endpoint dedicado, sem dados sensiveis
+
+**Data:** 2026-11-18 · **Estado:** aceite · **Decidido por:** Arthur (issue #16) · **Proposto:** Claude
+
+**Contexto:** o funcionario deve ver a equipa na agenda (PRD F6), mas `subtipo` (ex.: medica), `observacao` e `motivo_recusa` nao podem chegar a colegas.
+
+**Decisao:** `GET /api/agenda?de&ate`. Admin recebe pedidos completos; funcionario recebe os seus completos e, dos colegas, so pedidos aprovados com `{id, user:{id,nome}, tipo, data_inicio, data_fim, estado}`. A reducao e feita por lista explicita de campos no servidor, nunca por omissao no cliente.
+
+**Alternativas consideradas:**
+- Alargar `GET /api/pedidos` a colegas: rejeitada, exporia campos sensiveis por omissao.
+
+**Consequencias:** campos novos do pedido nao chegam a colegas ate serem acrescentados a lista; `GET /api/pedidos` mantem-se so com os proprios pedidos.
