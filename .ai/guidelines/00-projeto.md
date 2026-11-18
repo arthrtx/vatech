@@ -15,7 +15,6 @@ Detalhe em `docs/PRD.md`.
 
 - Raiz: **Laravel 13** (API, Sanctum por tokens) + **Filament v5** (backoffice do super-admin)
 - `web/`: **Next.js 16** (frontend da app; projecto Node independente)
-- `desktop/`: **Electron** a embrulhar o frontend (D2); a lógica fica no Laravel
 - BD: **MySQL 8.4** em dev e produção (phpMyAdmin). Deploy: Ploi (D5)
 
 ## Comandos
@@ -53,7 +52,7 @@ Ler quando o trabalho os tocar:
 
 - Um único modelo `Pedido` com tipo (férias | ausência | licença) e subtipo.
 - Toda a consulta filtra por empresa (tenancy); testes de isolamento obrigatórios.
-- Auth por tokens Sanctum, não cookies de domínio (o Electron não usa domínio).
+- Auth por tokens Sanctum, não cookies de domínio.
 - Interface só em PT. **Sem setas na UI** (nem ícones de seta nem chevrons): ligações e acções só com texto.
 - Valores legais de licenças nunca pré-definidos: indicam-se no pedido.
 - Design: tokens (cores, fontes, raios, espaçamentos) por medir, `TODO: token em falta`; não inventar valores.
