@@ -1,0 +1,54 @@
+# CI Laravel (raiz do repo): formatação e testes.
+# Testes em SQLite em memória (phpunit.xml). Pest e Larastan ainda não estão no
+# composer.json: usa-se `php artisan test` (corre PHPUnit ou Pest) e o passo de
+# análise estática fica comentado até o Larastan entrar.
+
+name: CI Laravel
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  laravel:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, sqlite3
+          coverage: none
+
+      - name: Localizar a cache do Composer
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Preparar ambiente
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Pint (formatação)
+        run: ./vendor/bin/pint --test
+
+      # Descomentar quando o Larastan estiver instalado (com phpstan.neon):
+      # - name: Larastan (análise estática)
+      #   run: ./vendor/bin/phpstan analyse --no-progress
+
+      - name: Testes
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: php artisan test
