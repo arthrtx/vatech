@@ -13,7 +13,7 @@ class PedidoController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = Pedido::where('empresa_id', $user->empresa_id)->latest('id');
+        $query = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->latest('id');
 
         if ($user->isAdmin()) {
             $query->with('user:id,nome');

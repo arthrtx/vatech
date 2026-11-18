@@ -67,3 +67,17 @@
 **Alternativas consideradas:** VPS com Docker, cPanel — rejeitadas: Ploi dá Laravel + MySQL geridos.
 
 **Consequências:** custo do servidor Ploi; domínio/IP a decidir (PRD Q2).
+
+## D6: Apagar funcionários por soft delete, não por cascade
+
+**Data:** 2026-11-18 · **Estado:** aceite · **Decidido por:** Arthur (issue #13) · **Proposto:** Claude
+
+**Contexto:** `pedidos.user_id` tem `cascadeOnDelete`: apagar um utilizador apagaria o histórico de pedidos da empresa. O admin precisa de remover funcionários que saem.
+
+**Decisão:** `users` passa a ter `deleted_at` (`SoftDeletes`). `DELETE /api/funcionarios/{id}` marca o utilizador como apagado e revoga os tokens Sanctum; os pedidos mantêm-se na BD mas `GET /api/pedidos` oculta os de utilizadores apagados. A FK de `pedidos` não se altera (migração aplicada).
+
+**Alternativas consideradas:**
+- Apagar de vez (cascade) — rejeitada: perde histórico de pedidos.
+- `restrictOnDelete` — rejeitada: impediria apagar quem já fez pedidos.
+
+**Consequências:** o email de um funcionário apagado continua ocupado (índice único da BD); reutilizá-lo exige restaurar ou anonimizar, fora do âmbito desta decisão. Restaurar é possível (`restore()`), sem endpoint por agora.

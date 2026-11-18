@@ -15,6 +15,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('papel:admin')->group(function () {
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
         Route::post('/funcionarios', [FuncionarioController::class, 'store']);
+        Route::put('/funcionarios/{id}', [FuncionarioController::class, 'update']);
+        Route::delete('/funcionarios/{id}', [FuncionarioController::class, 'destroy']);
         Route::post('/pedidos/{id}/aprovar', [PedidoController::class, 'aprovar']);
         Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
     });
