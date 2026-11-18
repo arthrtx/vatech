@@ -13,7 +13,7 @@
 Pequenas empresas gerem hoje as férias, licenças e ausências dos funcionários em folhas de Excel. O processo é confuso, sem estado de aprovação claro nem histórico de comprovativos. [fonte: operador (entrevista /start), 2026-11-18]
 
 ### Solução
-Aplicação web (empacotada em desktop com Electron) onde o admin da empresa cria os funcionários, os funcionários pedem férias, licenças e ausências, e o admin aprova ou recusa. Mais intuitiva do que o Excel que substitui.
+Aplicação web onde o admin da empresa cria os funcionários, os funcionários pedem férias, licenças e ausências, e o admin aprova ou recusa. Mais intuitiva do que o Excel que substitui.
 
 ### Como é resolvido hoje
 Excel / folha de cálculo.
@@ -21,7 +21,7 @@ Excel / folha de cálculo.
 ### Fora de âmbito (v1)
 - Processamento salarial e facturação
 - Controlo de assiduidade / picagem de ponto
-- App móvel nativa (só web responsiva; Electron para desktop)
+- App móvel nativa (só web responsiva; o produto é só website, D8)
 - Gestão de turnos e escalas
 - Integração com a Segurança Social e com o Portal das Finanças
 - Aprovação em várias etapas (só o admin aprova)
@@ -119,7 +119,6 @@ Decisão: um único modelo `Pedido` com tipo, em vez de três tabelas (mesmo cic
 | Backend | Laravel 13 (API) |
 | Base de dados | MySQL 8.4 (phpMyAdmin), multi-empresa |
 | Backoffice | Filament v5 (super-admin) |
-| Desktop | Electron (fora da stack da casa, D2) |
 | Auth | Laravel Sanctum (tokens) |
 | Deploy | Ploi (D5); repo privado `arthrtx/vatech` |
 
@@ -142,7 +141,7 @@ Direcção registada em `docs/DESIGN.md` (referência: capturas do projecto HURO
 | # | Pergunta | Dono | Prazo | Estado |
 |---|---|---|---|---|
 | Q1 | North Star Metric | Arthur | TBD | Aberta |
-| Q2 | Onde corre a API (servidor/IP) já que a app Electron não usa domínio | Arthur | Fase 4 | Aberta |
+| Q2 | Onde corre a API (servidor/IP) já que a app Electron não usa domínio | Arthur | Fase 4 | Fechada: removida, o Electron deixou de existir (D8, #31); a API fica acessível ao website alojado (D5) |
 
 ---
 

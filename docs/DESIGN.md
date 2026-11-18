@@ -7,7 +7,6 @@
 ## Princípios observados na referência
 
 - **Tema escuro e claro** em paridade, com alternador na barra de topo.
-- **App desktop em janela própria** (barra de título com minimizar/fechar), coerente com o Electron.
 - **Layout:** barra lateral com secções ("Principal", "Conta"), ícones de linha + texto; área principal em painel arredondado.
 - **Barra de topo** com relógio/data, pílula com a página actual, pesquisa, alternador de tema, notificações com contador, menu do utilizador.
 - **Cartões grandes de cantos muito arredondados**, com efeito vidro e gradientes suaves de cor. Cada cartão responde a uma pergunta (saldo, próximos eventos).
