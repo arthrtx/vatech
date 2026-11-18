@@ -1,5 +1,5 @@
 <?php
 
-it('responde 200 em GET /', function () {
-    $this->get('/')->assertStatus(200);
+it('responde 200 em GET /up', function () {
+    $this->get('/up')->assertStatus(200);
 });
