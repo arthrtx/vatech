@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FuncionarioController;
 use App\Http\Controllers\PedidoController;
@@ -11,6 +12,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::get('/pedidos', [PedidoController::class, 'index']);
+    Route::get('/agenda', [AgendaController::class, 'index']);
 
     Route::middleware('papel:admin')->group(function () {
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
