@@ -28,6 +28,7 @@ export default function AppShell({
   }
 
   const links = [{ href: "/", texto: user.papel === "admin" ? "Pedidos" : "Os meus pedidos" }];
+  links.push({ href: "/agenda", texto: "Agenda" });
   if (user.papel === "admin") links.push({ href: "/funcionarios", texto: "Funcionários" });
 
   return (
