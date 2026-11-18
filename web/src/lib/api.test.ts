@@ -53,4 +53,15 @@ describe("cliente da API", () => {
       errors: { email: ["invalido"] },
     });
   });
+
+  it("editarFuncionario faz PUT e apagarFuncionario aceita 204 sem corpo", async () => {
+    const f = vi.fn().mockResolvedValueOnce(resposta(200, { data: user })).mockResolvedValueOnce(resposta(204));
+    vi.stubGlobal("fetch", f);
+    const u = await api.editarFuncionario(1, { nome: "A", email: "a@b.c" });
+    expect(u.id).toBe(1);
+    expect(f.mock.calls[0][0]).toMatch(/\/funcionarios\/1$/);
+    expect(f.mock.calls[0][1].method).toBe("PUT");
+    await expect(api.apagarFuncionario(1)).resolves.toBeUndefined();
+    expect(f.mock.calls[1][1].method).toBe("DELETE");
+  });
 });
