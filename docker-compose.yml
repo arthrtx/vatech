@@ -2,7 +2,7 @@
 services:
   mysql:
     image: mysql:8.4
-    ports: ["3306:3306"]
+    ports: ["3307:3306"]  # 3307 no host: a 3306 costuma estar ocupada (XAMPP, MySQL local)
     environment:
       MYSQL_ROOT_PASSWORD: root_local
       MYSQL_DATABASE: vatech
@@ -13,6 +13,17 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       retries: 10
+  api:
+    build: ./docker/api
+    working_dir: /app
+    volumes: [".:/app"]
+    ports: ["8000:8000"]
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+    command: sh docker/api/entrypoint.sh
+    depends_on:
+      mysql: { condition: service_healthy }
   phpmyadmin:
     image: phpmyadmin:5
     ports: ["8080:80"]

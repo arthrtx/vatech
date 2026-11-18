@@ -1,3 +1,28 @@
+# vatech
+
+Gestão de férias, ausências e licenças. Next.js (`web/`), Laravel (API, raiz), MySQL, Electron (`desktop/`).
+
+## Arrancar (qualquer máquina com Git, Node e Docker Desktop)
+
+Duplo clique em `iniciar.bat` na raiz. Cada vez que corre, faz `git pull` da última versão, instala as dependências, sobe a API e a base de dados em Docker e abre a aplicação Electron.
+
+## Contas de desenvolvimento (só local, nunca em produção)
+
+| Papel | Email | Password |
+|---|---|---|
+| Admin (dono) | `admin@vatech.test` | `password` |
+| Funcionário | `funcionario@vatech.test` | `password` |
+
+Criadas pelo seeder (`database/seeders/DatabaseSeeder.php`) quando a API arranca.
+
+## Endereços locais
+
+- Web: http://localhost:3000
+- API: http://localhost:8000/api (contrato em `docs/API-CONTRATO.md`)
+- phpMyAdmin: http://localhost:8080 (MySQL no host em `127.0.0.1:3307`)
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
