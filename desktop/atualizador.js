@@ -15,7 +15,13 @@ function executorReal(raiz) {
       execFile(
         bin,
         args,
-        { cwd: opcoes.cwd || raiz, timeout: 5 * 60 * 1000, windowsHide: true, shell: bin.endsWith('.cmd') },
+        {
+          cwd: opcoes.cwd || raiz,
+          timeout: 5 * 60 * 1000,
+          windowsHide: true,
+          shell: bin.endsWith('.cmd'),
+          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+        },
         (erro, stdout) => {
           if (erro) reject(erro);
           else resolve(String(stdout));
@@ -62,8 +68,14 @@ function criarAtualizador({ raiz, exec = executorReal(raiz), log = () => {} }) {
       if (tocaBackend(ficheiros)) {
         try {
           await exec('docker', ['info'], { cwd: raiz });
-          await exec('docker', ['compose', 'restart', 'api'], { cwd: raiz });
-          accoes.push('docker compose restart api');
+          let reiniciou = true;
+          try {
+            await exec('docker', ['compose', 'restart', 'api'], { cwd: raiz });
+          } catch (e) {
+            reiniciou = false;
+            log(`[atualizador] docker compose restart api falhou: ${String(e.message).split('\n')[0]}`);
+          }
+          if (reiniciou) accoes.push('docker compose restart api');
         } catch (e) {
           log(`[atualizador] docker indisponivel, api nao reiniciada: ${String(e.message).split('\n')[0]}`);
         }
