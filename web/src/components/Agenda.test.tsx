@@ -61,7 +61,7 @@ describe("Agenda", () => {
     expect(hoje?.textContent).toContain("(hoje)");
     const pend = screen.getAllByText(/\(pendente\)/);
     expect(pend.length).toBe(2);
-    expect(pend[0].closest("span.truncate")?.className).toContain("border-dashed");
+    expect(pend[0].closest("button.truncate")?.className).toContain("border-dashed");
     const celulas = [...container.querySelectorAll('[role="gridcell"]')];
     expect(celulas.length % 7).toBe(0);
     expect(celulas.every((c) => c.parentElement?.getAttribute("role") === "row")).toBe(true);
@@ -91,5 +91,41 @@ describe("Agenda", () => {
     rerender(<Agenda pedidos={pedidos} admin={false} hoje="2026-12-01" />);
     expect(screen.queryByLabelText("Funcionário")).toBeNull();
     expect(screen.getByLabelText("Tipo")).toBeTruthy();
+  });
+
+  it("clicar no dia abre a lista com aviso de sobreposicao e Escape fecha devolvendo o foco", () => {
+    render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
+    const dia = screen.getByRole("button", { name: /^1\s*de Dezembro\s*\(hoje\)$/ });
+    dia.focus();
+    fireEvent.click(dia);
+    const painel = screen.getByRole("region", { name: "Pedidos de 2026-12-01" });
+    expect(painel.textContent).toContain("Sobreposição: mais de uma pessoa fora neste dia.");
+    expect(painel.textContent).toContain("Ana · Férias · Aprovado");
+    expect(painel.textContent).toContain("Rui · Férias · Pendente");
+    expect(document.activeElement).toBe(painel);
+    fireEvent.keyDown(painel, { key: "Escape" });
+    expect(screen.queryByRole("region", { name: /Pedidos de 2026/ })).toBeNull();
+    expect(document.activeElement).toBe(dia);
+  });
+
+  it("clicar num pedido aprovado ou pendente mostra o detalhe sem abrir a lista do dia", () => {
+    const ana = p({ observacao: "Praia", decidido_em: "2026-11-20T10:00:00Z" });
+    render(<Agenda pedidos={[ana, pedidos[1]]} admin hoje="2026-12-01" />);
+    fireEvent.click(screen.getAllByTitle(/Ana: .*\(aprovado\)/)[0]);
+    const painel = screen.getByRole("region", { name: "Pedido de Ana" });
+    expect(painel.textContent).toContain("Sem subtipo");
+    expect(painel.textContent).toContain("2026-11-27 a 2026-12-03");
+    expect(painel.textContent).toContain("Dias7");
+    expect(painel.textContent).toContain("Praia");
+    expect(painel.textContent).toContain("2026-11-20");
+    expect(screen.queryByRole("region", { name: /^Pedidos de 2026/ })).toBeNull();
+    fireEvent.click(screen.getByText("Fechar"));
+    fireEvent.click(screen.getAllByTitle(/Rui: .*\(pendente\)/)[0]);
+    const pend = screen.getByRole("region", { name: "Pedido de Rui" });
+    expect(pend.textContent).toContain("Pendente");
+    expect(pend.textContent).toContain("Sem observação");
+    expect(pend.textContent).toContain("Ainda não decidido");
+    fireEvent.click(screen.getByText("Voltar ao dia"));
+    expect(screen.getByRole("region", { name: /^Pedidos de 2026-/ })).toBeTruthy();
   });
 });
