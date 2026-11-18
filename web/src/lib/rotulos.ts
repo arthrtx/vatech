@@ -4,3 +4,4 @@ export const subtipos = {
   documentacao: "Documentação",
   falta_justificada: "Falta justificada",
 } as const;
+export const estados = { pendente: "Pendente", aprovado: "Aprovado", recusado: "Recusado" } as const;
