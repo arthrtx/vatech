@@ -27,8 +27,18 @@ describe("Funcionários: busca", () => {
     fireEvent.change(campo, { target: { value: "zzz" } });
     expect(screen.getByText('Nenhum resultado para "zzz"')).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    expect(document.activeElement).toBe(campo);
     expect(screen.getByText("João Álvares")).toBeTruthy();
     expect(screen.getByText("Ana")).toBeTruthy();
     expect(api.funcionarios).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Funcionários: lista vazia", () => {
+  it("esconde o campo de busca", async () => {
+    vi.mocked(api.funcionarios).mockResolvedValue([]);
+    render(<FuncionariosPage />);
+    await screen.findByText("Novo funcionário");
+    expect(screen.queryByLabelText("Pesquisar funcionários")).toBeNull();
   });
 });

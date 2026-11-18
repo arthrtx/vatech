@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { input } from "./ui";
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function CampoBusca({ id, rotulo, valor, onChange, placeholder = "Pesquisar" }: Props) {
+  const ref = useRef<HTMLInputElement>(null);
   return (
     <div role="search" className="relative max-w-md">
       <label htmlFor={id} className="sr-only">
@@ -28,6 +30,7 @@ export default function CampoBusca({ id, rotulo, valor, onChange, placeholder = 
       </svg>
       <input
         id={id}
+        ref={ref}
         type="search"
         autoComplete="off"
         className={`${input} pl-9 pr-20 [&::-webkit-search-cancel-button]:appearance-none`}
@@ -38,7 +41,10 @@ export default function CampoBusca({ id, rotulo, valor, onChange, placeholder = 
       {valor && (
         <button
           type="button"
-          onClick={() => onChange("")}
+          onClick={() => {
+            onChange("");
+            ref.current?.focus();
+          }}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
         >
           Limpar

@@ -48,7 +48,9 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-2xl font-semibold">Funcionários</h1>
-      <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
+      {lista.length > 0 && (
+        <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
+      )}
       {lista.length > 0 && visiveis.length === 0 && (
         <p className="text-zinc-700">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
       )}
