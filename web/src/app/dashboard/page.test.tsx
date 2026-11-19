@@ -181,7 +181,7 @@ describe("Dashboard admin", () => {
     expect(screen.getByText(/Sofia/)).toBeTruthy();
   });
 
-  it("limita a 5 pedidos pendentes e conta todos na ligação", async () => {
+  it("limita a 3 pedidos pendentes e conta todos na ligação", async () => {
     vi.mocked(api.pedidos).mockResolvedValue(
       [1, 2, 3, 4, 5, 6, 7].map((i) => ped(i, { user: { id: i + 10, nome: `Pessoa${i}` } })),
     );
@@ -189,7 +189,7 @@ describe("Dashboard admin", () => {
     vi.mocked(api.agenda).mockResolvedValue([]);
     render(<DashboardPage />);
     await screen.findByText(/Pessoa1 /);
-    expect(screen.getAllByRole("button", { name: "Aprovar" }).length).toBe(5);
+    expect(screen.getAllByRole("button", { name: "Aprovar" }).length).toBe(3);
     expect(screen.getByRole("link", { name: "Ver todos os pedidos (7)" })).toBeTruthy();
   });
 });

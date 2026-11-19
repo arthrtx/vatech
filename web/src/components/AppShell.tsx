@@ -23,6 +23,7 @@ import FundoQuente, { classeFundoQuente } from "./FundoQuente";
 import Notificacoes from "./Notificacoes";
 import Pesquisa from "./Pesquisa";
 import { useTema } from "@/lib/tema";
+import { botao, botaoSec } from "./ui";
 
 // Dica com o nome do item: aparece ao passar o rato ou com foco de teclado.
 // Abaixo do ícone no telemóvel (barra de topo), à direita no desktop (barra lateral).
@@ -56,6 +57,7 @@ export default function AppShell({
   const router = useRouter();
   const pathname = usePathname();
   const [pesquisaAberta, setPesquisaAberta] = useState(false);
+  const [aSair, setASair] = useState(false);
   const { escuro, definir: definirTema } = useTema();
   const [agora, setAgora] = useState<Date | null>(null);
   const semAcesso = !!user && ((soAdmin && user.papel !== "admin") || (!!papeis && !papeis.includes(user.papel)));
@@ -71,6 +73,13 @@ export default function AppShell({
     window.addEventListener("keydown", atalho);
     return () => window.removeEventListener("keydown", atalho);
   }, []);
+
+  useEffect(() => {
+    if (!aSair) return;
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && setASair(false);
+    window.addEventListener("keydown", tecla);
+    return () => window.removeEventListener("keydown", tecla);
+  }, [aSair]);
 
   useEffect(() => {
     const atualizar = () => setAgora(new Date());
@@ -153,7 +162,7 @@ export default function AppShell({
                 {definicoes.texto}
               </span>
             </Link>
-            <button type="button" onClick={logout} aria-label="Sair" className={`${botaoIcone} ${itemInativo}`}>
+            <button type="button" onClick={() => setASair(true)} aria-label="Sair" className={`${botaoIcone} ${itemInativo}`}>
               <IconeSair />
               <span aria-hidden="true" className={dica}>
                 Sair
@@ -229,6 +238,33 @@ export default function AppShell({
           <main className={`min-w-0 flex-1 md:pr-2 ${ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : ""}`}>{children}</main>
         </div>
       </div>
+      {aSair && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-barra/40 p-4 backdrop-blur-sm" onClick={() => setASair(false)}>
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="sair-titulo"
+            aria-describedby="sair-texto"
+            className="w-full max-w-sm rounded-cartao bg-painel/90 p-6 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="sair-titulo" className="text-lg font-semibold">
+              Sair da conta?
+            </h2>
+            <p id="sair-texto" className="mt-2 text-sm text-texto-suave">
+              Tem a certeza de que quer terminar a sessão? Terá de iniciar sessão novamente para voltar a entrar.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" autoFocus onClick={() => setASair(false)} className={botaoSec}>
+                Ficar
+              </button>
+              <button type="button" onClick={logout} className={botao}>
+                Sim, sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {pesquisaAberta && (
         <Pesquisa destinos={[...links, definicoes].map(({ href, texto }) => ({ href, texto }))} onFechar={fecharPesquisa} />
       )}

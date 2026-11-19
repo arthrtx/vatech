@@ -58,8 +58,12 @@ export default function CampoData({ id, valor, onChange, min, required, classNam
   }, [aberto]);
 
   function escrever(texto: string) {
-    const iso = lerData(texto);
-    if (iso) {
+    const lida = lerData(texto);
+    // Data escrita antes do mínimo: não vale (volta ao valor anterior ao sair do campo).
+    const iso = lida && !(min && lida < min) ? lida : null;
+    if (lida && !iso) {
+      setRascunho(texto);
+    } else if (iso) {
       setRascunho(null);
       setMes(mesDe(iso));
       onChange(iso);

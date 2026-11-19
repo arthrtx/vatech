@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { api, mensagemDeErro, type Anexo, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
+import { hojeIso } from "@/lib/agenda";
 import CampoAnexos from "./CampoAnexos";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
@@ -34,16 +35,34 @@ export default function PedidoForm({
   const edicao = !!pedido;
   const { user } = useAuth();
   const semFerias = user?.papel === "estagiario";
+  const hoje = hojeIso();
   const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? (semFerias ? "ausencia" : "ferias"));
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
   const [obs, setObs] = useState(pedido?.observacao ?? "");
+  const [aMelhorar, setAMelhorar] = useState(false);
+  const [antesDeMelhorar, setAntesDeMelhorar] = useState<string | null>(null);
+  const [erroTexto, setErroTexto] = useState<string | null>(null);
   const [novos, setNovos] = useState<File[]>([]);
   const [guardados, setGuardados] = useState<Anexo[]>(pedido?.anexos ?? []);
   const [erro, setErro] = useState<string | null>(null);
   const [avisos, setAvisos] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
+
+  async function melhorar() {
+    setErroTexto(null);
+    setAMelhorar(true);
+    try {
+      const melhorado = await api.melhorarTexto(obs);
+      setAntesDeMelhorar(obs);
+      setObs(melhorado);
+    } catch (err) {
+      setErroTexto(mensagemDeErro(err));
+    } finally {
+      setAMelhorar(false);
+    }
+  }
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -123,13 +142,22 @@ export default function PedidoForm({
           <label htmlFor="data_inicio" className={label}>
             Data de início
           </label>
-          <CampoData id="data_inicio" required valor={inicio} onChange={setInicio} />
+          <CampoData
+            id="data_inicio"
+            required
+            min={hoje}
+            valor={inicio}
+            onChange={(v) => {
+              setInicio(v);
+              if (fim && v > fim) setFim("");
+            }}
+          />
         </div>
         <div>
           <label htmlFor="data_fim" className={label}>
             Data de fim
           </label>
-          <CampoData id="data_fim" required min={inicio || undefined} valor={fim} onChange={setFim} />
+          <CampoData id="data_fim" required min={inicio && inicio > hoje ? inicio : hoje} valor={fim} onChange={setFim} />
         </div>
       </div>
       <div>
@@ -141,8 +169,39 @@ export default function PedidoForm({
           rows={3}
           className={input}
           value={obs}
-          onChange={(e) => setObs(e.target.value)}
+          maxLength={2000}
+          onChange={(e) => {
+            setObs(e.target.value);
+            setAntesDeMelhorar(null);
+          }}
         />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button type="button" disabled={aMelhorar || obs.trim().length < 3} onClick={melhorar} className={`${botaoSec} min-h-9 px-3 py-1`}>
+            {aMelhorar ? "A melhorar..." : "Melhorar texto"}
+          </button>
+          {antesDeMelhorar !== null && !aMelhorar && (
+            <>
+              <button
+                type="button"
+                className={`${botaoSec} min-h-9 px-3 py-1`}
+                onClick={() => {
+                  setObs(antesDeMelhorar);
+                  setAntesDeMelhorar(null);
+                }}
+              >
+                Desfazer
+              </button>
+              <span role="status" className="text-sm text-texto-suave">
+                Texto melhorado. Reveja antes de submeter.
+              </span>
+            </>
+          )}
+        </div>
+        {erroTexto && (
+          <p role="alert" className={`${erroCls} mt-2`}>
+            {erroTexto}
+          </p>
+        )}
       </div>
       <CampoAnexos
         novos={novos}

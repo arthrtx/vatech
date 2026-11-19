@@ -161,6 +161,10 @@ export const api = {
     setToken(r.token);
     return r.user;
   },
+  esqueciPassword: async (email: string) =>
+    (await request<{ message: string }>("POST", "/esqueci-password", { email })).message,
+  redefinirPassword: async (b: { token: string; email: string; password: string; password_confirmation: string }) =>
+    (await request<{ message: string }>("POST", "/redefinir-password", b)).message,
   logout: async () => {
     try {
       await request<void>("POST", "/logout");
@@ -206,6 +210,7 @@ export const api = {
   editarPedido: (id: number, b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("PUT", `/pedidos/${id}`, b),
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
+  melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
   enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {
     const f = new FormData();
     for (const ficheiro of ficheiros) f.append("anexos[]", ficheiro);
