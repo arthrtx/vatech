@@ -88,7 +88,7 @@ class AnexoController extends Controller
         $user = $request->user();
         $pedido = Pedido::where('empresa_id', $user->empresa_id)->where('user_id', $user->id)->findOrFail($id);
 
-        abort_if($pedido->estado !== 'pendente', 409, 'So e possivel alterar pedidos pendentes.');
+        abort_if($pedido->estado !== 'pendente', 409, 'Só é possível alterar pedidos pendentes.');
 
         return $pedido;
     }

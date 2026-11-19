@@ -47,7 +47,7 @@ class PedidoController extends Controller
 
         $resposta = ['data' => $pedido->refresh()->load('anexos')];
         if ($sobrepoe) {
-            $resposta['avisos'] = ['As datas sobrepoem-se a outro pedido seu.'];
+            $resposta['avisos'] = ['As datas sobrepõem-se a outro pedido seu.'];
         }
 
         return response()->json($resposta, 201);
@@ -72,7 +72,7 @@ class PedidoController extends Controller
 
         $resposta = ['data' => $pedido->refresh()->load('anexos')];
         if ($sobrepoe) {
-            $resposta['avisos'] = ['As datas sobrepoem-se a outro pedido seu.'];
+            $resposta['avisos'] = ['As datas sobrepõem-se a outro pedido seu.'];
         }
 
         return response()->json($resposta);
@@ -102,7 +102,7 @@ class PedidoController extends Controller
         // 404 para pedidos de outros utilizadores ou empresas (nao revela existencia).
         $pedido = Pedido::where('empresa_id', $user->empresa_id)->where('user_id', $user->id)->findOrFail($id);
 
-        abort_if($pedido->estado !== 'pendente', 409, 'So e possivel alterar pedidos pendentes.');
+        abort_if($pedido->estado !== 'pendente', 409, 'Só é possível alterar pedidos pendentes.');
 
         return $pedido;
     }
@@ -120,10 +120,10 @@ class PedidoController extends Controller
     private function decidir(Request $request, int $id, array $campos): JsonResponse
     {
         $user = $request->user();
-        // 404 para pedidos de outra empresa (nao revela existencia).
-        $pedido = Pedido::where('empresa_id', $user->empresa_id)->findOrFail($id);
+        // 404 para pedidos de outra empresa ou de funcionarios apagados (nao revela existencia).
+        $pedido = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->findOrFail($id);
 
-        abort_if($pedido->estado !== 'pendente', 409, 'O pedido ja foi decidido.');
+        abort_if($pedido->estado !== 'pendente', 409, 'O pedido já foi decidido.');
 
         $pedido->update([...$campos, 'decidido_por' => $user->id, 'decidido_em' => now()]);
 

@@ -22,11 +22,11 @@ class StorePresencaAtrasadaRequest extends FormRequest
     {
         return [
             'data.required' => 'Indique o dia.',
-            'data.date_format' => 'Dia invalido.',
+            'data.date_format' => 'Dia inválido.',
             'entrada.required' => 'Indique a hora de entrada.',
-            'entrada.date_format' => 'Hora de entrada invalida.',
-            'saida.required' => 'Indique a hora de saida.',
-            'saida.date_format' => 'Hora de saida invalida.',
+            'entrada.date_format' => 'Hora de entrada inválida.',
+            'saida.required' => 'Indique a hora de saída.',
+            'saida.date_format' => 'Hora de saída inválida.',
         ];
     }
 
@@ -42,11 +42,11 @@ class StorePresencaAtrasadaRequest extends FormRequest
             $inicio = $this->user()->estagio_inicio?->format('Y-m-d');
 
             if ($dia > $agora->toDateString()) {
-                $validator->errors()->add('data', 'Nao pode registar presencas em dias futuros.');
+                $validator->errors()->add('data', 'Não pode registar presenças em dias futuros.');
             } elseif ($inicio && $dia < $inicio) {
                 $validator->errors()->add('data', 'O dia e anterior ao inicio do estagio.');
             } elseif (Presenca::where('user_id', $this->user()->id)->where('data', $dia)->exists()) {
-                $validator->errors()->add('data', 'Ja existe presenca nesse dia.');
+                $validator->errors()->add('data', 'Já existe presença nesse dia.');
             } elseif ($this->input('entrada') >= $this->input('saida')) {
                 $validator->errors()->add('saida', 'A saida tem de ser depois da entrada.');
             } elseif ($dia === $agora->toDateString()) {
