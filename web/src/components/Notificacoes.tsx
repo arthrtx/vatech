@@ -120,7 +120,7 @@ export default function Notificacoes({ user, className }: { user: Pick<User, "id
           {estado.itens.length === 0 ? (
             <p className="px-1 py-4 text-center text-sm text-texto-suave">Sem notificações.</p>
           ) : (
-            <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto">
+            <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto scroll-fino">
               {estado.itens.map((n) => (
                 <li key={n.id}>
                   <button
