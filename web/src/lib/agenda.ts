@@ -102,3 +102,21 @@ export function filtrar(pedidos: Pedido[], f: Filtros): Pedido[] {
 export function haSobreposicao(pedidosDoDia: Pedido[]): boolean {
   return new Set(pedidosDoDia.map(quemE)).size > 1;
 }
+
+const diaUtc = (iso: string) => new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10))));
+
+/** Soma (ou subtrai) dias a uma data "YYYY-MM-DD". */
+export function somaDias(iso: string, n: number): string {
+  const d = diaUtc(iso);
+  d.setUTCDate(d.getUTCDate() + n);
+  return isoDe(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+}
+
+/** Segunda-feira da semana do dia dado. */
+export const inicioSemana = (iso: string) => somaDias(iso, -((diaUtc(iso).getUTCDay() + 6) % 7));
+
+export const diasSemanaLongos = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"] as const;
+
+/** "2026-11-19" -> "Quinta-feira, 19 de novembro" */
+export const nomeDoDia = (iso: string) =>
+  `${diasSemanaLongos[diaUtc(iso).getUTCDay()]}, ${Number(iso.slice(8, 10))} de ${mesesPt[Number(iso.slice(5, 7)) - 1].toLowerCase()}`;

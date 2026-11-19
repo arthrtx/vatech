@@ -23,6 +23,10 @@
   --color-texto-suave: #5c555d; /* ajustado: medido #9998a0 não passa 4.5:1 */
   --color-linha: #e7e4e8;
   --color-linha-forte: #8a838b; /* ajustado: borda de campo com 3:1 sobre branco */
+  /* Cores quentes do fundo do Dashboard, medidas no dashboard claro do HUROH (09-dashboard-claro.png). */
+  --color-creme: #fbf2ed;
+  --color-pessego: #fcbaa4;
+  --color-laranja: #f0a76d;
 
   --radius-controlo: 0.75rem;
   --radius-cartao: 1.5rem;
@@ -30,6 +34,22 @@
   --radius-painel: 2.5rem;
 
   --shadow-suave: 0 12px 32px -14px rgb(26 24 30 / 0.28);
+
+  /* Movimento do Dashboard: entrada curta dos widgets e brilho de fundo lento. */
+  --animate-subir: subir 0.5s ease-out both;
+  --animate-flutuar: flutuar 18s ease-in-out infinite alternate;
+
+  @keyframes subir {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes flutuar {
+    to {
+      transform: translate(6%, 8%) scale(1.1);
+    }
+  }
 }
 
 body {
