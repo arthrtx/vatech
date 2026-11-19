@@ -1,5 +1,5 @@
 import type { Pedido, PedidoAgenda } from "./api";
-import { cobreDia, isoDe, quemE } from "./agenda";
+import { cobreDia, isoDe } from "./agenda";
 
 /** Soma dias a uma data "YYYY-MM-DD", sem fusos horarios. */
 export function maisDias(iso: string, n: number): string {
@@ -30,6 +30,3 @@ export function contarPorEstado(pedidos: Pedido[]) {
 
 export const proximasAusencias = (pedidos: Pedido[], hoje: string) =>
   aprovados(pedidos).filter((p) => p.data_fim >= hoje);
-
-export const equipaForaHoje = (agenda: PedidoAgenda[], hoje: string, meuId: number) =>
-  aprovados(agenda).filter((p) => cobreDia(p, hoje) && quemE(p) !== meuId);
