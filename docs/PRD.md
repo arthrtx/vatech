@@ -21,7 +21,7 @@ Excel / folha de cálculo.
 ### Fora de âmbito (v1)
 - Processamento salarial e facturação
 - Controlo de assiduidade / picagem de ponto
-- App móvel nativa (só web responsiva; o produto é só website, D8)
+- App móvel nativa (só web responsiva; o produto é só website, D2)
 - Gestão de turnos e escalas
 - Integração com a Segurança Social e com o Portal das Finanças
 - Aprovação em várias etapas (só o admin aprova)
@@ -141,7 +141,7 @@ Direcção registada em `docs/DESIGN.md` (referência: capturas do projecto HURO
 | # | Pergunta | Dono | Prazo | Estado |
 |---|---|---|---|---|
 | Q1 | North Star Metric | Arthur | TBD | Aberta |
-| Q2 | Onde corre a API (servidor/IP) já que a app Electron não usa domínio | Arthur | Fase 4 | Fechada como Electron (D8, #31); o domínio ou IP da API para o website alojado segue na D5 |
+| Q2 | Onde corre a API (servidor, IP ou domínio) para o website alojado | Arthur | Fase 4 | Aberta (ver D5) |
 
 ---
 

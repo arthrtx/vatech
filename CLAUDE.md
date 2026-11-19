@@ -1,6 +1,6 @@
 # vatech
 
-Gestão de férias, ausências e licenças para pequenas empresas. Next.js 16 (`web/`), Laravel 13 API (raiz), MySQL 8.4, Filament v5. Só website (sem Electron, D8). Só PT na v1.
+Gestão de férias, ausências e licenças para pequenas empresas. Next.js 16 (`web/`), Laravel 13 API (raiz), MySQL 8.4, Filament v5. Só website (D2). Só PT na v1.
 
 Ler antes de trabalhar:
 - `.ai/guidelines/00-projeto.md` — stack, comandos, ambiente local, convenções

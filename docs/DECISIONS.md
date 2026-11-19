@@ -14,19 +14,15 @@
 
 **Consequências:** front e back separados (dois deploys, CORS/tokens a tratar); Filament serve só o super-admin. Risco: PHP local 8.2.12 pode não cumprir o requisito do Laravel 13, mitigado com Docker/Sail (D3).
 
-## D2: Electron para empacotar a app (fora da stack da casa)
+## D2: Só website
 
-**Data:** 2026-11-18 · **Estado:** Substituída por D8 · **Decidido por:** Arthur
+**Data:** 2026-11-18 · **Estado:** aceite · **Decidido por:** Arthur
 
-**Contexto:** o dono quer uma aplicação instalável, sem depender de um domínio para a abrir.
+**Contexto:** o produto é um website, sem aplicação instalável.
 
-**Decisão:** o **Electron** embrulha o frontend Next.js numa janela desktop. A lógica fica no Laravel; o Electron só carrega a interface e fala com a API. Razão para sair da stack da casa: app instalável sem domínio.
+**Decisão:** o produto é o `web/` (Next.js) a falar com a API Laravel; volta a ficar dentro da stack da casa. `iniciar.bat` sobe API, base de dados e web e abre `http://localhost:3000`.
 
-**Alternativas consideradas:**
-- Só web em browser — rejeitada porque o dono quer app sem domínio.
-- Tauri — mais leve, mas o dono pediu Electron.
-
-**Consequências:** o Electron **não elimina o servidor**: precisa de uma API alojada com endereço fixo (IP ou domínio). Auth por tokens, não cookies de domínio. Distribuição e actualizações do instalador a tratar na execução. Fica aberto como Q2 do PRD onde corre a API.
+**Consequências:** a API tem de estar acessível ao website alojado (domínio ou IP, CORS a configurar; ver D5). Auth Sanctum por tokens. Q2 do PRD fica a decidir onde corre a API.
 
 ## D3: Ambiente local em Docker / Sail
 
@@ -60,13 +56,13 @@
 
 **Data:** 2026-11-18 · **Estado:** aceite · **Decidido por:** Arthur
 
-**Contexto:** distribuição privada; a API tem de estar num servidor acessível ao website alojado (antes: ao Electron, D2, substituída por D8).
+**Contexto:** distribuição privada; a API tem de estar num servidor acessível ao website alojado.
 
 **Decisão:** deploy no **Ploi** (skill `deploy-ploi`); repo privado `arthrtx/vatech`. Nada se configura no /start: a execução fecha o deploy ⛔.
 
 **Alternativas consideradas:** VPS com Docker, cPanel — rejeitadas: Ploi dá Laravel + MySQL geridos.
 
-**Consequências:** custo do servidor Ploi; domínio/IP a decidir para o website e a API (a Q2 do PRD fechou com D8).
+**Consequências:** custo do servidor Ploi; domínio/IP a decidir para o website e a API (Q2 do PRD, em aberto).
 
 ## D6: Apagar funcionários por soft delete, não por cascade
 
@@ -94,16 +90,3 @@
 - Alargar `GET /api/pedidos` a colegas: rejeitada, exporia campos sensiveis por omissao.
 
 **Consequencias:** campos novos do pedido nao chegam a colegas ate serem acrescentados a lista; `GET /api/pedidos` mantem-se so com os proprios pedidos.
-
-## D8: Só website, sem Electron
-
-**Data:** 2026-11-18 · **Estado:** aceite · **Decidido por:** Arthur (issue #31) · **Substitui:** D2
-
-**Contexto:** o dono decidiu que o vatech é apenas website; deixa de haver aplicação instalável.
-
-**Decisão:** removida a pasta `desktop/` (inclui o auto-update #21). O produto é o `web/` (Next.js) a falar com a API Laravel. Volta a ficar dentro da stack da casa. `iniciar.bat` sobe API, base de dados e web e abre `http://localhost:3000`.
-
-**Alternativas consideradas:**
-- Manter o Electron — rejeitada: o dono quer só website.
-
-**Consequências:** a API tem de estar acessível ao website alojado (domínio ou IP, CORS a configurar; ver D5). Auth Sanctum por tokens mantém-se. Fecha a Q2 do PRD.
