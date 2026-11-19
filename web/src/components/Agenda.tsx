@@ -212,7 +212,7 @@ export default function Agenda({
       {/* Coluna da esquerda: criar, mês pequeno, filtros e lista do mês (rola por dentro). */}
       <aside
         aria-label="Calendário do mês"
-        className="flex w-full shrink-0 flex-col gap-5 lg:min-h-0 lg:w-80 lg:overflow-y-auto lg:border-r lg:border-linha lg:pr-5"
+        className="flex w-full shrink-0 flex-col gap-5 lg:min-h-0 lg:w-80 lg:overflow-y-auto lg:scroll-fino lg:border-r lg:border-linha lg:pr-5"
       >
         {podeCriar && (
           <button type="button" className={`${botao} self-start`} onClick={() => setNovo({ data: sel?.iso ?? "" })}>
@@ -504,7 +504,7 @@ export default function Agenda({
           })}
         </div>
 
-        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:scroll-fino">
           {sel ? (
             <section
               ref={painel}
@@ -677,7 +677,7 @@ export default function Agenda({
 
       {novo && (
         <div
-          className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto bg-barra/50 p-4 pt-16"
+          className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto scroll-fino bg-barra/50 p-4 pt-16"
           onClick={() => setNovo(null)}
         >
           <div

@@ -93,7 +93,7 @@ export default function Seletor({ id, valor, opcoes, onChange, className = "" }:
           id={`${id}-lista`}
           role="listbox"
           aria-labelledby={id}
-          className={`absolute left-0 right-0 z-30 ${acima ? "bottom-full mb-2" : "top-full mt-2"} flex max-h-64 flex-col gap-0.5 overflow-y-auto rounded-cartao bg-painel p-1.5 shadow-suave ring-1 ring-linha`}
+          className={`absolute left-0 right-0 z-30 ${acima ? "bottom-full mb-2" : "top-full mt-2"} flex max-h-64 flex-col gap-0.5 overflow-y-auto scroll-fino rounded-cartao bg-painel p-1.5 shadow-suave ring-1 ring-linha`}
         >
           {opcoes.map((o) => {
             const ativo = o.valor === valor;
