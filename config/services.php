@@ -14,6 +14,12 @@ return [
     |
     */
 
+    // "Melhorar texto" nos pedidos. Sem ANTHROPIC_API_KEY o botão responde que não está configurado.
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-5-5'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

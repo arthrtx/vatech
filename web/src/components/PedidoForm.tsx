@@ -41,11 +41,28 @@ export default function PedidoForm({
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
   const [obs, setObs] = useState(pedido?.observacao ?? "");
+  const [aMelhorar, setAMelhorar] = useState(false);
+  const [antesDeMelhorar, setAntesDeMelhorar] = useState<string | null>(null);
+  const [erroTexto, setErroTexto] = useState<string | null>(null);
   const [novos, setNovos] = useState<File[]>([]);
   const [guardados, setGuardados] = useState<Anexo[]>(pedido?.anexos ?? []);
   const [erro, setErro] = useState<string | null>(null);
   const [avisos, setAvisos] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
+
+  async function melhorar() {
+    setErroTexto(null);
+    setAMelhorar(true);
+    try {
+      const melhorado = await api.melhorarTexto(obs);
+      setAntesDeMelhorar(obs);
+      setObs(melhorado);
+    } catch (err) {
+      setErroTexto(mensagemDeErro(err));
+    } finally {
+      setAMelhorar(false);
+    }
+  }
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -152,8 +169,39 @@ export default function PedidoForm({
           rows={3}
           className={input}
           value={obs}
-          onChange={(e) => setObs(e.target.value)}
+          maxLength={2000}
+          onChange={(e) => {
+            setObs(e.target.value);
+            setAntesDeMelhorar(null);
+          }}
         />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button type="button" disabled={aMelhorar || obs.trim().length < 3} onClick={melhorar} className={`${botaoSec} min-h-9 px-3 py-1`}>
+            {aMelhorar ? "A melhorar..." : "Melhorar texto"}
+          </button>
+          {antesDeMelhorar !== null && !aMelhorar && (
+            <>
+              <button
+                type="button"
+                className={`${botaoSec} min-h-9 px-3 py-1`}
+                onClick={() => {
+                  setObs(antesDeMelhorar);
+                  setAntesDeMelhorar(null);
+                }}
+              >
+                Desfazer
+              </button>
+              <span role="status" className="text-sm text-texto-suave">
+                Texto melhorado. Reveja antes de submeter.
+              </span>
+            </>
+          )}
+        </div>
+        {erroTexto && (
+          <p role="alert" className={`${erroCls} mt-2`}>
+            {erroTexto}
+          </p>
+        )}
       </div>
       <CampoAnexos
         novos={novos}

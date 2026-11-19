@@ -210,6 +210,7 @@ export const api = {
   editarPedido: (id: number, b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("PUT", `/pedidos/${id}`, b),
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
+  melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
   enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {
     const f = new FormData();
     for (const ficheiro of ficheiros) f.append("anexos[]", ficheiro);
