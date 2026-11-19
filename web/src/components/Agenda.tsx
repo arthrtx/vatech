@@ -441,7 +441,7 @@ export default function Agenda({
                 onClick={(e) => abrir(e, { iso })}
                 className={`flex min-w-0 flex-col items-center gap-1 rounded-cartao px-1 py-2 ${focoCls} ${aberto ? "bg-primaria-suave" : "hover:bg-campo"}`}
               >
-                <span className={`text-xs font-medium uppercase tracking-wide ${eHoje ? "text-primaria" : "text-texto-suave"}`}>
+                <span className={`text-xs font-medium uppercase tracking-wide ${eHoje ? "text-texto" : "text-texto-suave"}`}>
                   {diasSemana[i]}.
                 </span>
                 <span
@@ -612,7 +612,7 @@ export default function Agenda({
 
       {novo && (
         <div
-          className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto bg-texto/40 p-4 pt-16"
+          className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto bg-barra/50 p-4 pt-16"
           onClick={() => setNovo(null)}
         >
           <div

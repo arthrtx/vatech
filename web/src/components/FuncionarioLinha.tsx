@@ -68,7 +68,7 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
   );
 
   return (
-    <li className="rounded-cartao bg-painel shadow-suave p-3">
+    <li className="rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-3">
       {modo === "editar" ? (
         <form
           className="flex max-w-xl flex-col gap-3"

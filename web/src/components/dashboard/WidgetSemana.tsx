@@ -20,7 +20,7 @@ export default function WidgetSemana({ agenda, hoje }: { agenda: PedidoAgenda[];
   const max = Math.max(1, ...dias.map((d) => d.n));
 
   return (
-    <section aria-labelledby="w-semana" className={`${vidro} flex flex-col gap-4 p-5 motion-safe:animate-subir [animation-delay:160ms]`}>
+    <section aria-labelledby="w-semana" className={`${vidro} brilho-laranja flex flex-col gap-4 p-5 motion-safe:animate-subir [animation-delay:160ms]`}>
       <div>
         <h2 id="w-semana" className="text-lg font-semibold">
           Próximos 7 dias

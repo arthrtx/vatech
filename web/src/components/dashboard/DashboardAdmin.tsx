@@ -90,7 +90,7 @@ export default function DashboardAdmin() {
           <>
             {grupos.map((g) => (
               <div key={g.titulo} className="flex flex-col gap-2">
-                <h3 className="mt-2 text-xs font-semibold uppercase tracking-wide text-texto-suave">
+                <h3 className="mt-2 font-mono text-xs font-semibold uppercase tracking-wide text-texto-suave">
                   {g.titulo} ({g.lista.length})
                 </h3>
                 {g.lista.length === 0 ? (

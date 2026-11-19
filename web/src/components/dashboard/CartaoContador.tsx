@@ -11,7 +11,7 @@ interface Props {
 
 export default function CartaoContador({ rotulo, valor, aCarregar, ligacao }: Props) {
   return (
-    <li className={`${vidro} p-4 motion-safe:animate-subir md:p-5`}>
+    <li className={`${vidro} p-4 motion-safe:animate-subir nth-1:brilho-laranja nth-2:brilho-rosa nth-3:brilho-violeta md:p-5`}>
       {aCarregar ? (
         <div aria-hidden="true" data-skeleton className="animate-pulse motion-reduce:animate-none">
           <div className="h-11 w-3/5 rounded-controlo bg-trilho md:h-12" />
@@ -32,7 +32,7 @@ export default function CartaoContador({ rotulo, valor, aCarregar, ligacao }: Pr
               valor
             )}
           </p>
-          <p className="mt-2 text-xs uppercase leading-snug tracking-wide text-texto-suave">{rotulo}</p>
+          <p className="mt-2 font-mono text-xs uppercase leading-snug tracking-wide text-texto-suave">{rotulo}</p>
         </>
       )}
       {ligacao && (

@@ -70,7 +70,7 @@ function Conteudo() {
           />
         ))}
       </ul>
-      <form onSubmit={criar} className="flex max-w-xl flex-col gap-4 rounded-cartao bg-painel p-5 shadow-suave" aria-labelledby="novo-func">
+      <form onSubmit={criar} className="flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10" aria-labelledby="novo-func">
         <h2 id="novo-func" className="text-lg font-semibold">
           Novo funcionário
         </h2>

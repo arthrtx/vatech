@@ -32,7 +32,7 @@ export default function Pesquisa({ destinos, onFechar }: { destinos: Destino[]; 
   }
 
   return (
-    <div className="fixed inset-0 z-20 flex items-start justify-center bg-texto/40 p-4 pt-24" onClick={onFechar}>
+    <div className="fixed inset-0 z-20 flex items-start justify-center bg-barra/50 p-4 pt-24" onClick={onFechar}>
       <div
         role="dialog"
         aria-modal="true"
