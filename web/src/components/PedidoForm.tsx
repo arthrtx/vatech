@@ -46,7 +46,7 @@ export default function PedidoForm({ onCriado }: { onCriado?: () => void }) {
   }
 
   return (
-    <form onSubmit={enviar} className="flex max-w-xl flex-col gap-4" aria-labelledby="novo-pedido">
+    <form onSubmit={enviar} className="flex max-w-xl flex-col gap-4 rounded-cartao bg-painel p-5 shadow-suave" aria-labelledby="novo-pedido">
       <h2 id="novo-pedido" className="text-lg font-semibold">
         Novo pedido
       </h2>
