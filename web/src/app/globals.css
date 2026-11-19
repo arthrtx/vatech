@@ -11,7 +11,7 @@
  * TODO: token em falta (família de fonte da referência não identificada; fica system-ui).
  */
 @theme {
-  --color-fundo: #e7e4e8;
+  --color-fundo: #dbd7dc; /* ajustado: um pouco mais escuro, a pedido do dono */
   --color-painel: #ffffff;
   --color-campo: #f4f2f5;
   --color-trilho: #e7e4e8;
@@ -104,9 +104,10 @@
   --efeito-mes: linear-gradient(160deg, rgb(73 74 78 / 0.3) 0%, rgb(192 183 180 / 0.55) 50%, rgb(240 167 109 / 0.5) 100%);
   /* Cartão: metal escovado prateado. */
   --efeito-metal: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.025) 0 1px, transparent 1px 3px),
-    linear-gradient(125deg, #e8eaed 0%, #dddfe4 42%, #f6f7f9 52%, #d3d5db 100%);
+    linear-gradient(125deg, #f3f4f6 0%, #eceef1 42%, #fbfbfc 52%, #e6e8ec 100%); /* ajustado: mais claro, a pedido do dono */
   /* Recentes: vidro cinzento com painel interior claro. */
-  --efeito-recentes: linear-gradient(160deg, rgb(173 172 174 / 0.6) 0%, rgb(214 205 200 / 0.5) 55%, rgb(240 167 109 / 0.55) 100%);
+  /* ajustado: cinza mais claro, a pedido do dono */
+  --efeito-recentes: linear-gradient(160deg, rgb(226 225 228 / 0.75) 0%, rgb(236 230 226 / 0.65) 55%, rgb(240 167 109 / 0.45) 100%);
   --efeito-interior: rgb(255 255 255 / 0.55);
   --efeito-suave: #433d44;
   /* Vidro transparente (Este mês do HUROH, captura do Arthur 19/11): deixa ver o fundo. */
