@@ -11,9 +11,11 @@ interface Props {
   pedidos: Pedido[];
   onAprovar: (id: number) => void | Promise<void>;
   onRecusar: (id: number, motivo: string) => void | Promise<void>;
+  /** Dashboard: lista resumida, sem barra de pesquisa. */
+  semBusca?: boolean;
 }
 
-export default function PedidosAdmin({ pedidos, onAprovar, onRecusar }: Props) {
+export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca = false }: Props) {
   const [recusando, setRecusando] = useState<number | null>(null);
   const [motivo, setMotivo] = useState("");
   const [busca, setBusca] = useState("");
@@ -29,7 +31,9 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <CampoBusca id="busca-pedidos-admin" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
+      {!semBusca && (
+        <CampoBusca id="busca-pedidos-admin" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
+      )}
       {visiveis.length === 0 ? (
         <p className="text-texto-suave">
           {pedidos.length === 0 ? "Sem pedidos pendentes." : `Nenhum resultado para "${busca.trim()}"`}
