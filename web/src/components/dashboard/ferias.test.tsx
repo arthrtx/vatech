@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import AvisoFerias from "./AvisoFerias";
 import FeriasPorMarcar from "./FeriasPorMarcar";
 import { api } from "@/lib/api";
@@ -31,6 +31,22 @@ describe("AvisoFerias", () => {
     const aviso = await screen.findByRole("status");
     expect(aviso.textContent).toContain("Tem 20 dias úteis de férias por marcar. O prazo era 30 de abril.");
     expect(screen.getByRole("link", { name: "Fazer pedido de férias" }).getAttribute("href")).toBe("/");
+  });
+
+  it("o X fecha o aviso e ele fica fechado enquanto os dias por marcar forem os mesmos", async () => {
+    localStorage.clear();
+    vi.setSystemTime(new Date(2026, 4, 1, 12));
+    limites(22, 8, 10);
+    const { unmount } = render(<AvisoFerias />);
+    await screen.findByRole("status");
+    fireEvent.click(screen.getByRole("button", { name: "Fechar aviso" }));
+    expect(screen.queryByRole("status")).toBeNull();
+    unmount();
+    render(<AvisoFerias />);
+    await waitFor(() => expect(api.limites).toHaveBeenCalledTimes(2));
+    await Promise.resolve();
+    expect(screen.queryByRole("status")).toBeNull();
+    localStorage.clear();
   });
 
   it("no próprio dia do prazo ainda não avisa", async () => {
