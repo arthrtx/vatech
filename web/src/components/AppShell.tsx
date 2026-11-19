@@ -19,6 +19,7 @@ import {
 } from "./Icones";
 import Avatar from "./Avatar";
 import FundoQuente, { classeFundoQuente } from "./FundoQuente";
+import Notificacoes from "./Notificacoes";
 import Pesquisa from "./Pesquisa";
 import { useTema } from "@/lib/tema";
 
@@ -180,6 +181,7 @@ export default function AppShell({
                   Pesquisar (Ctrl+K)
                 </span>
               </button>
+              <Notificacoes user={user} className={`${vidroTopo} ${botaoTopo}`} />
               <button
                 type="button"
                 aria-pressed={escuro}

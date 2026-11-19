@@ -107,6 +107,15 @@ export function IconeSol(p: Props) {
   );
 }
 
+export function IconeSino(p: Props) {
+  return (
+    <Base {...p}>
+      <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 1.5h-15z" />
+      <path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
+    </Base>
+  );
+}
+
 export function IconeLua(p: Props) {
   return (
     <Base {...p}>

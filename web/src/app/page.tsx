@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import ListaPedidos from "@/components/ListaPedidos";
 import PedidoForm from "@/components/PedidoForm";
@@ -40,6 +41,19 @@ function Conteudo() {
       document.removeEventListener("visibilitychange", aoVoltar);
     };
   }, [carregar]);
+
+  // Vindo de uma notificação (?pedido=ID): leva o pedido à vista e destaca-o por instantes.
+  const destacado = useSearchParams().get("pedido");
+  useEffect(() => {
+    if (!destacado || pedidos.length === 0) return;
+    const el = document.getElementById(`pedido-${destacado}`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    const marca = ["ring-2", "ring-rosa"];
+    el.classList.add(...marca);
+    const t = setTimeout(() => el.classList.remove(...marca), 3000);
+    return () => clearTimeout(t);
+  }, [destacado, pedidos]);
 
   async function decidir(fn: () => Promise<unknown>) {
     try {
@@ -103,7 +117,9 @@ function Conteudo() {
 export default function Home() {
   return (
     <AppShell>
-      <Conteudo />
+      <Suspense>
+        <Conteudo />
+      </Suspense>
     </AppShell>
   );
 }

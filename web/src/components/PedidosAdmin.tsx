@@ -67,6 +67,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca =
           {visiveis.map((p) => (
             <li
               key={p.id}
+              id={`pedido-${p.id}`}
               className="flex flex-col gap-3 rounded-cartao bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 sm:flex-row"
             >
               <div className="flex min-w-0 flex-1 flex-col gap-3">
