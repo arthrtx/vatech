@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/presencas/hoje', [PresencaController::class, 'hoje']);
         Route::post('/presencas/entrada', [PresencaController::class, 'entrada']);
         Route::post('/presencas/saida', [PresencaController::class, 'saida']);
+        Route::post('/presencas/atrasada', [PresencaController::class, 'atrasada']);
     });
 
     Route::middleware('papel:funcionario,estagiario')->group(function () {

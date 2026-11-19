@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePresencaAtrasadaRequest;
 use App\Models\Presenca;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +38,23 @@ class PresencaController extends Controller
         $presenca->update(['saida' => now()]);
 
         return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()]);
+    }
+
+    public function atrasada(StorePresencaAtrasadaRequest $request): JsonResponse
+    {
+        try {
+            $presenca = Presenca::create([
+                'user_id' => $request->user()->id,
+                'data' => $request->input('data'),
+                'entrada' => $request->instante('entrada'),
+                'saida' => $request->instante('saida'),
+                'atrasada' => true,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            abort(422, 'Ja existe presenca nesse dia.');
+        }
+
+        return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()], 201);
     }
 
     public function index(Request $request): JsonResponse
