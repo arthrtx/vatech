@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\UpdatePerfilRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,5 +36,22 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json(['user' => $request->user()->toContrato()]);
+    }
+
+    public function updateMe(UpdatePerfilRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $dados = $request->safe()->only(['nome', 'email']);
+
+        if ($request->filled('password')) {
+            if (! Hash::check((string) $request->input('password_atual'), $user->password)) {
+                throw ValidationException::withMessages(['password_atual' => ['Palavra-passe atual incorreta.']]);
+            }
+            $dados['password'] = $request->string('password')->toString();
+        }
+
+        $user->update($dados);
+
+        return response()->json(['user' => $user->fresh()->toContrato()]);
     }
 }
