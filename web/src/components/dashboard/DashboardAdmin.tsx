@@ -11,7 +11,6 @@ import { erro as erroCls } from "../ui";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
-import Fundo from "./Fundo";
 import ListaAusencias from "./ListaAusencias";
 import WidgetFeriados from "./WidgetFeriados";
 import WidgetSemana from "./WidgetSemana";
@@ -47,7 +46,6 @@ export default function DashboardAdmin() {
   const num = (v: number | undefined) => (v === undefined ? null : v);
 
   return (
-    <Fundo>
     <div className="flex flex-col gap-5">
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -142,6 +140,5 @@ export default function DashboardAdmin() {
         )}
       </BlocoEstado>
     </div>
-    </Fundo>
   );
 }
