@@ -16,7 +16,15 @@ export interface User {
   avatar_url?: string | null;
 }
 
+export interface Anexo {
+  id: number;
+  nome: string;
+  mime: string;
+  tamanho: number;
+}
+
 export interface Pedido {
+  anexos?: Anexo[];
   id: number;
   empresa_id: number;
   user_id: number;
@@ -169,6 +177,21 @@ export const api = {
   editarPedido: (id: number, b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("PUT", `/pedidos/${id}`, b),
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
+  enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {
+    const f = new FormData();
+    for (const ficheiro of ficheiros) f.append("anexos[]", ficheiro);
+    return (await request<{ data: Anexo[] }>("POST", `/pedidos/${pedidoId}/anexos`, f)).data;
+  },
+  apagarAnexo: (pedidoId: number, anexoId: number) => request<void>("DELETE", `/pedidos/${pedidoId}/anexos/${anexoId}`),
+  /** Descarrega o ficheiro com o token (um link simples não leva o Authorization) e devolve um URL temporário. */
+  urlDoAnexo: async (pedidoId: number, anexoId: number) => {
+    const token = getToken();
+    const res = await fetch(`${API_URL}/pedidos/${pedidoId}/anexos/${anexoId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new ApiError(res.status, "Não foi possível abrir o ficheiro.");
+    return URL.createObjectURL(await res.blob());
+  },
   aprovar: async (id: number) =>
     (await request<{ data: Pedido }>("POST", `/pedidos/${id}/aprovar`)).data,
   recusar: async (id: number, motivo_recusa: string) =>

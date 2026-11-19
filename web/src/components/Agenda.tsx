@@ -516,7 +516,7 @@ export default function Agenda({
                     <dd>{rotuloEstado(pedidoSel)}</dd>
                     {!reduzido(pedidoSel) && (
                       <>
-                        <dt className="font-medium">Observação</dt>
+                        <dt className="font-medium">Descrição</dt>
                         <dd>{pedidoSel.observacao || "Sem observação"}</dd>
                         <dt className="font-medium">Decidido em</dt>
                         <dd>{pedidoSel.decidido_em ? pedidoSel.decidido_em.slice(0, 10) : "Ainda não decidido"}</dd>

@@ -6,6 +6,7 @@ import { filtrar } from "@/lib/busca";
 import { estados, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import Avatar from "./Avatar";
+import AnexosDoPedido from "./AnexosDoPedido";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos, filtrosIniciais } from "./FiltrosPedidosCampos";
 import { botao, botaoSec, input, label } from "./ui";
@@ -136,6 +137,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca =
                 ) : (
                   <p className="mt-1 text-texto-suave">Sem descrição.</p>
                 )}
+                <AnexosDoPedido pedidoId={p.id} anexos={p.anexos} />
               </div>
             </li>
           ))}

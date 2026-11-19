@@ -7,13 +7,14 @@ use App\Http\Requests\StorePedidoRequest;
 use App\Models\Pedido;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PedidoController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->latest('id');
+        $query = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->with('anexos')->latest('id');
 
         if ($user->isAdmin()) {
             $query->with('user:id,nome');
@@ -40,7 +41,7 @@ class PedidoController extends Controller
 
         $pedido = Pedido::create([...$dados, 'user_id' => $user->id, 'empresa_id' => $user->empresa_id]);
 
-        $resposta = ['data' => $pedido->refresh()];
+        $resposta = ['data' => $pedido->refresh()->load('anexos')];
         if ($sobrepoe) {
             $resposta['avisos'] = ['As datas sobrepoem-se a outro pedido seu.'];
         }
@@ -64,7 +65,7 @@ class PedidoController extends Controller
         // Campos opcionais em falta limpam-se (ex.: mudar de ausencia para ferias remove o subtipo).
         $pedido->update([...$dados, 'subtipo' => $dados['subtipo'] ?? null, 'observacao' => $dados['observacao'] ?? null]);
 
-        $resposta = ['data' => $pedido->refresh()];
+        $resposta = ['data' => $pedido->refresh()->load('anexos')];
         if ($sobrepoe) {
             $resposta['avisos'] = ['As datas sobrepoem-se a outro pedido seu.'];
         }
@@ -75,7 +76,10 @@ class PedidoController extends Controller
     /** O funcionario apaga um pedido seu enquanto esta pendente. */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->pedidoPendenteDoUtilizador($request, $id)->delete();
+        $pedido = $this->pedidoPendenteDoUtilizador($request, $id);
+        // As linhas dos anexos saem em cascata; os ficheiros apagam-se do disco aqui.
+        Storage::disk('local')->deleteDirectory('anexos/'.$pedido->id);
+        $pedido->delete();
 
         return response()->json(null, 204);
     }
