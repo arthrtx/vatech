@@ -13,7 +13,7 @@ function Conteudo() {
 
 export default function DashboardPage() {
   return (
-    <AppShell>
+    <AppShell ecraInteiro>
       <Conteudo />
     </AppShell>
   );

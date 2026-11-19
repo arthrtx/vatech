@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { primeiroNome, saudacao } from "@/lib/saudacao";
+import { primeiroNome } from "@/lib/saudacao";
 import {
   IconeAgenda,
   IconeDashboard,
@@ -28,6 +28,10 @@ const dica =
 // Dica para o avatar na barra de topo: sempre por baixo, alinhada à direita.
 const dicaAbaixo =
   "pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
+// Peças de vidro da barra de topo (relógio, página actual, botões e conta).
+const vidroTopo = "rounded-full bg-painel/55 text-texto ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10";
+const botaoTopo =
+  "group relative flex h-11 w-11 shrink-0 items-center justify-center hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 const itemInativo = "text-texto-suave hover:bg-primaria-suave hover:text-texto";
 const botaoIcone =
   "group relative flex h-10 w-10 items-center justify-center rounded-controlo focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
@@ -93,12 +97,9 @@ export default function AppShell({
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
-  let hoje = "";
-  if (agora) {
-    const data = new Intl.DateTimeFormat("pt", { weekday: "long", day: "numeric", month: "long" }).format(agora);
-    const hora = new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" }).format(agora);
-    hoje = `${data.charAt(0).toUpperCase() + data.slice(1)} · ${hora}`;
-  }
+  const hora = agora ? new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" }).format(agora) : "";
+  const pagina = [...links, { ...definicoes, Icone: IconeDefinicoes }].find((l) => l.href === pathname);
+  const IconePagina = pagina?.Icone;
 
   return (
     <div className={`min-h-screen bg-fundo p-0 text-texto md:p-6 ${ecraInteiro ? "lg:h-screen lg:overflow-hidden" : ""}`}>
@@ -149,48 +150,64 @@ export default function AppShell({
           </div>
         </aside>
         <div className={`flex min-w-0 flex-1 flex-col ${ecraInteiro ? "gap-4 lg:min-h-0" : "gap-6"}`}>
-          <header className="flex items-center gap-3">
+          <header className="flex items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr]">
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold">
-                {agora ? `${saudacao(agora)}, ` : ""}
-                {primeiroNome(user.nome)}
-              </p>
-              <p className="hidden truncate text-sm text-texto-suave sm:block">{hoje}</p>
+              {agora && (
+                <time dateTime={agora.toISOString()} className="block text-3xl font-bold leading-none tabular-nums">
+                  {hora}
+                </time>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setPesquisaAberta(true)}
-              aria-keyshortcuts="Control+K"
-              className="ml-auto flex h-11 w-full max-w-xs items-center gap-2 rounded-full bg-painel/55 px-4 ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 text-sm text-texto-suave hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
-            >
-              <IconePesquisa />
-              <span>Pesquisar</span>
-              <span aria-hidden="true" className="ml-auto text-xs">
-                Ctrl+K
-              </span>
-            </button>
-            <button
-              type="button"
-              aria-pressed={escuro}
-              aria-label="Modo escuro"
-              onClick={() => definirTema(escuro ? "claro" : "escuro")}
-              className="group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-painel/55 text-texto ring-1 ring-white/70 backdrop-blur-xl hover:bg-primaria-suave dark:ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
-            >
-              {escuro ? <IconeSol /> : <IconeLua />}
-              <span aria-hidden="true" className={dicaAbaixo}>
-                {escuro ? "Mudar para claro" : "Mudar para escuro"}
-              </span>
-            </button>
-            <span
-              tabIndex={0}
-              aria-label={user.nome}
-              className="group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte dark:text-texto focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
-            >
-              <span aria-hidden="true">{iniciais || <IconeUtilizador />}</span>
-              <span aria-hidden="true" className={dicaAbaixo}>
-                {user.nome}
-              </span>
-            </span>
+            {pagina && IconePagina && (
+              <p className={`${vidroTopo} hidden items-center gap-3 py-1.5 pl-1.5 pr-6 md:flex`}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primaria-suave">
+                  <IconePagina className="h-4 w-4" />
+                </span>
+                <span className="font-semibold">{pagina.texto}</span>
+              </p>
+            )}
+            <div className="ml-auto flex items-center gap-2 md:justify-self-end">
+              <button
+                type="button"
+                onClick={() => setPesquisaAberta(true)}
+                aria-label="Pesquisar"
+                aria-keyshortcuts="Control+K"
+                className={`${vidroTopo} ${botaoTopo}`}
+              >
+                <IconePesquisa className="h-4 w-4" />
+                <span aria-hidden="true" className={dicaAbaixo}>
+                  Pesquisar (Ctrl+K)
+                </span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={escuro}
+                aria-label="Modo escuro"
+                onClick={() => definirTema(escuro ? "claro" : "escuro")}
+                className={`${vidroTopo} ${botaoTopo}`}
+              >
+                {escuro ? <IconeSol className="h-4 w-4" /> : <IconeLua className="h-4 w-4" />}
+                <span aria-hidden="true" className={dicaAbaixo}>
+                  {escuro ? "Mudar para claro" : "Mudar para escuro"}
+                </span>
+              </button>
+              <Link
+                href="/definicoes"
+                aria-label={`${user.nome}, a minha conta`}
+                className={`${vidroTopo} flex shrink-0 items-center gap-3 p-1 hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria sm:pr-5`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte dark:text-texto"
+                >
+                  {iniciais || <IconeUtilizador />}
+                </span>
+                <span aria-hidden="true" className="hidden min-w-0 leading-tight sm:block">
+                  <span className="block max-w-40 truncate font-semibold">{primeiroNome(user.nome)}</span>
+                  <span className="block text-xs text-texto-suave">A minha conta</span>
+                </span>
+              </Link>
+            </div>
           </header>
           <main className={`min-w-0 flex-1 md:pr-2 ${ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : ""}`}>{children}</main>
         </div>

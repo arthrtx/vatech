@@ -20,14 +20,14 @@ export default function WidgetSemana({ agenda, hoje }: { agenda: PedidoAgenda[];
   const max = Math.max(1, ...dias.map((d) => d.n));
 
   return (
-    <section aria-labelledby="w-semana" className={`${vidro} brilho-laranja flex flex-col gap-4 p-5 motion-safe:animate-subir [animation-delay:160ms]`}>
+    <section aria-labelledby="w-semana" className={`${vidro} brilho-laranja flex flex-col gap-4 p-5 lg:min-h-0 motion-safe:animate-subir [animation-delay:160ms]`}>
       <div>
         <h2 id="w-semana" className="text-lg font-semibold">
           Próximos 7 dias
         </h2>
         <p className="text-sm text-texto-suave">Pessoas fora por dia</p>
       </div>
-      <ol className="grid h-40 grid-cols-7 items-end gap-2">
+      <ol className="grid h-40 min-h-24 grid-cols-7 items-end gap-2 lg:h-auto lg:flex-1">
         {dias.map((d, i) => {
           const dia = new Date(`${d.iso}T12:00:00`);
           return (

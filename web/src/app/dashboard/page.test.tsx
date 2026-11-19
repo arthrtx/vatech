@@ -75,7 +75,7 @@ describe("Dashboard admin", () => {
     render(<DashboardPage />);
 
     await screen.findByText("Ana Ribeiro");
-    expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Boa tarde, Marta" })).toBeTruthy();
     expect(within(cartao("Pedidos pendentes")).getByText("2")).toBeTruthy();
     expect(within(cartao("Ausentes hoje")).getByText("2")).toBeTruthy(); // so aprovados
     expect(within(cartao("Funcionários")).getByText("3")).toBeTruthy();
@@ -211,7 +211,7 @@ describe("Dashboard funcionário", () => {
     render(<DashboardPage />);
     await screen.findByText("Ana Ribeiro");
 
-    expect(screen.getByRole("heading", { level: 1, name: "Olá, Marta" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Boa tarde, Marta" })).toBeTruthy();
     expect(within(cartao("Pendentes")).getByText("1")).toBeTruthy();
     expect(within(cartao("Aprovados")).getByText("2")).toBeTruthy();
     expect(within(cartao("Recusados")).getByText("2")).toBeTruthy();

@@ -73,13 +73,15 @@ export default function BlocoEstado<T>({
 
   return (
     <section
-      className={`${vidro} ${efeito === "recentes" ? "arco efeito-recentes" : "brilho-violeta"} flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] ${className}`}
+      className={`${vidro} ${efeito === "recentes" ? "arco efeito-recentes" : "brilho-violeta"} flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] lg:min-h-0 ${className}`}
     >
       <h2 className="text-lg font-semibold">{titulo}</h2>
       {efeito === "recentes" ? (
-        <div className="efeito-interior flex flex-col gap-2 rounded-cartao p-3 ring-1 ring-white/50 dark:ring-white/10">{corpo}</div>
+        <div className="efeito-interior flex flex-col gap-2 rounded-cartao p-3 ring-1 ring-white/50 dark:ring-white/10 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:scroll-fino">
+          {corpo}
+        </div>
       ) : (
-        corpo
+        <div className="flex flex-col gap-2 lg:-mx-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-1 lg:scroll-fino">{corpo}</div>
       )}
     </section>
   );
