@@ -4,13 +4,13 @@
 > Contexto pessoal de cada colaborador vive no Brain do proprio JOCA.
 
 ## Estado actual
-Versão funcional completa para uso interno, só website (D2; o Electron foi removido, #31/#35). Em `main`: login, funcionários (editar/apagar), pedidos com aprovação, agenda da equipa com privacidade para colegas (D7), dashboard para admin e funcionário, filtros e pesquisa global, menu lateral de ícones, paleta Setuptech, Definições editáveis (`PUT /api/me`, palavra-passe atual exigida) e API com opcache. CI (Pint + Pest, web, Vercel) verde. Faltam o deploy em Ploi e a limpeza das issues abertas (#7, #9, #10, #11, #12, #17, #24). `desktop/` ainda existe no disco (não versionado) e só se apaga quando o Electron for fechado.
+Versão funcional completa para uso interno, só website (D2; o Electron foi removido, #31/#35). Em `main`: login, funcionários (editar/apagar), pedidos com aprovação, agenda da equipa com privacidade para colegas (D7), dashboard para admin e funcionário, filtros e pesquisa global, menu lateral de ícones, paleta Setuptech, Definições editáveis (`PUT /api/me`, palavra-passe atual exigida) e API com opcache. CI (Pint + Pest, web, Vercel) verde. Produção grátis no ar (D8): site em https://vatech-eight.vercel.app, API em https://vatech-api.onrender.com, base de dados no TiDB Cloud Starter (passos em `docs/DEPLOY.md`). Falta a limpeza das issues abertas (#7, #9, #10, #11, #12, #17, #24) e guardar as fotos de perfil fora do disco do Render.
 
 ## Workflows
 tipo: [aplicacao]
 | # | Workflow | Estado | Começa quando | Entrega | Prova |
 |---|---|---|---|---|---|
-| 1 | aplicacao (executar-projeto) | ⏳ E4 em curso (v1 funcional em `main`, falta produção) | — | app em produção (API Ploi + website) | E4 |
+| 1 | aplicacao (executar-projeto) | ⏳ E4 em curso (v1 em produção grátis, D8) | — | app em produção (API Ploi + website) | E4 |
 
 ## Fases
 | Fase | Estado | Prova |

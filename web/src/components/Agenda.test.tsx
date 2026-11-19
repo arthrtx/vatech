@@ -180,7 +180,7 @@ describe("Agenda", () => {
     expect(painel.textContent).toContain("Aprovado");
     expect(painel.textContent).not.toContain("Subtipo");
     expect(painel.textContent).not.toContain("Sem subtipo");
-    expect(painel.textContent).not.toContain("Observação");
+    expect(painel.textContent).not.toContain("Descrição");
     expect(painel.textContent).not.toContain("Sem observação");
     expect(painel.textContent).not.toContain("Decidido em");
   });

@@ -28,7 +28,7 @@ describe("PedidoForm", () => {
     expect(screen.getByLabelText("Tipo")).toBeTruthy();
     expect(screen.getByLabelText("Data de início")).toBeTruthy();
     expect(screen.getByLabelText("Data de fim")).toBeTruthy();
-    expect(screen.getByLabelText("Observação")).toBeTruthy();
+    expect(screen.getByLabelText("Descrição")).toBeTruthy();
     expect(screen.queryByLabelText("Subtipo")).toBeNull();
     fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
     fireEvent.click(screen.getByRole("option", { name: "Ausência" }));

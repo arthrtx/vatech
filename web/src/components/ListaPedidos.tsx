@@ -5,6 +5,7 @@ import type { Pedido } from "@/lib/api";
 import { filtrar } from "@/lib/busca";
 import { estados, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
+import AnexosDoPedido from "./AnexosDoPedido";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos } from "./FiltrosPedidosCampos";
 import { ResumoFiltros } from "./PainelFiltros";
@@ -80,6 +81,7 @@ export default function ListaPedidos({ pedidos, formulario, onEditar, onApagar }
                 {p.data_inicio} a {p.data_fim}
               </p>
               {p.observacao && <p className="mt-1 break-words text-sm">{p.observacao}</p>}
+              <AnexosDoPedido pedidoId={p.id} anexos={p.anexos} />
               {p.estado === "recusado" && p.motivo_recusa && (
                 <p className="mt-1 break-words text-sm">Motivo da recusa: {p.motivo_recusa}</p>
               )}
