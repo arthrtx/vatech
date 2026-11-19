@@ -153,7 +153,7 @@ export default function AppShell({
           <header className="relative z-30 flex items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr]">
             <div className="min-w-0">
               {agora && (
-                <time dateTime={agora.toISOString()} className="block text-3xl font-bold leading-none tabular-nums">
+                <time dateTime={agora.toISOString()} className="block pl-3 text-4xl font-bold leading-none tracking-tight tabular-nums md:text-5xl">
                   {hora}
                 </time>
               )}
