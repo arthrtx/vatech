@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pedido;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -41,12 +41,16 @@ class AnexoController extends Controller
 
         $criados = [];
         foreach ($ficheiros as $f) {
-            $criados[] = $pedido->anexos()->create([
-                'nome' => $f->getClientOriginalName(),
-                'caminho' => $f->store('anexos/'.$pedido->id, 'local'),
-                'mime' => $f->getClientMimeType(),
-                'tamanho' => $f->getSize(),
-            ]);
+            $criados[] = DB::transaction(function () use ($pedido, $f) {
+                $anexo = $pedido->anexos()->create([
+                    'nome' => $f->getClientOriginalName(),
+                    'mime' => $f->getClientMimeType(),
+                    'tamanho' => $f->getSize(),
+                ]);
+                $anexo->conteudo()->create(['conteudo' => $f->get()]);
+
+                return $anexo;
+            });
         }
 
         return response()->json(['data' => $criados], 201);
@@ -57,7 +61,6 @@ class AnexoController extends Controller
         $pedido = $this->pedidoPendenteDoUtilizador($request, $id);
         $anexo = $pedido->anexos()->findOrFail($anexoId);
 
-        Storage::disk('local')->delete($anexo->caminho);
         $anexo->delete();
 
         return response()->json(null, 204);
@@ -73,10 +76,11 @@ class AnexoController extends Controller
             $query->where('user_id', $user->id);
         }
         $anexo = $query->findOrFail($id)->anexos()->findOrFail($anexoId);
+        $conteudo = $anexo->conteudo()->first();
+        // Anexos antigos cujo ficheiro se perdeu com o disco: sem bytes, 404.
+        abort_unless($conteudo, 404);
 
-        abort_unless(Storage::disk('local')->exists($anexo->caminho), 404);
-
-        return Storage::disk('local')->download($anexo->caminho, $anexo->nome);
+        return response()->streamDownload(fn () => print ($conteudo->conteudo), $anexo->nome, ['Content-Type' => $anexo->mime]);
     }
 
     private function pedidoPendenteDoUtilizador(Request $request, int $id): Pedido
