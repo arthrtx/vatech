@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Agenda from "@/components/Agenda";
-import { api, mensagemDeErro, type Aniversario, type PedidoAgenda, type Presenca } from "@/lib/api";
+import PontesAdmin from "@/components/PontesAdmin";
+import { api, mensagemDeErro, type Ponte, type Aniversario, type PedidoAgenda, type Presenca } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { estagiosDe, hojeIso, intervaloDoMes, mesDe, type Estagio, type Mes } from "@/lib/agenda";
 import { erro as erroCls } from "@/components/ui";
@@ -46,6 +47,20 @@ function Conteudo() {
     };
   }, [de, ate, chave, versao]);
   const aniversarios = anivs?.chave === chave ? anivs.lista : [];
+
+  // Pontes da empresa no intervalo (todos as veem); se falhar, a agenda mostra-se sem elas.
+  const [pont, setPont] = useState<{ chave: string; lista: Ponte[] } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pontes(de, ate)
+      .then((lista) => vivo && setPont({ chave, lista }))
+      .catch(() => vivo && setPont({ chave, lista: [] }));
+    return () => {
+      vivo = false;
+    };
+  }, [de, ate, chave, versao]);
+  const pontes = pont?.chave === chave ? pont.lista : [];
 
   // Presenças do intervalo (a API devolve só as próprias a quem não é admin).
   const [pres, setPres] = useState<{ chave: string; lista: Presenca[]; erro: boolean } | null>(null);
@@ -90,6 +105,7 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
       <h1 className="sr-only">Agenda</h1>
+      {admin && <PontesAdmin aoAlterar={recarregar} />}
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}
@@ -104,6 +120,7 @@ function Conteudo() {
         presencas={presencas}
         estagios={estagios}
         aniversarios={aniversarios}
+        pontes={pontes}
         pedidos={pedidos}
         admin={admin}
         nomeProprio={user?.nome}

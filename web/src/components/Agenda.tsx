@@ -26,7 +26,7 @@ import {
   tocaMes,
   visiveis,
 } from "@/lib/agenda";
-import { datasDoAno, datasDoDia, type DataEspecial } from "@/lib/feriados";
+import { datasDasPontes, datasDoAno, datasDoDia, type DataEspecial, type PonteDia } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
 import { subtipos, tipos } from "@/lib/rotulos";
@@ -55,12 +55,13 @@ const pilulaEstado = {
   recusado: "",
 } as const;
 
-const rotulosData = { feriado: "Feriado nacional", municipal: "Feriado municipal", comemorativa: "Data comemorativa" } as const;
+const rotulosData = { feriado: "Feriado nacional", municipal: "Feriado municipal", comemorativa: "Data comemorativa", ponte: "Ponte" } as const;
 const rotuloData = (d: DataEspecial) => rotulosData[d.tipo];
 const pilulaData = {
   feriado: "bg-rosa-suave text-texto",
   municipal: "bg-rosa-suave text-texto ring-1 ring-inset ring-rosa",
   comemorativa: "border border-linha-forte text-texto",
+  ponte: "bg-primaria-suave text-texto ring-1 ring-inset ring-primaria",
 } as const;
 
 const focoCls = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
@@ -97,6 +98,7 @@ export default function Agenda({
   presencas = [],
   estagios = [],
   aniversarios = [],
+  pontes = [],
 }: {
   pedidos: Pedido[];
   admin: boolean;
@@ -114,6 +116,8 @@ export default function Agenda({
   estagios?: Estagio[];
   /** Aniversários do intervalo visível (quem indicou a data de nascimento). */
   aniversarios?: Aniversario[];
+  /** Pontes da empresa (registadas pelo admin) a mostrar como dias de descanso. */
+  pontes?: PonteDia[];
 }) {
   const [localidade] = useLocalidade();
   const [novo, setNovo] = useState<{ data: string } | null>(null);
@@ -184,9 +188,14 @@ export default function Agenda({
     return Array.from({ length: c.length / 7 }, (_, i) => c.slice(i * 7, i * 7 + 7));
   }, [mes]);
 
+  const datasDePontes = useMemo(() => datasDasPontes(pontes), [pontes]);
+  const especiaisDe = (iso: string) => [...datasDoDia(iso, localidade), ...datasDePontes.filter((d) => d.iso === iso)];
   const datasMes = useMemo(
-    () => datasDoAno(mes.ano, localidade).filter((d) => Number(d.iso.slice(5, 7)) === mes.mes),
-    [mes, localidade],
+    () =>
+      [...datasDoAno(mes.ano, localidade), ...datasDePontes]
+        .filter((d) => Number(d.iso.slice(0, 4)) === mes.ano && Number(d.iso.slice(5, 7)) === mes.mes)
+        .sort((a, b) => a.iso.localeCompare(b.iso)),
+    [mes, localidade, datasDePontes],
   );
 
   const aniversariosDoDia = useMemo(() => {
@@ -264,7 +273,7 @@ export default function Agenda({
                   const nPres = presencasDoDia(presencas, c.iso).length;
                   const eHoje = c.iso === hoje;
                   const aberto = c.iso === diaAberto;
-                  const especiais = datasDoDia(c.iso, localidade);
+                  const especiais = especiaisDe(c.iso);
                   const feriado = especiais.some((d) => d.tipo !== "comemorativa");
                   const anivs = aniversariosDoDia(c.iso);
                   return (
@@ -469,7 +478,7 @@ export default function Agenda({
                     <span className="w-12 shrink-0 font-medium tabular-nums">{curta(d.iso)}</span>
                     <span className="min-w-0 flex-1 truncate">{d.nome}</span>
                     <span className={`shrink-0 rounded-full px-2 text-[0.6875rem] leading-5 ${pilulaData[d.tipo]}`}>
-                      {d.tipo === "feriado" ? "Feriado" : d.tipo === "municipal" ? "Municipal" : "Comemorativa"}
+                      {d.tipo === "feriado" ? "Feriado" : d.tipo === "municipal" ? "Municipal" : d.tipo === "ponte" ? "Ponte" : "Comemorativa"}
                     </span>
                   </button>
                 </li>
@@ -489,7 +498,7 @@ export default function Agenda({
             const n = filtrados.filter((p) => cobreDia(p, iso)).length;
             const eHoje = iso === hoje;
             const aberto = iso === diaAberto;
-            const especiais = datasDoDia(iso, localidade);
+            const especiais = especiaisDe(iso);
             return (
               <button
                 key={iso}
@@ -603,10 +612,11 @@ export default function Agenda({
                 </div>
               ) : (
                 <>
-                  {datasDoDia(sel.iso, localidade).map((d) => (
+                  {especiaisDe(sel.iso).map((d) => (
                     <p key={d.nome} className={`self-start rounded-controlo px-3 py-2 text-sm ${pilulaData[d.tipo]}`}>
                       <span className="font-semibold">{rotuloData(d)}</span> · {d.nome}
                       {d.tipo === "feriado" && " · dia de descanso obrigatório"}
+                      {d.tipo === "ponte" && " · ponte da empresa"}
                       {d.tipo === "municipal" && " · só neste concelho"}
                     </p>
                   ))}

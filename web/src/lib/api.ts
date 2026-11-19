@@ -40,6 +40,13 @@ export interface Anexo {
   tamanho: number;
 }
 
+export interface Ponte {
+  id: number;
+  nome: string;
+  data_inicio: string;
+  data_fim: string;
+}
+
 export interface Pedido {
   anexos?: Anexo[];
   id: number;
@@ -236,6 +243,11 @@ export const api = {
     (await request<{ data: Pedido[] }>("GET", `/pedidos${estado ? `?estado=${estado}` : ""}`)).data,
   agenda: async (de: string, ate: string) =>
     (await request<{ data: PedidoAgenda[] }>("GET", `/agenda?de=${de}&ate=${ate}`)).data,
+  pontes: async (de?: string, ate?: string) =>
+    (await request<{ data: Ponte[] }>("GET", `/pontes${de && ate ? `?de=${de}&ate=${ate}` : ""}`)).data,
+  criarPonte: async (b: { nome: string; data_inicio: string; data_fim: string }) =>
+    (await request<{ data: Ponte }>("POST", "/pontes", b)).data,
+  apagarPonte: (id: number) => request<void>("DELETE", `/pontes/${id}`),
   aniversarios: async (de: string, ate: string) =>
     (await request<{ data: Aniversario[] }>("GET", `/aniversarios?de=${de}&ate=${ate}`)).data,
   criarPedido: (b: NovoPedido) =>

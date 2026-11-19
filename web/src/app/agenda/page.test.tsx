@@ -6,7 +6,7 @@ const presencas = vi.fn().mockResolvedValue([]);
 const aniversarios = vi.fn().mockResolvedValue([]);
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: "funcionario" } }) }));
-vi.mock("@/lib/api", async (orig) => ({ ...(await orig<typeof import("@/lib/api")>()), api: { agenda: (...a: unknown[]) => agenda(...a), presencas: (...a: unknown[]) => presencas(...a), aniversarios: (...a: unknown[]) => aniversarios(...a) } }));
+vi.mock("@/lib/api", async (orig) => ({ ...(await orig<typeof import("@/lib/api")>()), api: { agenda: (...a: unknown[]) => agenda(...a), presencas: (...a: unknown[]) => presencas(...a), aniversarios: (...a: unknown[]) => aniversarios(...a), pontes: async () => [] } }));
 
 import AgendaPage from "./page";
 
