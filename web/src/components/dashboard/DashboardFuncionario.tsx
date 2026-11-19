@@ -6,13 +6,17 @@ import { api, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { contarPorEstado, equipaForaHoje, proximasAusencias } from "@/lib/dashboard";
 import { useFonte } from "@/lib/useFonte";
+import { IconeAgenda, IconePedidos } from "../Icones";
+import { acao, acaoDestaque } from "../ui";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
 import ListaAusencias from "./ListaAusencias";
+import WidgetContagem from "./WidgetContagem";
+import WidgetFeriados from "./WidgetFeriados";
 
 const MAX = 5;
-const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900";
+const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
 export default function DashboardFuncionario({ user }: { user: User }) {
   const [hoje] = useState(() => hojeIso());
@@ -23,20 +27,56 @@ export default function DashboardFuncionario({ user }: { user: User }) {
   const aCarregar = !pedidos.erro && pedidos.dados === null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <Cabecalho titulo={`Olá, ${user.nome.split(" ")[0]}`} hoje={hoje} />
-      <ul className="grid grid-cols-3 gap-2 md:gap-4">
+    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
+      <div className="lg:shrink-0">
+          <Cabecalho
+            nome={user.nome}
+            hoje={hoje}
+            resumo={
+              n === null ? (
+                <span className="text-texto-suave">Os teus pedidos, quem da equipa está fora e o próximo descanso.</span>
+              ) : n.pendente === 0 ? (
+                "Não tens pedidos à espera de resposta."
+              ) : (
+                <>
+                  Tens <strong>{n.pendente}</strong> {n.pendente === 1 ? "pedido" : "pedidos"} à espera de resposta.
+                </>
+              )
+            }
+            acoes={
+              <>
+                <Link href="/agenda" className={acao}>
+                  <IconeAgenda className="h-4 w-4" />
+                  Agenda
+                </Link>
+                <Link href="/" className={acaoDestaque}>
+                  <IconePedidos className="h-4 w-4" />
+                  Novo pedido
+                </Link>
+              </>
+            }
+          />
+      </div>
+      <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
+      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:min-w-0 lg:flex-[2]">
         <CartaoContador
           rotulo="Pendentes"
           valor={n?.pendente ?? null}
           aCarregar={aCarregar}
           ligacao={{ href: "/", texto: "Ver pedidos" }}
+          Icone={IconePedidos}
+          cor="violeta"
         />
-        <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} />
-        <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} />
+        <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} Icone={IconePedidos} cor="positivo" />
+        <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} Icone={IconePedidos} cor="rosa" />
       </ul>
+      <WidgetContagem pedidos={pedidos.dados} hoje={hoje} className="lg:min-w-0 lg:flex-1" />
+      <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
+      </div>
 
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
       <BlocoEstado
+        efeito="recentes"
         titulo="As minhas próximas ausências"
         fonte={pedidos}
         mensagemErro="Não foi possível carregar os seus pedidos. Verifique a ligação."
@@ -72,10 +112,11 @@ export default function DashboardFuncionario({ user }: { user: User }) {
         {(d) => (
           <>
             <ListaAusencias pedidos={equipaForaHoje(d, hoje, user.id)} titulo="nome" />
-            <p className="text-xs text-zinc-700">Só nome, tipo e datas (agenda reduzida).</p>
+            <p className="text-xs text-texto-suave">Só nome, tipo e datas (agenda reduzida).</p>
           </>
         )}
       </BlocoEstado>
+      </div>
     </div>
   );
 }

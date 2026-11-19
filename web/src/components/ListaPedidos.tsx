@@ -40,7 +40,7 @@ export default function ListaPedidos({ pedidos }: { pedidos: Pedido[] }) {
       ) : (
         <ul className="flex flex-col gap-3">
           {visiveis.map((p) => (
-            <li key={p.id} className="rounded-cartao bg-painel shadow-suave p-4">
+            <li key={p.id} className="rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4">
               <p className="font-medium">
                 {tipos[p.tipo]}
                 {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""} · {estados[p.estado]}
