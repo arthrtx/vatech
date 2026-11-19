@@ -13,7 +13,7 @@ const subtipos: { v: SubtipoPedido; t: string }[] = [
 export default function PedidoForm({
   onCriado,
   dataInicial = "",
-  className = "flex max-w-xl flex-col gap-4 rounded-cartao bg-painel p-5 shadow-suave",
+  className = "flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10",
 }: {
   onCriado?: (avisos: string[]) => void;
   /** Preenche início e fim (ex.: dia escolhido na Agenda). */

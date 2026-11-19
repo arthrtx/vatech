@@ -10,24 +10,27 @@ import {
   IconeDashboard,
   IconeDefinicoes,
   IconeFuncionarios,
+  IconeLua,
   IconePedidos,
   IconePesquisa,
   IconeSair,
+  IconeSol,
   IconeUtilizador,
 } from "./Icones";
 import FundoQuente, { classeFundoQuente } from "./FundoQuente";
 import Pesquisa from "./Pesquisa";
+import { useTema } from "@/lib/tema";
 
 // Dica com o nome do item: aparece ao passar o rato ou com foco de teclado.
 // Abaixo do ícone no telemóvel (barra de topo), à direita no desktop (barra lateral).
 const dica =
-  "pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-controlo bg-texto px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:left-full md:top-1/2 md:mt-0 md:ml-3 md:translate-x-0 md:-translate-y-1/2";
+  "pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:left-full md:top-1/2 md:mt-0 md:ml-3 md:translate-x-0 md:-translate-y-1/2";
 // Dica para o avatar na barra de topo: sempre por baixo, alinhada à direita.
 const dicaAbaixo =
-  "pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-controlo bg-texto px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
-const itemInativo = "text-white/85 hover:bg-white/15 hover:text-white";
+  "pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
+const itemInativo = "text-texto-suave hover:bg-primaria-suave hover:text-texto";
 const botaoIcone =
-  "group relative flex h-10 w-10 items-center justify-center rounded-controlo focus:outline-none focus-visible:ring-2 focus-visible:ring-white";
+  "group relative flex h-10 w-10 items-center justify-center rounded-controlo focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
 export default function AppShell({
   children,
@@ -43,6 +46,7 @@ export default function AppShell({
   const router = useRouter();
   const pathname = usePathname();
   const [pesquisaAberta, setPesquisaAberta] = useState(false);
+  const { escuro, definir: definirTema } = useTema();
   const [agora, setAgora] = useState<Date | null>(null);
   const fecharPesquisa = useCallback(() => setPesquisaAberta(false), []);
 
@@ -81,7 +85,7 @@ export default function AppShell({
   ];
   if (user.papel === "admin") links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
   const definicoes = { href: "/definicoes", texto: "Definições" };
-  const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa" : itemInativo}`;
+  const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa text-white" : itemInativo}`;
 
   const iniciais = user.nome
     .split(/\s+/)
@@ -102,12 +106,12 @@ export default function AppShell({
         className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave ${classeFundoQuente} ${ecraInteiro ? "lg:h-full lg:min-h-0" : ""}`}
       >
         <FundoQuente />
-        <aside className="flex items-center gap-3 rounded-barra bg-primaria px-3 py-2 text-white md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
-          <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-white/20 text-base font-semibold">
+        <aside className="flex items-center gap-3 rounded-barra bg-painel/45 px-3 py-2 text-texto shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
+          <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-texto text-base font-semibold text-painel">
             <span aria-hidden="true">v</span>
             <span className="sr-only">vatech</span>
           </p>
-          <span aria-hidden="true" className="hidden h-px w-8 bg-white/25 md:block" />
+          <span aria-hidden="true" className="hidden h-px w-8 bg-linha md:block" />
           <nav aria-label="Principal" className="flex gap-1 md:flex-col md:gap-3">
             {links.map(({ href, texto, Icone }) => (
               <Link
@@ -157,7 +161,7 @@ export default function AppShell({
               type="button"
               onClick={() => setPesquisaAberta(true)}
               aria-keyshortcuts="Control+K"
-              className="ml-auto flex h-11 w-full max-w-xs items-center gap-2 rounded-controlo bg-campo px-4 text-sm text-texto-suave hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
+              className="ml-auto flex h-11 w-full max-w-xs items-center gap-2 rounded-full bg-painel/55 px-4 ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 text-sm text-texto-suave hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
             >
               <IconePesquisa />
               <span>Pesquisar</span>
@@ -165,10 +169,22 @@ export default function AppShell({
                 Ctrl+K
               </span>
             </button>
+            <button
+              type="button"
+              aria-pressed={escuro}
+              aria-label="Modo escuro"
+              onClick={() => definirTema(escuro ? "claro" : "escuro")}
+              className="group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-painel/55 text-texto ring-1 ring-white/70 backdrop-blur-xl hover:bg-primaria-suave dark:ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
+            >
+              {escuro ? <IconeSol /> : <IconeLua />}
+              <span aria-hidden="true" className={dicaAbaixo}>
+                {escuro ? "Mudar para claro" : "Mudar para escuro"}
+              </span>
+            </button>
             <span
               tabIndex={0}
               aria-label={user.nome}
-              className="group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
+              className="group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte dark:text-texto focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
             >
               <span aria-hidden="true">{iniciais || <IconeUtilizador />}</span>
               <span aria-hidden="true" className={dicaAbaixo}>

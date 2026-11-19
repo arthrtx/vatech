@@ -64,7 +64,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca =
       ) : (
         <ul className="flex flex-col gap-3">
           {visiveis.map((p) => (
-            <li key={p.id} className="rounded-cartao bg-painel shadow-suave p-4">
+            <li key={p.id} className="rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4">
               <p className="font-medium">
                 {p.user?.nome ?? `Utilizador ${p.user_id}`} · {tipos[p.tipo]}
                 {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}

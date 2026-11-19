@@ -22,8 +22,8 @@ export default function WidgetFeriados({ hoje, quantos = 3 }: { hoje: string; qu
   const falta = dias(hoje, primeiro.iso);
 
   return (
-    <section aria-labelledby="w-feriados" className={`${vidro} flex flex-col gap-4 p-5 motion-safe:animate-subir [animation-delay:80ms]`}>
-      <h2 id="w-feriados" className="text-sm font-semibold uppercase tracking-wide text-texto-suave">
+    <section aria-labelledby="w-feriados" className={`${vidro} arco brilho-rosa flex flex-col gap-4 p-5 motion-safe:animate-subir [animation-delay:80ms]`}>
+      <h2 id="w-feriados" className="font-mono text-sm font-semibold uppercase tracking-wide text-texto-suave">
         Próximo feriado
       </h2>
       <div className="flex items-end justify-between gap-3">

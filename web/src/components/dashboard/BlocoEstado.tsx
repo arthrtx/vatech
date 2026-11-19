@@ -69,7 +69,7 @@ export default function BlocoEstado<T>({
   }
 
   return (
-    <section className={`${vidro} flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] ${className}`}>
+    <section className={`${vidro} arco brilho-violeta flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] ${className}`}>
       <h2 className="text-lg font-semibold">{titulo}</h2>
       {corpo}
     </section>
