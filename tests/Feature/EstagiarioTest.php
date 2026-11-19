@@ -99,3 +99,11 @@ it('recusar exige motivo e o dono recebe motivo_recusa', function () {
     Sanctum::actingAs($dono);
     $this->getJson('/api/pedidos')->assertJsonPath('data.0.estado', 'recusado')->assertJsonPath('data.0.motivo_recusa', 'Equipa reduzida');
 });
+
+it('o dia da presenca e o dia em Lisboa, nao o dia UTC', function () {
+    $this->travelTo(now()->setDate(2026, 7, 1)->setTime(23, 30)->utc());
+    Sanctum::actingAs(estagiario());
+
+    $this->postJson('/api/presencas/entrada')->assertCreated()->assertJsonPath('data.data', '2026-07-02');
+    $this->getJson('/api/presencas/hoje')->assertJsonPath('data.data', '2026-07-02');
+});

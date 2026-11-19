@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Presenca;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,8 +18,12 @@ class PresencaController extends Controller
     {
         abort_if($this->doDia($request), 422, 'Ja marcou a entrada hoje.');
 
-        $agora = now();
-        $presenca = Presenca::create(['user_id' => $request->user()->id, 'data' => $agora->toDateString(), 'entrada' => $agora]);
+        try {
+            $presenca = Presenca::create(['user_id' => $request->user()->id, 'data' => $this->diaLocal(), 'entrada' => now()]);
+        } catch (UniqueConstraintViolationException) {
+            // Duplo clique ou pedidos em simultâneo: a segunda marcação não passa.
+            abort(422, 'Ja marcou a entrada hoje.');
+        }
 
         return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()], 201);
     }
@@ -65,6 +70,12 @@ class PresencaController extends Controller
 
     private function doDia(Request $request): ?Presenca
     {
-        return Presenca::where('user_id', $request->user()->id)->where('data', now()->toDateString())->first();
+        return Presenca::where('user_id', $request->user()->id)->where('data', $this->diaLocal())->first();
+    }
+
+    // O dia da presença é o dia em Lisboa (o servidor corre em UTC), igual ao que o utilizador vê.
+    private function diaLocal(): string
+    {
+        return now('Europe/Lisbon')->toDateString();
     }
 }
