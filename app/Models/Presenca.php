@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'data', 'entrada', 'saida'])]
+#[Fillable(['user_id', 'data', 'entrada', 'saida', 'atrasada'])]
 class Presenca extends Model
 {
     protected $table = 'presencas';
 
     protected function casts(): array
     {
-        return ['data' => 'date:Y-m-d', 'entrada' => 'datetime', 'saida' => 'datetime'];
+        return ['data' => 'date:Y-m-d', 'entrada' => 'datetime', 'saida' => 'datetime', 'atrasada' => 'boolean'];
     }
 
     public function user(): BelongsTo
@@ -21,7 +21,7 @@ class Presenca extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** @return array{id:int,user_id:int,user:array{id:int,nome:string}|null,data:string,entrada:string,saida:string|null} */
+    /** @return array{id:int,user_id:int,user:array{id:int,nome:string}|null,data:string,entrada:string,saida:string|null,atrasada:bool} */
     public function toContrato(): array
     {
         return [
@@ -31,6 +31,7 @@ class Presenca extends Model
             'data' => $this->data->format('Y-m-d'),
             'entrada' => $this->entrada->toIso8601String(),
             'saida' => $this->saida?->toIso8601String(),
+            'atrasada' => (bool) $this->atrasada,
         ];
     }
 }

@@ -52,11 +52,11 @@ it('marca entrada e saida com hora do servidor e valida os estados', function ()
     $this->postJson('/api/presencas/saida')->assertStatus(422);
 
     $this->postJson('/api/presencas/entrada', ['entrada' => '2000-01-01T00:00:00Z'])
-        ->assertCreated()->assertJsonPath('data.user.id', $e->id)->assertJsonPath('data.data', now()->toDateString());
+        ->assertCreated()->assertJsonPath('data.user.id', $e->id)->assertJsonPath('data.data', now()->toDateString())->assertJsonPath('data.atrasada', false);
     expect(Presenca::first()->entrada->isToday())->toBeTrue();
 
     $this->postJson('/api/presencas/entrada')->assertStatus(422);
-    $this->postJson('/api/presencas/saida')->assertOk()->assertJsonStructure(['data' => ['id', 'user_id', 'user', 'data', 'entrada', 'saida']]);
+    $this->postJson('/api/presencas/saida')->assertOk()->assertJsonStructure(['data' => ['id', 'user_id', 'user', 'data', 'entrada', 'saida', 'atrasada']]);
     $this->postJson('/api/presencas/saida')->assertStatus(422);
     $this->getJson('/api/presencas/hoje')->assertJsonPath('data.user_id', $e->id);
 });
@@ -106,4 +106,42 @@ it('o dia da presenca e o dia em Lisboa, nao o dia UTC', function () {
 
     $this->postJson('/api/presencas/entrada')->assertCreated()->assertJsonPath('data.data', '2026-07-02');
     $this->getJson('/api/presencas/hoje')->assertJsonPath('data.data', '2026-07-02');
+});
+
+it('regista presenca atrasada com horas de Lisboa gravadas em UTC', function () {
+    $this->travelTo(now()->setDate(2026, 7, 10)->setTime(12, 0)->utc());
+    $e = estagiario();
+    Sanctum::actingAs($e);
+
+    $this->postJson('/api/presencas/atrasada', ['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '17:30'])
+        ->assertCreated()->assertJsonPath('data.data', '2026-07-08')->assertJsonPath('data.user.id', $e->id)
+        ->assertJsonPath('data.entrada', '2026-07-08T08:00:00+00:00')->assertJsonPath('data.saida', '2026-07-08T16:30:00+00:00')->assertJsonPath('data.atrasada', true);
+
+    $this->postJson('/api/presencas/atrasada', ['data' => '2026-07-10', 'entrada' => '09:00', 'saida' => '10:00'])->assertCreated();
+    $this->getJson('/api/presencas')->assertOk()->assertJsonPath('data.0.atrasada', true);
+});
+
+it('presenca atrasada rejeita futura, anterior ao estagio, duplicada e horas invalidas', function () {
+    $this->travelTo(now()->setDate(2026, 7, 10)->setTime(12, 0)->utc()); // 13:00 em Lisboa
+    $e = estagiario(['estagio_inicio' => '2026-07-01']);
+    Sanctum::actingAs($e);
+    $post = fn (array $b) => $this->postJson('/api/presencas/atrasada', $b);
+
+    $post(['data' => '2026-07-11', 'entrada' => '09:00', 'saida' => '10:00'])->assertStatus(422)->assertJsonValidationErrors('data');
+    $post(['data' => '2026-06-30', 'entrada' => '09:00', 'saida' => '10:00'])->assertStatus(422)->assertJsonValidationErrors('data');
+    $post(['data' => '2026-07-08', 'entrada' => '10:00', 'saida' => '10:00'])->assertStatus(422)->assertJsonValidationErrors('saida');
+    $post(['data' => '2026-07-08', 'entrada' => '11:00', 'saida' => '10:00'])->assertStatus(422)->assertJsonValidationErrors('saida');
+    $post(['data' => '2026-07-10', 'entrada' => '09:00', 'saida' => '14:00'])->assertStatus(422)->assertJsonValidationErrors('saida');
+
+    $post(['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'])->assertCreated();
+    $post(['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'])
+        ->assertStatus(422)->assertJsonValidationErrors(['data' => 'Ja existe presenca nesse dia.']);
+});
+
+it('presenca atrasada e so para estagiarios', function () {
+    $body = ['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'];
+    Sanctum::actingAs(User::factory()->create());
+    $this->postJson('/api/presencas/atrasada', $body)->assertForbidden();
+    Sanctum::actingAs(User::factory()->admin()->create());
+    $this->postJson('/api/presencas/atrasada', $body)->assertForbidden();
 });

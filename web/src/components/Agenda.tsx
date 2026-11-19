@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { PedidoAgenda as Pedido, TipoPedido } from "@/lib/api";
+import type { PedidoAgenda as Pedido, Presenca, TipoPedido } from "@/lib/api";
 import { aplicarFiltrosAgenda, contarAtivos, type FiltrosAgenda } from "@/lib/filtros";
 import {
   celulasDoMes,
   cobreDia,
   diasDoPedido,
+  estagioCobre,
   haSobreposicao,
   hojeIso,
   inicioSemana,
@@ -16,15 +17,18 @@ import {
   mesesPt,
   mesSeguinte,
   nomeDoDia,
+  presencasDoDia,
   quemE,
   reduzido,
   somaDias,
+  type Estagio,
   type Mes,
   tocaMes,
   visiveis,
 } from "@/lib/agenda";
 import { datasDoAno, datasDoDia, type DataEspecial } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
+import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
 import { subtipos, tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
 import { botao, botaoSec, label } from "./ui";
@@ -90,6 +94,8 @@ export default function Agenda({
   aoMudarMes,
   podeCriar = false,
   aoCriar,
+  presencas = [],
+  estagios = [],
 }: {
   pedidos: Pedido[];
   admin: boolean;
@@ -101,6 +107,10 @@ export default function Agenda({
   /** Funcionário pode pedir férias a partir da agenda (admin não faz pedidos). */
   podeCriar?: boolean;
   aoCriar?: () => void;
+  /** Presenças do intervalo visível (a API já limita a cada pessoa quem não é admin). */
+  presencas?: Presenca[];
+  /** Períodos de estágio a mostrar (o próprio, ou todos para o admin). */
+  estagios?: Estagio[];
 }) {
   const [localidade] = useLocalidade();
   const [novo, setNovo] = useState<{ data: string } | null>(null);
@@ -183,6 +193,8 @@ export default function Agenda({
 
   const pedidoSel =
     sel?.pedidoId !== undefined ? pedidos.find((p) => p.id === sel.pedidoId && p.estado !== "recusado") : undefined;
+  const presencasSel = sel ? presencasDoDia(presencas, sel.iso) : [];
+  const estagiosSel = sel ? estagios.filter((e) => estagioCobre(e, sel.iso)) : [];
   const doDiaSel = sel ? filtrados.filter((p) => cobreDia(p, sel.iso)) : [];
   const sobreposicaoSel = sel ? haSobreposicao(visiveis(pedidos).filter((p) => cobreDia(p, sel.iso))) : false;
 
@@ -240,6 +252,7 @@ export default function Agenda({
                 {linha.map((c) => {
                   const doDia = filtrados.filter((p) => cobreDia(p, c.iso));
                   const sobrepoe = haSobreposicao(visiveis(pedidos).filter((p) => cobreDia(p, c.iso)));
+                  const nPres = presencasDoDia(presencas, c.iso).length;
                   const eHoje = c.iso === hoje;
                   const aberto = c.iso === diaAberto;
                   const especiais = datasDoDia(c.iso, localidade);
@@ -270,7 +283,7 @@ export default function Agenda({
                       </button>
                       {sobrepoe && <span className="sr-only">Sobreposição</span>}
                       {especiais.length > 0 && <span className="sr-only">{especiais.map((d) => d.nome).join(", ")}</span>}
-                      <div className="flex h-1.5 w-full justify-center gap-0.5 px-1">
+                      <div className="flex min-h-1.5 w-full items-center justify-center gap-0.5 px-1">
                         {doDia.slice(0, MAX_MARCAS).map((p) => (
                           <button
                             type="button"
@@ -288,6 +301,19 @@ export default function Agenda({
                             </span>
                           </button>
                         ))}
+                        {doDia.length > MAX_MARCAS && (
+                          <span className="text-[0.625rem] leading-none text-texto-suave">
+                            +{doDia.length - MAX_MARCAS}
+                            <span className="sr-only"> pedidos</span>
+                          </span>
+                        )}
+                        {nPres > 0 && (
+                          <span title={`${nPres} ${nPres === 1 ? "presença" : "presenças"}`} className="h-1.5 w-1.5 shrink-0 bg-texto">
+                            <span className="sr-only">
+                              {nPres} {nPres === 1 ? "presença" : "presenças"}
+                            </span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -297,7 +323,7 @@ export default function Agenda({
           </div>
           <p className="text-xs text-texto-suave">
             Verde: aprovado. Tracejado: pendente. Contorno rosa: mais de uma pessoa fora. Fundo rosa: feriado. Sublinhado:
-            data comemorativa. Pedidos recusados não aparecem.
+            data comemorativa. Quadrado preto: com presença registada. Pedidos recusados não aparecem.
           </p>
         </div>
 
@@ -335,6 +361,24 @@ export default function Agenda({
               </div>
             )}
           </PainelFiltros>
+        )}
+
+        {estagios.length > 0 && (
+          <section aria-labelledby="ag-estagio" className="flex flex-col gap-2">
+            <h3 id="ag-estagio" className="text-base font-semibold">
+              {admin ? "Períodos de estágio" : "O meu estágio"}
+            </h3>
+            <ul className="flex flex-col gap-1.5">
+              {estagios.map((e) => (
+                <li key={e.id} className="rounded-controlo bg-campo px-3 py-2 text-sm">
+                  {admin && <span className="block font-medium">{e.nome}</span>}
+                  <span className="block text-texto-suave">
+                    {e.inicio && e.fim ? `${dataPt(e.inicio)} a ${dataPt(e.fim)}` : "Período ainda não definido."}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         <section aria-labelledby="ag-lista" className="flex flex-col gap-3">
@@ -542,6 +586,32 @@ export default function Agenda({
                     <p className="rounded-controlo bg-rosa-suave px-3 py-2 text-sm font-medium text-texto">
                       Sobreposição: mais de uma pessoa fora neste dia.
                     </p>
+                  )}
+                  {estagiosSel.length > 0 && (
+                    <p className="self-start rounded-controlo border border-linha-forte px-3 py-2 text-sm text-texto">
+                      <span className="font-semibold">Estágio</span> · {estagiosSel.map((e) => (admin ? e.nome : "em curso")).join(", ")}
+                    </p>
+                  )}
+                  {presencasSel.length > 0 && (
+                    <section aria-labelledby="ag-presencas" className="flex flex-col gap-2">
+                      <h4 id="ag-presencas" className="text-base font-semibold">
+                        Presenças neste dia
+                      </h4>
+                      <ul className="flex flex-col gap-1.5">
+                        {presencasSel.map((pr) => (
+                          <li key={pr.id} className="flex flex-wrap items-center justify-between gap-2 rounded-controlo bg-campo px-3 py-2 text-sm">
+                            <span className="font-medium">
+                              {pr.user?.nome ?? nomeProprio ?? "Eu"}
+                              {pr.atrasada && <span className="ml-2 text-xs font-normal text-texto-suave">Atrasada</span>}
+                            </span>
+                            <span className="tabular-nums">
+                              {horaDe(pr.entrada)} a {pr.saida ? horaDe(pr.saida) : "sem saída marcada"}
+                              {pr.saida && <span className="text-texto-suave"> · {totalHoras(pr)}</span>}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
                   )}
                   {aCarregar ? (
                     <div aria-hidden="true" className="flex flex-col gap-3">

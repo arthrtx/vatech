@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
 import AppShell from "@/components/AppShell";
 import CampoData from "@/components/CampoData";
+import PresencaAtrasada from "@/components/PresencaAtrasada";
 import Seletor from "@/components/Seletor";
-import { botaoSec, erro as erroCls, label, vidro } from "@/components/ui";
+import { botao, botaoSec, erro as erroCls, label, vidro } from "@/components/ui";
 import { api, mensagemDeErro, type Presenca, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
@@ -15,16 +17,20 @@ const th = "px-3 py-2 font-medium";
 const td = "px-3 py-3 tabular-nums";
 
 function Conteudo() {
+  const { user } = useAuth();
+  const admin = user?.papel === "admin";
   const [de, setDe] = useState(() => `${hojeIso().slice(0, 8)}01`);
   const [ate, setAte] = useState(() => hojeIso());
   const [userId, setUserId] = useState("");
   const [estagiarios, setEstagiarios] = useState<User[]>([]);
   const [res, setRes] = useState<Res | null>(null);
   const [volta, setVolta] = useState(0);
+  const [esqueci, setEsqueci] = useState(false);
   const valido = !!de && !!ate && ate >= de;
   const chave = `${de}|${ate}|${userId}|${volta}`;
 
   useEffect(() => {
+    if (!admin) return; // o estagiário recebe 403 na lista de funcionários
     let vivo = true;
     api
       .funcionarios()
@@ -33,19 +39,19 @@ function Conteudo() {
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [admin]);
 
   useEffect(() => {
     if (!valido) return;
     let vivo = true;
     api
-      .presencas(de, ate, userId ? Number(userId) : undefined)
+      .presencas(de, ate, admin && userId ? Number(userId) : undefined)
       .then((linhas) => vivo && setRes({ chave, linhas, erro: null }))
       .catch((e) => vivo && setRes({ chave, linhas: [], erro: mensagemDeErro(e) }));
     return () => {
       vivo = false;
     };
-  }, [de, ate, userId, valido, chave]);
+  }, [de, ate, userId, valido, chave, admin]);
 
   const atual = res?.chave === chave ? res : null;
   const aCarregar = valido && !atual;
@@ -56,8 +62,25 @@ function Conteudo() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Presenças</h1>
-      <div className={`${vidro} relative z-20 grid gap-4 p-4 sm:grid-cols-3`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">Presenças</h1>
+        {!admin && !esqueci && (
+          <button type="button" className={`${botao} min-h-10`} onClick={() => setEsqueci(true)}>
+            Esqueci de marcar presença
+          </button>
+        )}
+      </div>
+      {!admin && esqueci && (
+        <PresencaAtrasada
+          min={user?.estagio_inicio}
+          onCancelar={() => setEsqueci(false)}
+          onRegistado={() => {
+            setEsqueci(false);
+            setVolta((v) => v + 1);
+          }}
+        />
+      )}
+      <div className={`${vidro} relative z-20 grid gap-4 p-4 ${admin ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
         <div>
           <label htmlFor="pres_de" className={label}>
             De
@@ -70,17 +93,19 @@ function Conteudo() {
           </label>
           <CampoData id="pres_ate" valor={ate} min={de || undefined} onChange={setAte} />
         </div>
-        <div>
-          <label htmlFor="pres_user" className={label}>
-            Estagiário
-          </label>
-          <Seletor
-            id="pres_user"
-            valor={userId}
-            opcoes={[{ valor: "", rotulo: "Todos" }, ...estagiarios.map((u) => ({ valor: String(u.id), rotulo: u.nome }))]}
-            onChange={setUserId}
-          />
-        </div>
+        {admin && (
+          <div>
+            <label htmlFor="pres_user" className={label}>
+              Estagiário
+            </label>
+            <Seletor
+              id="pres_user"
+              valor={userId}
+              opcoes={[{ valor: "", rotulo: "Todos" }, ...estagiarios.map((u) => ({ valor: String(u.id), rotulo: u.nome }))]}
+              onChange={setUserId}
+            />
+          </div>
+        )}
       </div>
       {!valido && (
         <p role="alert" className={erroCls}>
@@ -111,9 +136,11 @@ function Conteudo() {
             <caption className="sr-only">Horas por dia</caption>
             <thead>
               <tr className="text-texto-suave">
-                <th scope="col" className={th}>
-                  Nome
-                </th>
+                {admin && (
+                  <th scope="col" className={th}>
+                    Nome
+                  </th>
+                )}
                 <th scope="col" className={th}>
                   Dia
                 </th>
@@ -131,8 +158,15 @@ function Conteudo() {
             <tbody>
               {linhas.map((p) => (
                 <tr key={p.id} className="border-t border-linha">
-                  <td className="px-3 py-3 font-medium">{p.user?.nome ?? `#${p.user_id}`}</td>
-                  <td className={td}>{dataPt(p.data)}</td>
+                  {admin && <td className="px-3 py-3 font-medium">{p.user?.nome ?? `#${p.user_id}`}</td>}
+                  <td className={td}>
+                    {dataPt(p.data)}
+                    {p.atrasada && (
+                      <span className="ml-2 rounded-controlo border border-linha-forte px-2 py-0.5 text-xs text-texto-suave">
+                        Atrasada
+                      </span>
+                    )}
+                  </td>
                   <td className={td}>{horaDe(p.entrada)}</td>
                   <td className={td}>{horaDe(p.saida) || "Em curso"}</td>
                   <td className={td}>{totalHoras(p) || "-"}</td>
@@ -148,7 +182,7 @@ function Conteudo() {
 
 export default function PresencasPage() {
   return (
-    <AppShell soAdmin>
+    <AppShell papeis={["admin", "estagiario"]}>
       <Conteudo />
     </AppShell>
   );

@@ -191,6 +191,35 @@ describe("Agenda", () => {
     expect(screen.getAllByText("Sobreposição").length).toBe(1);
   });
 
+  it("mostra o período de estágio, presenças no painel do dia e +N quando há mais de 3 pedidos", () => {
+    const muitos = [1, 2, 3, 4].map((i) => p({ id: 100 + i, user_id: i, user: { id: i, nome: `P${i}` }, data_inicio: "2026-12-01", data_fim: "2026-12-01" }));
+    const pres = { id: 1, user_id: 5, user: { id: 5, nome: "Eva" }, data: "2026-12-01", entrada: "2026-12-01T09:00:00Z", saida: null, atrasada: false };
+    render(
+      <Agenda
+        pedidos={muitos}
+        admin
+        hoje="2026-12-01"
+        presencas={[pres]}
+        estagios={[{ id: 5, nome: "Eva", inicio: "2026-09-01", fim: "2027-02-28" }]}
+      />,
+    );
+    expect(screen.getByText("01/09/2026 a 28/02/2027")).toBeTruthy();
+    expect(screen.getByText("+1")).toBeTruthy();
+    const painel = screen.getByRole("region", { name: "Pedidos de 2026-12-01" });
+    expect(painel.textContent).toContain("Presenças neste dia");
+    expect(painel.textContent).toContain("sem saída marcada");
+    expect(painel.textContent).toContain("Estágio · Eva");
+    expect(screen.getAllByText("1 presença").length).toBeGreaterThan(0);
+    expect(painel.textContent).not.toContain("Atrasada");
+  });
+
+  it("mostra a etiqueta Atrasada na presença do painel do dia", () => {
+    const pedido = p({ id: 201, user_id: 1, user: { id: 1, nome: "Ana" }, data_inicio: "2026-12-01", data_fim: "2026-12-01" });
+    const pres = { id: 2, user_id: 5, user: { id: 5, nome: "Eva" }, data: "2026-12-01", entrada: "2026-12-01T09:00:00Z", saida: null, atrasada: true };
+    render(<Agenda pedidos={[pedido]} admin hoje="2026-12-01" presencas={[pres]} />);
+    expect(screen.getByText("Atrasada")).toBeTruthy();
+  });
+
   it("filtro de funcionario lista colegas pelo user.id", () => {
     render(<Agenda pedidos={[colega]} admin hoje="2026-12-01" />);
     escolher("Funcionário", "Rui");
