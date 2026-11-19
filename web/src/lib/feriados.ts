@@ -1,6 +1,6 @@
 import { isoDe, somaDias } from "./agenda";
 
-export type TipoData = "feriado" | "municipal" | "comemorativa";
+export type TipoData = "feriado" | "municipal" | "comemorativa" | "ponte";
 
 export interface DataEspecial {
   iso: string;
@@ -117,4 +117,22 @@ export function datasDoDia(iso: string, localidade?: string | null): DataEspecia
     cache.set(chave, m);
   }
   return m.get(iso) ?? [];
+}
+
+/** Ponte da empresa, como a API a devolve. */
+export interface PonteDia {
+  nome: string;
+  data_inicio: string;
+  data_fim: string;
+}
+
+/** Uma entrada por dia de cada ponte (máx. 60 dias por ponte), para juntar às datas especiais. */
+export function datasDasPontes(pontes: PonteDia[]): DataEspecial[] {
+  const r: DataEspecial[] = [];
+  for (const p of pontes) {
+    for (let i = 0, iso = p.data_inicio; iso <= p.data_fim && i < 60; i++, iso = somaDias(iso, 1)) {
+      r.push({ iso, nome: p.nome, tipo: "ponte" });
+    }
+  }
+  return r;
 }
