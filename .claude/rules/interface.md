@@ -1,9 +1,7 @@
 ---
 paths:
-  - "resources/views/*.blade.php"
-  - "resources/views/**/*.blade.php"
-  - "resources/js/**/*.{vue,jsx,tsx,svelte}"
-  - "resources/css/**/*.css"
+  - "web/src/**/*.{ts,tsx}"
+  - "web/src/**/*.css"
 ---
 
 # Regras de interface
@@ -16,10 +14,10 @@ Ler `docs/DESIGN.md`. É a fonte das restrições visuais, não uma sugestão.
 
 ## Obrigatório
 
-- Usar os componentes de `resources/views/components/`. Criar componente novo
+- Usar os componentes de `web/src/components/`. Criar componente novo
   exige justificação — se algo aparece em dois sítios, é componente; se aparece
   num, é composição.
-- Tokens declarados em `@theme` no `resources/css/app.css` (Tailwind 4).
+- Tokens declarados em `@theme` no `web/src/app/globals.css` (Tailwind 4).
   **Não existe `tailwind.config.js`.**
 - Nenhuma cor, tamanho de fonte ou raio fora dos tokens definidos.
 - Uma única ação primária por ecrã.

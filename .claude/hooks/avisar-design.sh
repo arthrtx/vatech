@@ -17,7 +17,7 @@ fi
 INPUT=$(cat)
 FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
 
-# Cobre as tres stacks. So Laravel deixava Next.js e Flutter sem aviso — a
+# Cobre as tres stacks (Laravel: resources/*; Next.js: web/src/*, tokens em web/src/app/globals.css). So Laravel deixava Next.js e Flutter sem aviso — a
 # fase do sistema visual e a mesma, mudam os directorios.
 case "$FILE" in
   # Laravel / Livewire

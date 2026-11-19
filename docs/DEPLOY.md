@@ -30,6 +30,7 @@ browser -> site (Vercel) -> API (Render) -> base de dados (TiDB)
 
 4. Ao arrancar, a API cria as tabelas e a conta de admin. As contas de teste (`admin@vatech.test`) não existem em produção.
 5. Confirmar que `https://<endereço-da-api>/up` responde.
+6. Confirmar `APP_ENV=production` e `APP_DEBUG=false` (o `render.yaml` já os define; não os sobrepor no painel). Com `APP_DEBUG` ligado, as respostas de erro devolvem trace e caminhos do servidor. Verificar com um pedido que dê erro (ex. `https://<endereço-da-api>/api/rota-inexistente`, com `Accept: application/json`): a resposta não pode conter `trace`, `file` nem caminhos.
 
 ## 3. Site (Vercel)
 
