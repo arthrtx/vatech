@@ -6,6 +6,7 @@ import { filtrar } from "@/lib/busca";
 import { estados, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import AnexosDoPedido from "./AnexosDoPedido";
+import PontoUrgente from "./PontoUrgente";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos } from "./FiltrosPedidosCampos";
 import { ResumoFiltros } from "./PainelFiltros";
@@ -74,6 +75,7 @@ export default function ListaPedidos({ pedidos, formulario, onEditar, onApagar }
             <li key={p.id} id={`pedido-${p.id}`} className="rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
               <div className="min-w-0 flex-1">
               <p className="font-medium">
+                {p.urgente && <PontoUrgente />}
                 {tipos[p.tipo]}
                 {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""} · {estados[p.estado]}
               </p>

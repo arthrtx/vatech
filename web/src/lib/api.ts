@@ -50,6 +50,7 @@ export interface Pedido {
   data_inicio: string;
   data_fim: string;
   observacao: string | null;
+  urgente?: boolean;
   estado: EstadoPedido;
   decidido_por: number | null;
   decidido_em: string | null;
@@ -75,6 +76,7 @@ export interface PedidoAgenda {
   user_id?: number;
   subtipo?: SubtipoPedido | null;
   observacao?: string | null;
+  urgente?: boolean;
   decidido_por?: number | null;
   decidido_em?: string | null;
   motivo_recusa?: string | null;
@@ -86,6 +88,7 @@ export interface NovoPedido {
   data_inicio: string;
   data_fim: string;
   observacao?: string;
+  urgente?: boolean;
 }
 
 /** Limite anual de dias por tipo de pedido; dias_ano null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */

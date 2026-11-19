@@ -42,6 +42,7 @@ export default function PedidoForm({
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
   const [obs, setObs] = useState(pedido?.observacao ?? "");
+  const [urgente, setUrgente] = useState(pedido?.urgente ?? false);
   const [aMelhorar, setAMelhorar] = useState(false);
   const [antesDeMelhorar, setAntesDeMelhorar] = useState<string | null>(null);
   const [erroTexto, setErroTexto] = useState<string | null>(null);
@@ -102,6 +103,7 @@ export default function PedidoForm({
         data_inicio: inicio,
         data_fim: fim,
         ...(obs ? { observacao: obs } : {}),
+        urgente,
       };
       const r = pedido ? await api.editarPedido(pedido.id, corpo) : await api.criarPedido(corpo);
       setAvisos(r.avisos ?? []);
@@ -119,6 +121,7 @@ export default function PedidoForm({
         setInicio("");
         setFim("");
         setObs("");
+        setUrgente(false);
         setGuardados([]);
       }
       if (falhaAnexos) setErro(`${falhaAnexos}${edicao ? "" : " Edite o pedido para os juntar."}`);
@@ -132,9 +135,24 @@ export default function PedidoForm({
 
   return (
     <form onSubmit={enviar} className={className} aria-labelledby="novo-pedido">
-      <h2 id="novo-pedido" className="text-lg font-semibold">
-        {edicao ? "Editar pedido" : "Novo pedido"}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="novo-pedido" className="text-lg font-semibold">
+          {edicao ? "Editar pedido" : "Novo pedido"}
+        </h2>
+        <label htmlFor="urgente" className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+          Urgente
+          <button
+            id="urgente"
+            type="button"
+            role="switch"
+            aria-checked={urgente}
+            onClick={() => setUrgente((u) => !u)}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${urgente ? "bg-yellow-400" : "bg-white/20 ring-1 ring-white/20"}`}
+          >
+            <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${urgente ? "translate-x-5" : ""}`} />
+          </button>
+        </label>
+      </div>
       <div>
         <label htmlFor="tipo" className={label}>
           Tipo
