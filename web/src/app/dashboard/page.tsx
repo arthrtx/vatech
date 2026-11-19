@@ -15,7 +15,7 @@ function Conteudo() {
 
 export default function DashboardPage() {
   return (
-    <AppShell ecraInteiro>
+    <AppShell>
       <Conteudo />
     </AppShell>
   );
