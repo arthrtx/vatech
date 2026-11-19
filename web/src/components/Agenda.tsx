@@ -42,10 +42,10 @@ const MAX_MARCAS = 3;
 
 const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
-// Cores de estado com os tokens de globals.css. Aprovado = cheio a verde, pendente = tracejado.
+// Cores de estado com os tokens de globals.css. Aprovado = traço cheio a verde, pendente = traço vazado.
 const estiloMarca = {
   aprovado: "border-positivo bg-positivo",
-  pendente: "border-dashed border-primaria bg-painel",
+  pendente: "border-primaria bg-painel",
   recusado: "",
 } as const;
 const barraEstado = { aprovado: "bg-positivo", pendente: "bg-primaria", recusado: "" } as const;
@@ -302,9 +302,9 @@ export default function Agenda({
                       </button>
                       {sobrepoe && <span className="sr-only">Sobreposição</span>}
                       {especiais.length > 0 && <span className="sr-only">{especiais.map((d) => d.nome).join(", ")}</span>}
-                      <div className="flex min-h-1.5 w-full items-center justify-center gap-0.5 px-1">
+                      <div className="flex min-h-1 w-full flex-wrap items-center justify-center gap-0.5 px-1">
                         {anivs.length > 0 && (
-                          <span title={anivs.map((n) => `Aniversário de ${n}`).join(", ")} className="h-1.5 w-1.5 shrink-0 rounded-full bg-rosa">
+                          <span title={anivs.map((n) => `Aniversário de ${n}`).join(", ")} className="h-1 w-3.5 shrink-0 rounded-full bg-rosa">
                             <span className="sr-only">{anivs.map((n) => `Aniversário de ${n}`).join(", ")}</span>
                           </span>
                         )}
@@ -317,7 +317,7 @@ export default function Agenda({
                               abrir(e, { iso: c.iso, pedidoId: p.id });
                             }}
                             title={`${nomeDe(p, nomeProprio)}: ${descricao(p)}, ${p.data_inicio} a ${p.data_fim} (${p.estado})`}
-                            className={`truncate h-1.5 w-2.5 rounded-full border ${focoCls} ${estiloMarca[p.estado]}`}
+                            className={`h-1 w-3.5 shrink-0 rounded-full border ${focoCls} ${estiloMarca[p.estado]}`}
                           >
                             <span className="sr-only">
                               {nomeDe(p, nomeProprio)} · {tipos[p.tipo]}
@@ -332,7 +332,7 @@ export default function Agenda({
                           </span>
                         )}
                         {nPres > 0 && (
-                          <span title={`${nPres} ${nPres === 1 ? "presença" : "presenças"}`} className="h-1.5 w-1.5 shrink-0 bg-texto">
+                          <span title={`${nPres} ${nPres === 1 ? "presença" : "presenças"}`} className="h-1 w-3.5 shrink-0 rounded-full bg-texto">
                             <span className="sr-only">
                               {nPres} {nPres === 1 ? "presença" : "presenças"}
                             </span>
@@ -346,8 +346,9 @@ export default function Agenda({
             ))}
           </div>
           <p className="text-xs text-texto-suave">
-            Verde: aprovado. Tracejado: pendente. Contorno rosa: mais de uma pessoa fora. Fundo rosa: feriado. Sublinhado:
-            data comemorativa. Quadrado preto: com presença registada. Ponto rosa: aniversário. Pedidos recusados não aparecem.
+            Traço verde: aprovado. Traço vazado: pendente. Contorno rosa: mais de uma pessoa fora. Fundo rosa: feriado.
+            Sublinhado: data comemorativa. Traço preto: com presença registada. Traço rosa: aniversário. Pedidos recusados não
+            aparecem.
           </p>
         </div>
 

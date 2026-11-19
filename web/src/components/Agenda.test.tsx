@@ -69,7 +69,11 @@ describe("Agenda", () => {
     expect(hoje?.textContent).toContain("(hoje)");
     const pend = screen.getAllByText(/\(pendente\)/);
     expect(pend.length).toBe(2);
-    expect(pend[0].closest("button.truncate")?.className).toContain("border-dashed");
+    // Traço vazado (contorno, sem enchimento verde), distinto do aprovado.
+    const marca = pend[0].closest("button[title]")?.className ?? "";
+    expect(marca).toContain("border-primaria");
+    expect(marca).toContain("bg-painel");
+    expect(marca).not.toContain("bg-positivo");
     const celulas = [...container.querySelectorAll('[role="gridcell"]')];
     expect(celulas.length % 7).toBe(0);
     expect(celulas.every((c) => c.parentElement?.getAttribute("role") === "row")).toBe(true);
