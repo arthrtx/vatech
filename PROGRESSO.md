@@ -4,7 +4,7 @@
 > Contexto pessoal de cada colaborador vive no Brain do proprio JOCA.
 
 ## Estado actual
-Entrevista do /start feita (produto, fluxos, stack, infra, direcção de design). Repo privado `arthrtx/vatech` com scaffold (Laravel 13 na raiz, Next.js 16 em `web/`), testes de fumo (Pest, Vitest) e CI verde na `main`. `iniciar.bat` na raiz faz pull da última versão, sobe API, BD e web e abre http://localhost:3000. Electron removido: o produto é só website (#31, D8). Próximo passo: PR de teste, issues da v0.1 e primeira versão básica (login, funcionários, pedidos, aprovação) conforme `docs/API-CONTRATO.md`.
+Entrevista do /start feita (produto, fluxos, stack, infra, direcção de design). Repo privado `arthrtx/vatech` com scaffold (Laravel 13 na raiz, Next.js 16 em `web/`), testes de fumo (Pest, Vitest) e CI verde na `main`. `iniciar.bat` na raiz faz pull da última versão, sobe API, BD e web e abre http://localhost:3000. O produto é só website (D2). Próximo passo: PR de teste, issues da v0.1 e primeira versão básica (login, funcionários, pedidos, aprovação) conforme `docs/API-CONTRATO.md`.
 
 ## Workflows
 tipo: [aplicacao]
