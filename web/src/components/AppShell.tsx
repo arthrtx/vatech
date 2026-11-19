@@ -129,9 +129,9 @@ export default function AppShell({
       >
         <FundoQuente />
         <aside className="relative z-30 flex items-center gap-3 rounded-barra bg-painel/45 px-3 py-2 text-texto shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
-          <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-texto text-base font-semibold text-painel">
-            <span aria-hidden="true">v</span>
-            <span className="sr-only">vatech</span>
+          <p className="flex h-10 w-10 items-center justify-center rounded-controlo overflow-hidden bg-barra">
+            <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
+            <span className="sr-only">Setuptech</span>
           </p>
           <span aria-hidden="true" className="hidden h-px w-8 bg-linha md:block" />
           <nav aria-label="Principal" className="flex gap-1 md:flex-col md:gap-3">
