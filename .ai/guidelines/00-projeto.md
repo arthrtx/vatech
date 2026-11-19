@@ -15,14 +15,14 @@ Detalhe em `docs/PRD.md`.
 
 - Raiz: **Laravel 13** (API, Sanctum por tokens) + **Filament v5** (backoffice do super-admin)
 - `web/`: **Next.js 16** (frontend da app; projecto Node independente)
-- BD: **MySQL 8.4** em dev e produção (phpMyAdmin). Deploy: Ploi (D5)
+- BD: **MySQL 8.4** em dev e produção (phpMyAdmin). Deploy: Vercel + Render + TiDB (D8; `docs/DEPLOY.md`)
 
 ## Comandos
 
 **Laravel (raiz)**
 - Testes: `php artisan test` · um só: `--filter=<nome>`
 - Formatação: `./vendor/bin/pint`
-- Dev: `composer run dev` (ou `php artisan serve`, porta 8000)
+- Dev: `php artisan serve` (porta 8000); `composer run dev` é só um atalho para o mesmo
 
 **Next.js (`web/`)**
 - Lint: `npm run lint` · Tipos: `npx next typegen && npx tsc --noEmit`

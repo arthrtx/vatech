@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { Pedido } from "@/lib/api";
 import { filtrar } from "@/lib/busca";
-import { estados, subtipos, tipos } from "@/lib/rotulos";
+import { estados, formatarData, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import AnexosDoPedido from "./AnexosDoPedido";
 import PontoUrgente from "./PontoUrgente";
@@ -14,6 +14,8 @@ import { botaoPerigo, botaoSec } from "./ui";
 
 interface Props {
   pedidos: Pedido[];
+  /** Primeiro carregamento em curso: mostra "A carregar" em vez do estado vazio. */
+  carregando?: boolean;
   formulario?: ReactNode;
   /** Se existirem, os pedidos pendentes mostram "Editar" e "Apagar". */
   onEditar?: (p: Pedido) => void;
@@ -24,7 +26,7 @@ const botaoAcao = `${botaoSec} min-h-9 px-3 py-1`;
 const botaoApagar = `${botaoPerigo} min-h-9 px-3 py-1`;
 
 /** `formulario` (opcional) fica à esquerda; pesquisa e filtros ao lado, a lista por baixo. */
-export default function ListaPedidos({ pedidos, formulario, onEditar, onApagar }: Props) {
+export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar }: Props) {
   const [aApagar, setAApagar] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
   const [filtros, setFiltros] = useState(filtrosVazios);
@@ -61,7 +63,11 @@ export default function ListaPedidos({ pedidos, formulario, onEditar, onApagar }
           onLimpar={() => setFiltros(filtrosVazios)}
         />
       )}
-      {visiveis.length === 0 ? (
+      {carregando && pedidos.length === 0 ? (
+        <p role="status" className="text-texto-suave">
+          A carregar pedidos...
+        </p>
+      ) : visiveis.length === 0 ? (
         <p className="text-texto-suave">
           {pedidos.length === 0
             ? "Ainda não há pedidos."
@@ -80,7 +86,7 @@ export default function ListaPedidos({ pedidos, formulario, onEditar, onApagar }
                 {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""} · {estados[p.estado]}
               </p>
               <p className="text-sm text-texto-suave">
-                {p.data_inicio} a {p.data_fim}
+                {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
               </p>
               {p.observacao && <p className="mt-1 break-words text-sm">{p.observacao}</p>}
               <AnexosDoPedido pedidoId={p.id} anexos={p.anexos} />

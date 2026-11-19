@@ -12,7 +12,7 @@ class StorePedidoRequest extends FormRequest
         return [
             'tipo' => ['required', Rule::in(['ferias', 'ausencia', 'licenca']), function ($atributo, $valor, $falha) {
                 if ($valor === 'ferias' && $this->user()?->papel === 'estagiario') {
-                    $falha('Estagiarios nao podem pedir ferias.');
+                    $falha('Estagiários não podem pedir férias.');
                 }
             }],
             'subtipo' => ['nullable', Rule::in(['medica', 'documentacao', 'falta_justificada'])],
