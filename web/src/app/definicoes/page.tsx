@@ -327,7 +327,7 @@ function DatasEstagio({ user, atualizarUser }: { user: User; atualizarUser: (u: 
     inicio && fim && fim < inicio ? { estagio_fim: ["A data de fim não pode ser anterior à de início."] } : {};
 
   return (
-    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-estagio" className={`${cartao} md:max-w-xl`}>
+    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-estagio" className={`${cartao} relative z-10 md:max-w-xl`}>
       <h2 id="def-estagio" className="text-lg font-semibold">
         Datas do estágio
       </h2>

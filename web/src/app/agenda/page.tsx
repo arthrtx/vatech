@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Agenda from "@/components/Agenda";
-import { api, mensagemDeErro, type PedidoAgenda } from "@/lib/api";
+import { api, mensagemDeErro, type PedidoAgenda, type Presenca } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { hojeIso, intervaloDoMes, mesDe, type Mes } from "@/lib/agenda";
+import { estagiosDe, hojeIso, intervaloDoMes, mesDe, type Estagio, type Mes } from "@/lib/agenda";
 import { erro as erroCls } from "@/components/ui";
 
 function Conteudo() {
@@ -33,6 +33,41 @@ function Conteudo() {
     };
   }, [de, ate, chave, versao]);
 
+  // Presenças do intervalo (a API devolve só as próprias a quem não é admin).
+  const [pres, setPres] = useState<{ chave: string; lista: Presenca[]; erro: boolean } | null>(null);
+  const papel = user?.papel;
+  const veTodasPresencas = papel === "admin" || papel === "estagiario";
+  useEffect(() => {
+    // O funcionário não tem presenças (a API responde 403): nem se pede.
+    if (!veTodasPresencas) return;
+    let vivo = true;
+    api
+      .presencas(de, ate)
+      .then((lista) => vivo && setPres({ chave, lista, erro: false }))
+      .catch(() => vivo && setPres({ chave, lista: [], erro: true }));
+    return () => {
+      vivo = false;
+    };
+  }, [de, ate, chave, veTodasPresencas]);
+  const presencas = pres?.chave === chave ? pres.lista : [];
+  const erroPresencas = pres?.chave === chave && pres.erro;
+
+  // Períodos de estágio: o próprio estagiário, ou todos os estagiários para o admin.
+  const admin = user?.papel === "admin";
+  const [equipa, setEquipa] = useState<Estagio[]>([]);
+  useEffect(() => {
+    if (!admin) return;
+    let vivo = true;
+    api
+      .funcionarios()
+      .then((l) => vivo && setEquipa(estagiosDe(l)))
+      .catch(() => vivo && setEquipa([]));
+    return () => {
+      vivo = false;
+    };
+  }, [admin]);
+  const estagios: Estagio[] = admin ? equipa : user ? estagiosDe([user]) : [];
+
   // A carregar enquanto a resposta guardada nao for do intervalo pedido.
   const aCarregar = res?.chave !== chave;
   const erro = aCarregar ? null : res.erro;
@@ -46,9 +81,16 @@ function Conteudo() {
           {erro}
         </p>
       )}
+      {erroPresencas && (
+        <p role="alert" className={erroCls}>
+          Não foi possível carregar as presenças.
+        </p>
+      )}
       <Agenda
+        presencas={presencas}
+        estagios={estagios}
         pedidos={pedidos}
-        admin={user?.papel === "admin"}
+        admin={admin}
         nomeProprio={user?.nome}
         aCarregar={aCarregar}
         comErro={erro !== null}

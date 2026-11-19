@@ -8,6 +8,7 @@ import { dataPt, horaDe } from "@/lib/presencas";
 import { IconeAgenda, IconePedidos } from "../Icones";
 import { acao, acaoDestaque, botaoSec, erro as erroCls, vidro } from "../ui";
 import Cabecalho from "./Cabecalho";
+import ConfirmarPresenca from "./ConfirmarPresenca";
 
 type Estado = { fase: "a-carregar" } | { fase: "erro"; msg: string } | { fase: "ok"; presenca: Presenca | null };
 
@@ -17,6 +18,7 @@ const botaoPresenca =
 function CartaoPresenca() {
   const [estado, setEstado] = useState<Estado>({ fase: "a-carregar" });
   const [aMarcar, setAMarcar] = useState(false);
+  const [pergunta, setPergunta] = useState<"entrada" | "saida" | null>(null);
   const [erroMarcar, setErroMarcar] = useState<string | null>(null);
   const [volta, setVolta] = useState(0);
 
@@ -37,6 +39,7 @@ function CartaoPresenca() {
   }, []);
 
   async function marcar(saida: boolean) {
+    setPergunta(null);
     setErroMarcar(null);
     setAMarcar(true);
     try {
@@ -70,7 +73,7 @@ function CartaoPresenca() {
       <>
         <p>Ainda não marcaste a entrada de hoje.</p>
         <div>
-          <button type="button" disabled={aMarcar} className={botaoPresenca} onClick={() => void marcar(false)}>
+          <button type="button" disabled={aMarcar} className={botaoPresenca} onClick={() => setPergunta("entrada")}>
             {aMarcar ? "A marcar..." : "Marcar entrada"}
           </button>
         </div>
@@ -83,7 +86,7 @@ function CartaoPresenca() {
           Em curso. Entraste às <strong>{horaDe(estado.presenca.entrada)}</strong>.
         </p>
         <div>
-          <button type="button" disabled={aMarcar} className={botaoPresenca} onClick={() => void marcar(true)}>
+          <button type="button" disabled={aMarcar} className={botaoPresenca} onClick={() => setPergunta("saida")}>
             {aMarcar ? "A marcar..." : "Marcar saída"}
           </button>
         </div>
@@ -103,6 +106,13 @@ function CartaoPresenca() {
         Presença de hoje
       </h2>
       {corpo}
+      {pergunta && (
+        <ConfirmarPresenca
+          saida={pergunta === "saida"}
+          onConfirmar={() => void marcar(pergunta === "saida")}
+          onCancelar={() => setPergunta(null)}
+        />
+      )}
       {erroMarcar && (
         <p role="alert" className={erroCls}>
           {erroMarcar}

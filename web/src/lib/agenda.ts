@@ -1,4 +1,4 @@
-import type { PedidoAgenda as Pedido, TipoPedido } from "./api";
+import type { PedidoAgenda as Pedido, Presenca, TipoPedido } from "./api";
 
 // Datas como "YYYY-MM-DD": comparam-se como texto, sem fusos horarios.
 export interface Mes {
@@ -120,3 +120,26 @@ export const diasSemanaLongos = ["Domingo", "Segunda-feira", "Terça-feira", "Qu
 /** "2026-11-19" -> "Quinta-feira, 19 de novembro" */
 export const nomeDoDia = (iso: string) =>
   `${diasSemanaLongos[diaUtc(iso).getUTCDay()]}, ${Number(iso.slice(8, 10))} de ${mesesPt[Number(iso.slice(5, 7)) - 1].toLowerCase()}`;
+
+/** Período de estágio de uma pessoa (datas Y-m-d); sem datas = ainda não definido. */
+export interface Estagio {
+  id: number;
+  nome: string;
+  inicio: string | null;
+  fim: string | null;
+}
+
+/** Estagiários com nome, a partir de utilizadores da API (só papel estagiario). */
+export const estagiosDe = (
+  utilizadores: { id: number; nome: string; papel: string; estagio_inicio?: string | null; estagio_fim?: string | null }[],
+): Estagio[] =>
+  utilizadores
+    .filter((u) => u.papel === "estagiario")
+    .map((u) => ({ id: u.id, nome: u.nome, inicio: u.estagio_inicio ?? null, fim: u.estagio_fim ?? null }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
+
+/** O dia cai dentro do período do estágio (limites inclusivos). */
+export const estagioCobre = (e: Estagio, iso: string) => !!e.inicio && !!e.fim && e.inicio <= iso && iso <= e.fim;
+
+/** Presenças do dia (compara só a parte da data). */
+export const presencasDoDia = (lista: Presenca[], iso: string) => lista.filter((p) => p.data.slice(0, 10) === iso);

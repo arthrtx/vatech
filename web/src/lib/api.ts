@@ -27,6 +27,8 @@ export interface Presenca {
   data: string;
   entrada: string;
   saida: string | null;
+  /** true quando registada pelo botão «Esqueci de marcar presença». */
+  atrasada: boolean;
 }
 
 export interface Anexo {
@@ -191,6 +193,8 @@ export const api = {
   presencaHoje: async () => (await request<{ data: Presenca | null }>("GET", "/presencas/hoje")).data,
   marcarEntrada: async () => (await request<{ data: Presenca }>("POST", "/presencas/entrada")).data,
   marcarSaida: async () => (await request<{ data: Presenca }>("POST", "/presencas/saida")).data,
+  marcarPresencaAtrasada: async (corpo: { data: string; entrada: string; saida: string }) =>
+    (await request<{ data: Presenca }>("POST", "/presencas/atrasada", corpo)).data,
   presencas: async (de: string, ate: string, userId?: number) =>
     (await request<{ data: Presenca[] }>("GET", `/presencas?de=${de}&ate=${ate}${userId ? `&user_id=${userId}` : ""}`)).data,
   pedidos: async (estado?: EstadoPedido) =>
