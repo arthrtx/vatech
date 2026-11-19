@@ -50,7 +50,7 @@ function Conteudo() {
       <h1 className="text-2xl font-semibold">Funcionários</h1>
       <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
       {lista !== null && visiveis.length === 0 && (
-        <p className="text-zinc-700">
+        <p className="text-texto-suave">
           {lista.length === 0 ? "Ainda não há funcionários." : `Nenhum resultado para "${busca.trim()}"`}
         </p>
       )}
@@ -70,7 +70,7 @@ function Conteudo() {
           />
         ))}
       </ul>
-      <form onSubmit={criar} className="flex max-w-xl flex-col gap-4" aria-labelledby="novo-func">
+      <form onSubmit={criar} className="flex max-w-xl flex-col gap-4 rounded-cartao bg-painel p-5 shadow-suave" aria-labelledby="novo-func">
         <h2 id="novo-func" className="text-lg font-semibold">
           Novo funcionário
         </h2>
