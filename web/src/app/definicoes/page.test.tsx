@@ -211,7 +211,7 @@ describe("Definições", () => {
   });
 });
 
-describe("Limites de dias por ano", () => {
+describe("Limites de dias úteis por ano", () => {
   const lista = [
     { tipo: "ferias" as const, dias_ano: 22, transitados: 0, usados: 0 },
     { tipo: "ausencia" as const, dias_ano: null, transitados: 0, usados: 0 },
@@ -227,7 +227,7 @@ describe("Limites de dias por ano", () => {
 
   it("só o admin vê a secção", () => {
     render(<DefinicoesPage />);
-    expect(screen.queryByRole("form", { name: "Limites de dias por ano" })).toBeNull();
+    expect(screen.queryByRole("form", { name: "Limites de dias úteis por ano" })).toBeNull();
     expect(api.limites).not.toHaveBeenCalled();
   });
 
@@ -239,7 +239,7 @@ describe("Limites de dias por ano", () => {
       { tipo: "licenca", dias_ano: 5, transitados: 0, usados: 0 },
     ]);
     render(<DefinicoesPage />);
-    const f = await screen.findByRole("form", { name: "Limites de dias por ano" });
+    const f = await screen.findByRole("form", { name: "Limites de dias úteis por ano" });
     await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
     expect((within(f).getByLabelText("Ausência") as HTMLInputElement).value).toBe("");
     expect((within(f).getByLabelText("Licença") as HTMLInputElement).value).toBe("5");
@@ -258,7 +258,7 @@ describe("Limites de dias por ano", () => {
     comoAdmin();
     vi.mocked(api.guardarLimites).mockRejectedValue(new ApiError(500, "Falhou."));
     render(<DefinicoesPage />);
-    const f = await screen.findByRole("form", { name: "Limites de dias por ano" });
+    const f = await screen.findByRole("form", { name: "Limites de dias úteis por ano" });
     await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
     fireEvent.change(within(f).getByLabelText("Férias"), { target: { value: "" } });
     fireEvent.click(guardar(f));

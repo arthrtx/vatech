@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PedidoForm from "./PedidoForm";
 import PedidosAdmin from "./PedidosAdmin";
+import { diasUteis } from "@/lib/diasUteis";
+import { somaDias } from "@/lib/agenda";
 import { ApiError, api, type Papel, type Pedido } from "@/lib/api";
 
 let papelAtual: Papel = "funcionario";
@@ -69,6 +71,13 @@ describe("PedidoForm", () => {
 
 describe("PedidoForm limites", () => {
   const ano = new Date().getFullYear();
+  /** Período a partir de 1 jan do ano seguinte com exactamente n dias úteis. */
+  const periodo = (n: number): [string, string] => {
+    const de = `${ano + 1}-01-01`;
+    let ate = de;
+    while (diasUteis(de, ate) < n) ate = somaDias(ate, 1);
+    return [de, ate];
+  };
   const datas = (de: string, ate: string) => {
     fireEvent.change(screen.getByLabelText("Data de início"), { target: { value: de } });
     fireEvent.change(screen.getByLabelText("Data de fim"), { target: { value: ate } });
@@ -76,10 +85,10 @@ describe("PedidoForm limites", () => {
 
   it("mostra o saldo do tipo escolhido e nada quando não há limite", async () => {
     render(<PedidoForm />);
-    expect(await screen.findByText(`Férias: 8 de 22 dias usados em ${ano} (restam 14)`)).toBeTruthy();
+    expect(await screen.findByText(`Férias: 8 de 22 dias úteis usados em ${ano} (restam 14)`)).toBeTruthy();
     fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
     fireEvent.click(screen.getByRole("option", { name: "Ausência" }));
-    expect(screen.queryByText(/dias usados em/)).toBeNull();
+    expect(screen.queryByText(/dias úteis usados em/)).toBeNull();
   });
 
   it("mostra o cúmulo com os dias transitados e conta-os no aviso de exceder", async () => {
@@ -88,20 +97,20 @@ describe("PedidoForm limites", () => {
       prazo_ferias: "2026-04-30",
     });
     render(<PedidoForm />);
-    expect(await screen.findByText(`Férias: 8 de 30 dias usados em ${ano} (22 do ano + 8 transitados; restam 22)`)).toBeTruthy();
-    datas(`${ano + 1}-01-01`, `${ano + 1}-01-22`);
+    expect(await screen.findByText(`Férias: 8 de 30 dias úteis usados em ${ano} (22 do ano + 8 transitados; restam 22)`)).toBeTruthy();
+    datas(...periodo(22));
     expect(screen.queryByText(/só restam/)).toBeNull();
-    datas(`${ano + 1}-01-01`, `${ano + 1}-01-23`);
-    expect(screen.getByText(`Este pedido tem 23 dias e só restam 22 de férias em ${ano}.`)).toBeTruthy();
+    datas(...periodo(23));
+    expect(screen.getByText(`Este pedido tem 23 dias úteis e só restam 22 de férias em ${ano}.`)).toBeTruthy();
   });
 
   it("avisa antes de submeter quando o pedido excede o que resta", async () => {
     render(<PedidoForm />);
     await screen.findByText(/restam 14/);
     expect(screen.queryByText(/só restam/)).toBeNull();
-    datas(`${ano + 1}-01-01`, `${ano + 1}-01-20`);
-    expect(screen.getByText(`Este pedido tem 20 dias e só restam 14 de férias em ${ano}.`)).toBeTruthy();
-    datas(`${ano + 1}-01-01`, `${ano + 1}-01-10`);
+    datas(...periodo(20));
+    expect(screen.getByText(`Este pedido tem 20 dias úteis e só restam 14 de férias em ${ano}.`)).toBeTruthy();
+    datas(...periodo(10));
     expect(screen.queryByText(/só restam/)).toBeNull();
   });
 
