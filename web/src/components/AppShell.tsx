@@ -27,8 +27,11 @@ export default function AppShell({
     return <p className="p-6 text-zinc-700">A carregar...</p>;
   }
 
-  const links = [{ href: "/", texto: user.papel === "admin" ? "Pedidos" : "Os meus pedidos" }];
-  links.push({ href: "/agenda", texto: "Agenda" });
+  const links = [
+    { href: "/dashboard", texto: "Dashboard" },
+    { href: "/", texto: user.papel === "admin" ? "Pedidos" : "Os meus pedidos" },
+    { href: "/agenda", texto: "Agenda" },
+  ];
   if (user.papel === "admin") links.push({ href: "/funcionarios", texto: "Funcionários" });
 
   return (
