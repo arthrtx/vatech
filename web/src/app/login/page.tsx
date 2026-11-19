@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { mensagemDeErro } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -69,6 +70,12 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <Link
+              href={email ? `/recuperar?email=${encodeURIComponent(email)}` : "/recuperar"}
+              className="mt-2 inline-block text-sm text-primaria-forte underline underline-offset-2 hover:text-primaria focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria dark:text-texto"
+            >
+              Esqueceu-se da palavra-passe?
+            </Link>
           </div>
           {erro && (
             <p role="alert" className={erroCls}>
