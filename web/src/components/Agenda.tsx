@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { PedidoAgenda as Pedido, TipoPedido } from "@/lib/api";
+import { aplicarFiltrosAgenda, contarAtivos, type FiltrosAgenda } from "@/lib/filtros";
 import {
   celulasDoMes,
   cobreDia,
   diasDoPedido,
-  filtrar,
   haSobreposicao,
   hojeIso,
   mesAnterior,
@@ -21,6 +21,8 @@ import {
 } from "@/lib/agenda";
 import { subtipos, tipos } from "@/lib/rotulos";
 import { botaoSec, input, label } from "./ui";
+import GrupoChips from "./GrupoChips";
+import PainelFiltros from "./PainelFiltros";
 
 const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
@@ -57,8 +59,7 @@ export default function Agenda({
   useEffect(() => {
     aoMudarMes?.(mes);
   }, [mes, aoMudarMes]);
-  const [tipo, setTipo] = useState<TipoPedido | "">("");
-  const [userId, setUserId] = useState("");
+  const [filtros, setFiltros] = useState<FiltrosAgenda>({ tipos: [], estados: [], funcionarioId: null });
   const [sel, setSel] = useState<{ iso: string; pedidoId?: number } | null>(null);
   const origem = useRef<HTMLElement | null>(null);
   const painel = useRef<HTMLElement>(null);
@@ -91,14 +92,14 @@ export default function Agenda({
     return [...m].sort((a, b) => a[1].localeCompare(b[1], "pt"));
   }, [pedidos, nomeProprio]);
 
-  const filtrados = useMemo(
-    () => filtrar(pedidos, { tipo: tipo || undefined, userId: userId ? Number(userId) : undefined }),
-    [pedidos, tipo, userId],
-  );
+  const filtrados = useMemo(() => aplicarFiltrosAgenda(visiveis(pedidos), filtros), [pedidos, filtros]);
   const doMes = useMemo(
     () => filtrados.filter((p) => tocaMes(p, mes)).sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)),
     [filtrados, mes],
   );
+  const totalMes = useMemo(() => visiveis(pedidos).filter((p) => tocaMes(p, mes)).length, [pedidos, mes]);
+  const ativos = contarAtivos(filtros);
+  const limpar = () => setFiltros({ tipos: [], estados: [], funcionarioId: null });
   const semanas = useMemo(() => {
     const c = celulasDoMes(mes);
     return Array.from({ length: c.length / 7 }, (_, i) => c.slice(i * 7, i * 7 + 7));
@@ -124,35 +125,49 @@ export default function Agenda({
         <button type="button" className={botaoSec} onClick={() => setMes(mesDe(hoje))}>
           Hoje
         </button>
-        <div>
-          <label htmlFor="ag-tipo" className={label}>
-            Tipo
-          </label>
-          <select id="ag-tipo" className={input} value={tipo} onChange={(e) => setTipo(e.target.value as TipoPedido | "")}>
-            <option value="">Todos</option>
-            {Object.entries(tipos).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </div>
-        {admin && (
-          <div>
-            <label htmlFor="ag-func" className={label}>
-              Funcionário
-            </label>
-            <select id="ag-func" className={input} value={userId} onChange={(e) => setUserId(e.target.value)}>
-              <option value="">Todos</option>
-              {pessoas.map(([id, nome]) => (
-                <option key={id} value={id}>
-                  {nome}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
+
+      {!aCarregar && !comErro && (totalMes > 0 || ativos > 0) && (
+        <PainelFiltros ativos={ativos} total={totalMes} mostrados={doMes.length} rotuloItens="pedidos neste mês" onLimpar={limpar}>
+          <GrupoChips
+            legenda="Tipo"
+            opcoes={(Object.keys(tipos) as TipoPedido[]).map((valor) => ({ valor, rotulo: tipos[valor] }))}
+            selecionados={filtros.tipos}
+            onChange={(t) => setFiltros((f) => ({ ...f, tipos: t }))}
+          />
+          {admin && (
+            <GrupoChips
+              legenda="Estado"
+              opcoes={[
+                { valor: "pendente", rotulo: "Pendente" },
+                { valor: "aprovado", rotulo: "Aprovado" },
+              ]}
+              selecionados={filtros.estados}
+              onChange={(e) => setFiltros((f) => ({ ...f, estados: e }))}
+            />
+          )}
+          {admin && (
+            <div>
+              <label htmlFor="ag-func" className={label}>
+                Funcionário
+              </label>
+              <select
+                id="ag-func"
+                className={`${input} min-h-11`}
+                value={filtros.funcionarioId ?? ""}
+                onChange={(e) => setFiltros((f) => ({ ...f, funcionarioId: e.target.value ? Number(e.target.value) : null }))}
+              >
+                <option value="">Todos</option>
+                {pessoas.map(([id, nome]) => (
+                  <option key={id} value={id}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </PainelFiltros>
+      )}
 
       <p className="text-sm text-texto-suave">Cheio: aprovado. Tracejado: pendente. Pedidos recusados não aparecem.</p>
 
@@ -310,7 +325,7 @@ export default function Agenda({
         ) : comErro ? (
           <p className="text-texto-suave">Não foi possível carregar os pedidos.</p>
         ) : doMes.length === 0 ? (
-          <p className="text-texto-suave">Sem pedidos neste mês.</p>
+          <p className="text-texto-suave">{ativos > 0 && totalMes > 0 ? "Sem resultados com estes filtros." : "Sem pedidos neste mês."}</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {doMes.map((p) => (
