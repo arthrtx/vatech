@@ -17,7 +17,7 @@ export default function WidgetContagem({ pedidos, hoje }: { pedidos: Pedido[] | 
   const progresso = aDecorrer ? 100 : Math.max(4, Math.round(((60 - Math.min(falta, 60)) / 60) * 100));
 
   return (
-    <section aria-labelledby="w-contagem" className={`${vidro} arco brilho-laranja flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:80ms]`}>
+    <section aria-labelledby="w-contagem" className={`${vidro} arco efeito-saldo flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:80ms]`}>
       <h2 id="w-contagem" className="font-mono text-sm font-semibold uppercase tracking-wide text-texto-suave">
         {aDecorrer ? `${tipos[proxima.tipo]} a decorrer` : `Faltam para ${tipos[proxima.tipo].toLowerCase()}`}
       </h2>

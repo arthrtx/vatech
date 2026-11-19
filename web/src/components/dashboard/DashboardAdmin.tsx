@@ -77,6 +77,7 @@ export default function DashboardAdmin() {
       <div className="grid gap-5 lg:grid-cols-3">
       {agenda.dados && <WidgetSemana agenda={agenda.dados} hoje={hoje} />}
       <BlocoEstado
+        efeito="recentes"
         className={agenda.dados ? "lg:col-span-2" : "lg:col-span-3"}
         titulo="Ausentes hoje e nos próximos 30 dias"
         fonte={agenda}

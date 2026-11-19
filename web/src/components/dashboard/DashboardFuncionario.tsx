@@ -48,6 +48,7 @@ export default function DashboardFuncionario({ user }: { user: User }) {
 
       <div className="grid gap-5 lg:grid-cols-2">
       <BlocoEstado
+        efeito="recentes"
         titulo="As minhas próximas ausências"
         fonte={pedidos}
         mensagemErro="Não foi possível carregar os seus pedidos. Verifique a ligação."
