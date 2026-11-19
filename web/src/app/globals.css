@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Variante dark: segue o atributo data-tema que lib/tema.ts põe no <html>. */
+@custom-variant dark (&:where([data-tema="escuro"], [data-tema="escuro"] *));
+
 /*
  * Paleta Setuptech (nov/2026): #FF0B71 #08F2B0 #1A181E #2D262D #FFFFFF; fundo, campo,
  * suave e linhas são tons claros derivados de #2D262D (aprovados pelo dono).
@@ -8,7 +11,7 @@
  * TODO: token em falta (família de fonte da referência não identificada; fica system-ui).
  */
 @theme {
-  --color-fundo: #e7e4e8;
+  --color-fundo: #dbd7dc; /* ajustado: um pouco mais escuro, a pedido do dono */
   --color-painel: #ffffff;
   --color-campo: #f4f2f5;
   --color-trilho: #e7e4e8;
@@ -23,6 +26,15 @@
   --color-texto-suave: #5c555d; /* ajustado: medido #9998a0 não passa 4.5:1 */
   --color-linha: #e7e4e8;
   --color-linha-forte: #8a838b; /* ajustado: borda de campo com 3:1 sobre branco */
+  /* Superfícies escuras fixas (menu lateral, destaque do Dashboard, dicas, fundo dos modais). */
+  --color-barra: #1a181e;
+  /* Cores quentes do fundo do Dashboard, medidas no dashboard claro do HUROH (09-dashboard-claro.png). */
+  --color-creme: #fbf2ed;
+  --color-pessego: #fcbaa4;
+  --color-laranja: #f0a76d;
+  /* Brilho violeta dos widgets e arcos de canto, medidos no HUROH claro (claro-widgets.png, 09-dashboard-claro.png). */
+  --color-violeta: #d7a6e3;
+  --color-arco: #b3a59d;
 
   --radius-controlo: 0.75rem;
   --radius-cartao: 1.5rem;
@@ -30,10 +42,214 @@
   --radius-painel: 2.5rem;
 
   --shadow-suave: 0 12px 32px -14px rgb(26 24 30 / 0.28);
+
+  /* Movimento do Dashboard: entrada curta dos widgets e brilho de fundo lento. */
+  --animate-subir: subir 0.5s ease-out both;
+  --animate-flutuar: flutuar 18s ease-in-out infinite alternate;
+
+  @keyframes subir {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes flutuar {
+    to {
+      transform: translate(6%, 8%) scale(1.1);
+    }
+  }
+}
+
+/*
+ * Modo escuro, como o dashboard escuro do HUROH (01-dashboard.png): base quase preta, brilhos
+ * violeta, laranja e rosa por trás dos widgets. Rosa e verde ficam iguais.
+ * Contrastes: texto 15:1 e texto-suave 7:1 sobre painel; branco sobre primária 5:1;
+ * primária e linha-forte 3.5:1 sobre painel (anel de foco e bordas de campo).
+ */
+[data-tema="escuro"] {
+  color-scheme: dark;
+  --color-fundo: #050507;
+  --color-painel: #131318;
+  --color-campo: #1c1c23;
+  --color-trilho: #26262f;
+  --color-primaria: #4263eb;
+  --color-primaria-forte: #3b5bdb;
+  --color-primaria-escura: #3b5bdb;
+  --color-primaria-suave: #1f2140;
+  --color-rosa-suave: #4a1530;
+  --color-texto: #ececf1;
+  --color-texto-suave: #a09dab;
+  --color-linha: #2a2a33;
+  --color-linha-forte: #6d6a7a;
+  --color-barra: #09090c;
+  --color-creme: #08080c;
+  --color-pessego: #3b1f86;
+  --color-laranja: #c2551f;
+  --color-violeta: #4b3bd1;
+  --color-arco: #e4e4ec;
+  --shadow-suave: 0 12px 32px -14px rgb(0 0 0 / 0.8);
+}
+/*
+ * Efeitos dos widgets do Dashboard, um por tipo de widget do HUROH (01-dashboard.png e
+ * 09-dashboard-claro.png, cores medidas ao pixel). Cada efeito traz a sua cor de texto
+ * secundário, para manter 4.5:1 sobre o próprio fundo.
+ */
+:root {
+  /* Data: bloco rosa com mancha ao centro (claro). */
+  --efeito-data: radial-gradient(60% 55% at 50% 58%, #ff4080 0%, rgb(252 188 201 / 0.95) 48%, rgb(249 221 226 / 0.9) 78%);
+  --efeito-data-texto: #1a181e;
+  /* Saldo: brilho laranja que sobe do fundo. */
+  --efeito-saldo: radial-gradient(95% 120% at 25% 105%, #f2b886 0%, rgb(242 194 150 / 0.6) 40%, rgb(230 219 219 / 0.35) 80%);
+  /* Este mês: vidro cinzento meio transparente, com pêssego no canto. */
+  --efeito-mes: linear-gradient(160deg, rgb(73 74 78 / 0.3) 0%, rgb(192 183 180 / 0.55) 50%, rgb(240 167 109 / 0.5) 100%);
+  /* Cartão: metal escovado prateado. */
+  --efeito-metal: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(125deg, #f3f4f6 0%, #eceef1 42%, #fbfbfc 52%, #e6e8ec 100%); /* ajustado: mais claro, a pedido do dono */
+  /* Recentes: vidro cinzento com painel interior claro. */
+  /* ajustado: cinza mais claro, a pedido do dono */
+  --efeito-recentes: linear-gradient(160deg, rgb(226 225 228 / 0.75) 0%, rgb(236 230 226 / 0.65) 55%, rgb(240 167 109 / 0.45) 100%);
+  --efeito-interior: rgb(255 255 255 / 0.55);
+  --efeito-suave: #433d44;
+  /* Vidro transparente (Este mês do HUROH, captura do Arthur 19/11): deixa ver o fundo. */
+  --efeito-transparente: rgb(255 255 255 / 0.3);
+  /* Linha fina por baixo do cartão de boas-vindas. */
+  --efeito-linha: linear-gradient(90deg, var(--color-rosa), var(--color-violeta) 55%, transparent);
+}
+[data-tema="escuro"] {
+  /* Data: preto que desce para azul. */
+  --efeito-data: linear-gradient(180deg, #05070a 0%, #05070a 38%, #0d1a3a 68%, #5577cc 100%);
+  --efeito-data-texto: #ffffff;
+  --efeito-saldo: radial-gradient(70% 120% at 0% 100%, #b56b13 0%, rgb(181 107 19 / 0.45) 32%, transparent 62%),
+    linear-gradient(#16161a, #16161a);
+  --efeito-mes: linear-gradient(165deg, rgb(145 145 154 / 0.45) 0%, #30318e 45%, #192758 100%);
+  --efeito-metal: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(125deg, #222225 0%, #1c1c1e 48%, #2c2c30 60%, #161618 100%);
+  /* Vidro escuro com um brilho azul no canto, em vez do azul chapado. */
+  --efeito-recentes: radial-gradient(90% 70% at 100% 0%, color-mix(in oklab, var(--color-primaria) 32%, transparent), transparent 70%),
+    radial-gradient(70% 60% at 0% 100%, color-mix(in oklab, var(--color-violeta) 22%, transparent), transparent 70%),
+    linear-gradient(160deg, var(--color-campo) 0%, var(--color-painel) 100%);
+  --efeito-interior: rgb(255 255 255 / 0.06);
+  --efeito-suave: #c9cbe8;
+  --efeito-transparente: rgb(255 255 255 / 0.045);
+}
+
+/* O espaço entre o anel de foco e o controlo é branco por defeito; no escuro usa o painel. */
+[data-tema="escuro"] * {
+  --tw-ring-offset-color: var(--color-painel);
 }
 
 body {
   background: var(--color-fundo);
   color: var(--color-texto);
   font-family: system-ui, sans-serif;
+}
+
+/*
+ * Fundo dos widgets à HUROH: o vidro leva um brilho de cor num canto.
+ * Ficam por cima da cor de fundo do vidro (bg-painel/45), por isso o texto continua legível.
+ */
+@utility brilho-laranja {
+  background-image: radial-gradient(85% 120% at 0% 100%, color-mix(in oklab, var(--color-laranja) 70%, transparent), transparent 70%);
+}
+@utility brilho-rosa {
+  background-image: radial-gradient(80% 120% at 0% 0%, color-mix(in oklab, var(--color-rosa) 22%, transparent), transparent 70%);
+}
+@utility brilho-violeta {
+  background-image: radial-gradient(90% 120% at 100% 0%, color-mix(in oklab, var(--color-violeta) 55%, transparent), transparent 70%);
+}
+
+/* Arcos de canto do HUROH: traço fora do cartão, em cima à direita e em baixo à esquerda. Decorativo. */
+@utility arco {
+  position: relative;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    width: 3.25rem;
+    height: 3.25rem;
+    pointer-events: none;
+    border: 0 solid var(--color-arco);
+  }
+  &::after {
+    top: -0.4rem;
+    right: -0.4rem;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-top-right-radius: calc(var(--radius-cartao) + 0.4rem);
+  }
+  &::before {
+    bottom: -0.4rem;
+    left: -0.4rem;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-bottom-left-radius: calc(var(--radius-cartao) + 0.4rem);
+  }
+}
+
+@utility efeito-data {
+  background-image: var(--efeito-data);
+  color: var(--efeito-data-texto);
+}
+@utility efeito-saldo {
+  background-image: var(--efeito-saldo);
+  --color-texto-suave: var(--efeito-suave);
+}
+@utility efeito-mes {
+  background-image: var(--efeito-mes);
+  --color-texto-suave: var(--efeito-suave);
+}
+@utility efeito-metal {
+  background-image: var(--efeito-metal);
+}
+@utility efeito-recentes {
+  background-image: var(--efeito-recentes);
+  --color-texto-suave: var(--efeito-suave);
+}
+@utility efeito-interior {
+  background-color: var(--efeito-interior);
+}
+@utility efeito-linha {
+  background-image: var(--efeito-linha);
+}
+@utility efeito-transparente {
+  background-color: var(--efeito-transparente);
+  background-image: linear-gradient(160deg, rgb(255 255 255 / 0.08), transparent 60%);
+}
+
+/*
+ * Barra de scroll fina para as listas dos widgets. Usa o texto-suave do sítio onde está,
+ * por isso acompanha o tema e os efeitos (dentro de efeito-recentes fica no efeito-suave).
+ * Chrome, Edge e Safari usam os pseudo-elementos; o Firefox só aceita largura e cor.
+ */
+@utility scroll-fino {
+  --scroll-polegar: color-mix(in oklab, var(--color-texto-suave) 35%, transparent);
+  --scroll-polegar-ativo: color-mix(in oklab, var(--color-texto-suave) 60%, transparent);
+  scrollbar-gutter: stable;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: calc(var(--radius-cartao) / 2);
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--scroll-polegar);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover,
+  &::-webkit-scrollbar-thumb:active {
+    background-color: var(--scroll-polegar-ativo);
+  }
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-polegar) transparent;
+  }
 }

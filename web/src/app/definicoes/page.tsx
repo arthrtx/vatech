@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
+import EscolhaLocalidade from "@/components/EscolhaLocalidade";
+import EscolhaTema from "@/components/EscolhaTema";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-const cartao = "flex flex-col gap-4 rounded-cartao bg-painel shadow-suave p-4 md:p-6";
+const cartao = "flex flex-col gap-4 rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4 md:p-6";
 const botaoGuardar = `${botao} min-h-10`;
 
 function Campo({ id, rotulo, erros, children }: { id: string; rotulo: string; erros?: string[]; children: React.ReactNode }) {
@@ -255,7 +257,7 @@ function Conteudo() {
       <div className="flex items-center gap-4">
         <span
           aria-hidden="true"
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primaria-suave text-lg font-semibold text-primaria-forte"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primaria-suave text-lg font-semibold text-primaria-forte dark:text-texto"
         >
           {iniciais}
         </span>
@@ -269,6 +271,30 @@ function Conteudo() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
         <DadosConta user={user} atualizarUser={atualizarUser} />
         <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
+      <section aria-labelledby="def-aparencia" className={cartao}>
+        <div>
+          <h2 id="def-aparencia" className="text-lg font-semibold">
+            Aparência
+          </h2>
+          <p className="text-sm text-texto-suave">
+            Claro, escuro ou igual ao sistema. Também podes trocar no botão da lua, ao lado da pesquisa.
+          </p>
+        </div>
+        <EscolhaTema />
+      </section>
+      <section aria-labelledby="def-localidade" className={cartao}>
+        <div>
+          <h2 id="def-localidade" className="text-lg font-semibold">
+            Localidade
+          </h2>
+          <p className="text-sm text-texto-suave">
+            Escolhe o concelho para a Agenda mostrar o feriado municipal. Fica guardado neste navegador.
+          </p>
+        </div>
+        <EscolhaLocalidade />
+      </section>
       </div>
     </div>
   );

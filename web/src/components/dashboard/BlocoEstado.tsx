@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Fonte } from "@/lib/useFonte";
-import { botaoSec, erro as erroCls } from "../ui";
+import { botaoSec, erro as erroCls, vidro } from "../ui";
 
 interface Props<T> {
   titulo: string;
@@ -13,6 +13,10 @@ interface Props<T> {
   vazioTexto: string;
   vazioAcao?: ReactNode;
   children: (dados: T) => ReactNode;
+  /** Classes extra de grelha (ex.: lg:col-span-2). */
+  className?: string;
+  /** "recentes": fundo de cor do HUROH com o conteúdo num painel interior; "vidro": só vidro. */
+  efeito?: "recentes" | "vidro";
 }
 
 /** Um bloco com os 4 estados: a carregar (skeleton), erro, vazio, com dados. */
@@ -26,6 +30,8 @@ export default function BlocoEstado<T>({
   vazioTexto,
   vazioAcao,
   children,
+  className = "",
+  efeito = "vidro",
 }: Props<T>) {
   let corpo: ReactNode;
   if (fonte.erro) {
@@ -45,18 +51,18 @@ export default function BlocoEstado<T>({
             key={i}
             aria-hidden="true"
             data-skeleton
-            className="animate-pulse rounded-md border border-zinc-300 bg-white px-4 py-3 motion-reduce:animate-none"
+            className="animate-pulse rounded-controlo bg-painel/70 px-4 py-3 ring-1 ring-linha motion-reduce:animate-none"
           >
-            <div className="h-4 w-4/5 rounded-md bg-zinc-200" />
-            <div className="mt-2 h-3 w-1/2 rounded-md bg-zinc-200" />
+            <div className="h-4 w-4/5 rounded-controlo bg-trilho" />
+            <div className="mt-2 h-3 w-1/2 rounded-controlo bg-trilho" />
           </li>
         ))}
       </ul>
     );
   } else if (vazio(fonte.dados)) {
     corpo = (
-      <div className="rounded-md border border-dashed border-zinc-400 bg-white p-4 text-sm text-zinc-700">
-        <p className="text-base font-medium text-zinc-900">{vazioTitulo}</p>
+      <div className="rounded-controlo border border-dashed border-linha-forte bg-painel/60 p-4 text-sm text-texto-suave">
+        <p className="text-base font-medium text-texto">{vazioTitulo}</p>
         <p>{vazioTexto}</p>
         {vazioAcao}
       </div>
@@ -66,9 +72,17 @@ export default function BlocoEstado<T>({
   }
 
   return (
-    <section className="flex flex-col gap-2">
+    <section
+      className={`${vidro} ${efeito === "recentes" ? "arco efeito-recentes" : "brilho-violeta"} flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] lg:min-h-0 ${className}`}
+    >
       <h2 className="text-lg font-semibold">{titulo}</h2>
-      {corpo}
+      {efeito === "recentes" ? (
+        <div className="efeito-interior flex flex-col gap-2 rounded-cartao p-3 ring-1 ring-white/50 dark:ring-white/10 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:scroll-fino">
+          {corpo}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 lg:-mx-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-1 lg:scroll-fino">{corpo}</div>
+      )}
     </section>
   );
 }

@@ -4,41 +4,53 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { primeiroNome, saudacao } from "@/lib/saudacao";
+import { primeiroNome } from "@/lib/saudacao";
 import {
   IconeAgenda,
   IconeDashboard,
   IconeDefinicoes,
   IconeFuncionarios,
+  IconeLua,
   IconePedidos,
   IconePesquisa,
   IconeSair,
+  IconeSol,
   IconeUtilizador,
 } from "./Icones";
+import FundoQuente, { classeFundoQuente } from "./FundoQuente";
 import Pesquisa from "./Pesquisa";
+import { useTema } from "@/lib/tema";
 
 // Dica com o nome do item: aparece ao passar o rato ou com foco de teclado.
 // Abaixo do ícone no telemóvel (barra de topo), à direita no desktop (barra lateral).
 const dica =
-  "pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-controlo bg-texto px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:left-full md:top-1/2 md:mt-0 md:ml-3 md:translate-x-0 md:-translate-y-1/2";
+  "pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:left-full md:top-1/2 md:mt-0 md:ml-3 md:translate-x-0 md:-translate-y-1/2";
 // Dica para o avatar na barra de topo: sempre por baixo, alinhada à direita.
 const dicaAbaixo =
-  "pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-controlo bg-texto px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
-const itemInativo = "text-white/85 hover:bg-white/15 hover:text-white";
+  "pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
+// Peças de vidro da barra de topo (relógio, página actual, botões e conta).
+const vidroTopo = "rounded-full bg-painel/55 text-texto ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10";
+const botaoTopo =
+  "group relative flex h-11 w-11 shrink-0 items-center justify-center hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
+const itemInativo = "text-texto-suave hover:bg-primaria-suave hover:text-texto";
 const botaoIcone =
-  "group relative flex h-10 w-10 items-center justify-center rounded-controlo focus:outline-none focus-visible:ring-2 focus-visible:ring-white";
+  "group relative flex h-10 w-10 items-center justify-center rounded-controlo focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
 export default function AppShell({
   children,
   soAdmin = false,
+  ecraInteiro = false,
 }: {
   children: React.ReactNode;
   soAdmin?: boolean;
+  /** Em ecrã grande (lg+) a página cabe na janela, sem scroll; o conteúdo gere o próprio espaço. */
+  ecraInteiro?: boolean;
 }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [pesquisaAberta, setPesquisaAberta] = useState(false);
+  const { escuro, definir: definirTema } = useTema();
   const [agora, setAgora] = useState<Date | null>(null);
   const fecharPesquisa = useCallback(() => setPesquisaAberta(false), []);
 
@@ -77,7 +89,7 @@ export default function AppShell({
   ];
   if (user.papel === "admin") links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
   const definicoes = { href: "/definicoes", texto: "Definições" };
-  const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa" : itemInativo}`;
+  const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa text-white" : itemInativo}`;
 
   const iniciais = user.nome
     .split(/\s+/)
@@ -85,22 +97,22 @@ export default function AppShell({
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
-  let hoje = "";
-  if (agora) {
-    const data = new Intl.DateTimeFormat("pt", { weekday: "long", day: "numeric", month: "long" }).format(agora);
-    const hora = new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" }).format(agora);
-    hoje = `${data.charAt(0).toUpperCase() + data.slice(1)} · ${hora}`;
-  }
+  const hora = agora ? new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" }).format(agora) : "";
+  const pagina = [...links, { ...definicoes, Icone: IconeDefinicoes }].find((l) => l.href === pathname);
+  const IconePagina = pagina?.Icone;
 
   return (
-    <div className="min-h-screen bg-fundo p-0 text-texto md:p-6">
-      <div className="flex min-h-screen flex-col gap-4 bg-painel p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave">
-        <aside className="flex items-center gap-3 rounded-barra bg-primaria px-3 py-2 text-white md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
-          <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-white/20 text-base font-semibold">
+    <div className={`min-h-screen bg-fundo p-0 text-texto md:p-6 ${ecraInteiro ? "lg:h-screen lg:overflow-hidden" : ""}`}>
+      <div
+        className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave ${classeFundoQuente} ${ecraInteiro ? "lg:h-full lg:min-h-0" : ""}`}
+      >
+        <FundoQuente />
+        <aside className="relative z-30 flex items-center gap-3 rounded-barra bg-painel/45 px-3 py-2 text-texto shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
+          <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-texto text-base font-semibold text-painel">
             <span aria-hidden="true">v</span>
             <span className="sr-only">vatech</span>
           </p>
-          <span aria-hidden="true" className="hidden h-px w-8 bg-white/25 md:block" />
+          <span aria-hidden="true" className="hidden h-px w-8 bg-linha md:block" />
           <nav aria-label="Principal" className="flex gap-1 md:flex-col md:gap-3">
             {links.map(({ href, texto, Icone }) => (
               <Link
@@ -137,39 +149,67 @@ export default function AppShell({
             </button>
           </div>
         </aside>
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
-          <header className="flex items-center gap-3">
+        <div className={`flex min-w-0 flex-1 flex-col ${ecraInteiro ? "gap-4 lg:min-h-0" : "gap-6"}`}>
+          <header className="relative z-30 flex items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr]">
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold">
-                {agora ? `${saudacao(agora)}, ` : ""}
-                {primeiroNome(user.nome)}
-              </p>
-              <p className="hidden truncate text-sm text-texto-suave sm:block">{hoje}</p>
+              {agora && (
+                <time dateTime={agora.toISOString()} className="block text-3xl font-bold leading-none tabular-nums">
+                  {hora}
+                </time>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setPesquisaAberta(true)}
-              aria-keyshortcuts="Control+K"
-              className="ml-auto flex h-11 w-full max-w-xs items-center gap-2 rounded-controlo bg-campo px-4 text-sm text-texto-suave hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
-            >
-              <IconePesquisa />
-              <span>Pesquisar</span>
-              <span aria-hidden="true" className="ml-auto text-xs">
-                Ctrl+K
-              </span>
-            </button>
-            <span
-              tabIndex={0}
-              aria-label={user.nome}
-              className="group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
-            >
-              <span aria-hidden="true">{iniciais || <IconeUtilizador />}</span>
-              <span aria-hidden="true" className={dicaAbaixo}>
-                {user.nome}
-              </span>
-            </span>
+            {pagina && IconePagina && (
+              <p className={`${vidroTopo} hidden items-center gap-3 py-1.5 pl-1.5 pr-6 md:flex`}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primaria-suave">
+                  <IconePagina className="h-4 w-4" />
+                </span>
+                <span className="font-semibold">{pagina.texto}</span>
+              </p>
+            )}
+            <div className="ml-auto flex items-center gap-2 md:justify-self-end">
+              <button
+                type="button"
+                onClick={() => setPesquisaAberta(true)}
+                aria-label="Pesquisar"
+                aria-keyshortcuts="Control+K"
+                className={`${vidroTopo} ${botaoTopo}`}
+              >
+                <IconePesquisa className="h-4 w-4" />
+                <span aria-hidden="true" className={dicaAbaixo}>
+                  Pesquisar (Ctrl+K)
+                </span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={escuro}
+                aria-label="Modo escuro"
+                onClick={() => definirTema(escuro ? "claro" : "escuro")}
+                className={`${vidroTopo} ${botaoTopo}`}
+              >
+                {escuro ? <IconeSol className="h-4 w-4" /> : <IconeLua className="h-4 w-4" />}
+                <span aria-hidden="true" className={dicaAbaixo}>
+                  {escuro ? "Mudar para claro" : "Mudar para escuro"}
+                </span>
+              </button>
+              <Link
+                href="/definicoes"
+                aria-label={`${user.nome}, a minha conta`}
+                className={`${vidroTopo} flex shrink-0 items-center gap-3 p-1 hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria sm:pr-5`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte dark:text-texto"
+                >
+                  {iniciais || <IconeUtilizador />}
+                </span>
+                <span aria-hidden="true" className="hidden min-w-0 leading-tight sm:block">
+                  <span className="block max-w-40 truncate font-semibold">{primeiroNome(user.nome)}</span>
+                  <span className="block text-xs text-texto-suave">A minha conta</span>
+                </span>
+              </Link>
+            </div>
           </header>
-          <main className="min-w-0 flex-1 md:pr-2">{children}</main>
+          <main className={`min-w-0 flex-1 md:pr-2 ${ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : ""}`}>{children}</main>
         </div>
       </div>
       {pesquisaAberta && (

@@ -10,11 +10,20 @@ const subtipos: { v: SubtipoPedido; t: string }[] = [
   { v: "falta_justificada", t: "Falta justificada" },
 ];
 
-export default function PedidoForm({ onCriado }: { onCriado?: () => void }) {
+export default function PedidoForm({
+  onCriado,
+  dataInicial = "",
+  className = "flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10",
+}: {
+  onCriado?: (avisos: string[]) => void;
+  /** Preenche início e fim (ex.: dia escolhido na Agenda). */
+  dataInicial?: string;
+  className?: string;
+}) {
   const [tipo, setTipo] = useState<TipoPedido>("ferias");
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">("");
-  const [inicio, setInicio] = useState("");
-  const [fim, setFim] = useState("");
+  const [inicio, setInicio] = useState(dataInicial);
+  const [fim, setFim] = useState(dataInicial);
   const [obs, setObs] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [avisos, setAvisos] = useState<string[]>([]);
@@ -37,7 +46,7 @@ export default function PedidoForm({ onCriado }: { onCriado?: () => void }) {
       setInicio("");
       setFim("");
       setObs("");
-      onCriado?.();
+      onCriado?.(r.avisos ?? []);
     } catch (err) {
       setErro(mensagemDeErro(err));
     } finally {
@@ -46,7 +55,7 @@ export default function PedidoForm({ onCriado }: { onCriado?: () => void }) {
   }
 
   return (
-    <form onSubmit={enviar} className="flex max-w-xl flex-col gap-4 rounded-cartao bg-painel p-5 shadow-suave" aria-labelledby="novo-pedido">
+    <form onSubmit={enviar} className={className} aria-labelledby="novo-pedido">
       <h2 id="novo-pedido" className="text-lg font-semibold">
         Novo pedido
       </h2>
