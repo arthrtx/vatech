@@ -5,3 +5,9 @@ export const subtipos = {
   falta_justificada: "Falta justificada",
 } as const;
 export const estados = { pendente: "Pendente", aprovado: "Aprovado", recusado: "Recusado" } as const;
+
+export const papeis: Record<"admin" | "funcionario" | "estagiario", string> = {
+  admin: "Administrador",
+  funcionario: "Funcionário",
+  estagiario: "Estagiário",
+};

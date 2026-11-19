@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/lib/auth";
 import { api, mensagemDeErro, type Anexo, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
 import CampoAnexos from "./CampoAnexos";
 import CampoData from "./CampoData";
@@ -31,7 +32,9 @@ export default function PedidoForm({
   className?: string;
 }) {
   const edicao = !!pedido;
-  const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? "ferias");
+  const { user } = useAuth();
+  const semFerias = user?.papel === "estagiario";
+  const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? (semFerias ? "ausencia" : "ferias"));
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
@@ -95,7 +98,7 @@ export default function PedidoForm({
           id="tipo"
           valor={tipo}
           opcoes={[
-            { valor: "ferias", rotulo: "Férias" },
+            ...(semFerias ? [] : [{ valor: "ferias", rotulo: "Férias" }]),
             { valor: "ausencia", rotulo: "Ausência" },
             { valor: "licenca", rotulo: "Licença" },
           ]}

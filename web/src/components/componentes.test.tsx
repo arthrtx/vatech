@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import PedidoForm from "./PedidoForm";
 import PedidosAdmin from "./PedidosAdmin";
-import type { Pedido } from "@/lib/api";
+import type { Papel, Pedido } from "@/lib/api";
+
+let papelAtual: Papel = "funcionario";
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 2, nome: "Ana", papel: papelAtual } }) }));
 
 afterEach(cleanup);
 
@@ -33,6 +36,15 @@ describe("PedidoForm", () => {
     fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
     fireEvent.click(screen.getByRole("option", { name: "Ausência" }));
     expect(screen.getByLabelText("Subtipo")).toBeTruthy();
+  });
+
+  it("estagiário não vê o tipo Férias", () => {
+    papelAtual = "estagiario";
+    render(<PedidoForm />);
+    fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
+    expect(screen.queryByRole("option", { name: "Férias" })).toBeNull();
+    expect(screen.getByRole("option", { name: "Licença" })).toBeTruthy();
+    papelAtual = "funcionario";
   });
 });
 
