@@ -4,21 +4,31 @@ import { useState } from "react";
 import type { Pedido } from "@/lib/api";
 import { filtrar } from "@/lib/busca";
 import { estados, subtipos, tipos } from "@/lib/rotulos";
+import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import CampoBusca from "./CampoBusca";
+import FiltrosPedidosCampos, { filtrosEfetivos, filtrosIniciais } from "./FiltrosPedidosCampos";
 import { botao, botaoSec, input, label } from "./ui";
 
 interface Props {
   pedidos: Pedido[];
   onAprovar: (id: number) => void | Promise<void>;
   onRecusar: (id: number, motivo: string) => void | Promise<void>;
+  /** Dashboard: lista resumida, sem barra de pesquisa. */
+  semBusca?: boolean;
 }
 
-export default function PedidosAdmin({ pedidos, onAprovar, onRecusar }: Props) {
+export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca = false }: Props) {
   const [recusando, setRecusando] = useState<number | null>(null);
   const [motivo, setMotivo] = useState("");
   const [busca, setBusca] = useState("");
 
-  const visiveis = filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo], estados[p.estado]]);
+  const [filtros, setFiltros] = useState(semBusca ? filtrosVazios : filtrosIniciais);
+  const efetivos = filtrosEfetivos(filtros);
+  const visiveis = filtrar(aplicarFiltrosPedidos(pedidos, efetivos), busca, (p) => [
+    p.user?.nome,
+    tipos[p.tipo],
+    estados[p.estado],
+  ]);
 
   async function confirmar(id: number) {
     if (!motivo.trim()) return;
@@ -29,24 +39,42 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <CampoBusca id="busca-pedidos-admin" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
+      {!semBusca && (
+        <CampoBusca id="busca-pedidos-admin" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
+      )}
+      {!semBusca && pedidos.length > 0 && (
+        <FiltrosPedidosCampos
+          filtros={filtros}
+          onChange={setFiltros}
+          pedidos={pedidos}
+          mostrarFuncionario
+          mostrados={visiveis.length}
+        />
+      )}
       {visiveis.length === 0 ? (
-        <p className="text-zinc-700">
-          {pedidos.length === 0 ? "Sem pedidos pendentes." : `Nenhum resultado para "${busca.trim()}"`}
+        <p className="text-texto-suave">
+          {pedidos.length === 0
+            ? semBusca
+              ? "Sem pedidos pendentes."
+              : "Sem pedidos."
+            : contarAtivos(efetivos) > 0
+              ? "Sem resultados com estes filtros."
+              : `Nenhum resultado para "${busca.trim()}"`}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
           {visiveis.map((p) => (
-            <li key={p.id} className="rounded-md border border-zinc-300 bg-white p-4">
+            <li key={p.id} className="rounded-cartao bg-painel shadow-suave p-4">
               <p className="font-medium">
                 {p.user?.nome ?? `Utilizador ${p.user_id}`} · {tipos[p.tipo]}
                 {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}
+                {p.estado !== "pendente" && ` · ${estados[p.estado]}`}
               </p>
-              <p className="text-sm text-zinc-700">
+              <p className="text-sm text-texto-suave">
                 {p.data_inicio} a {p.data_fim}
               </p>
               {p.observacao && <p className="mt-1 break-words text-sm">{p.observacao}</p>}
-              {recusando === p.id ? (
+              {p.estado !== "pendente" ? null : recusando === p.id ? (
                 <div className="mt-3 flex flex-col gap-2">
                   <label htmlFor={`motivo-${p.id}`} className={label}>
                     Motivo da recusa (obrigatório)
