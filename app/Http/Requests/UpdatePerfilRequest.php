@@ -19,6 +19,7 @@ class UpdatePerfilRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->user()->id)],
             'password' => ['nullable', 'string', 'min:8'],
             'password_atual' => ['required_with:password', 'nullable', 'string'],
+            'data_nascimento' => ['nullable', 'date_format:Y-m-d', 'after:1900-01-01', 'before_or_equal:today'],
             'estagio_inicio' => [Rule::prohibitedIf($this->user()->papel !== 'estagiario'), 'nullable', 'date_format:Y-m-d'],
             'estagio_fim' => [Rule::prohibitedIf($this->user()->papel !== 'estagiario'), 'nullable', 'date_format:Y-m-d', 'after_or_equal:estagio_inicio'],
         ];

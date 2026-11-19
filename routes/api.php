@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/texto/melhorar', [TextoController::class, 'melhorar'])->middleware('throttle:10,1');
     Route::get('/pedidos', [PedidoController::class, 'index']);
     Route::get('/agenda', [AgendaController::class, 'index']);
+    Route::get('/aniversarios', [AgendaController::class, 'aniversarios']);
     Route::get('/pedidos/{id}/anexos/{anexo}', [AnexoController::class, 'download']);
 
     Route::middleware('papel:admin')->group(function () {

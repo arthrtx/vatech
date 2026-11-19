@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { PedidoAgenda as Pedido, Presenca, TipoPedido } from "@/lib/api";
+import type { Aniversario, PedidoAgenda as Pedido, Presenca, TipoPedido } from "@/lib/api";
 import { aplicarFiltrosAgenda, contarAtivos, type FiltrosAgenda } from "@/lib/filtros";
 import {
   celulasDoMes,
@@ -96,6 +96,7 @@ export default function Agenda({
   aoCriar,
   presencas = [],
   estagios = [],
+  aniversarios = [],
 }: {
   pedidos: Pedido[];
   admin: boolean;
@@ -111,6 +112,8 @@ export default function Agenda({
   presencas?: Presenca[];
   /** Períodos de estágio a mostrar (o próprio, ou todos para o admin). */
   estagios?: Estagio[];
+  /** Aniversários do intervalo visível (quem indicou a data de nascimento). */
+  aniversarios?: Aniversario[];
 }) {
   const [localidade] = useLocalidade();
   const [novo, setNovo] = useState<{ data: string } | null>(null);
@@ -186,6 +189,13 @@ export default function Agenda({
     [mes, localidade],
   );
 
+  const aniversariosDoDia = useMemo(() => {
+    const m = new Map<string, string[]>();
+    aniversarios.forEach((a) => m.set(a.data, [...(m.get(a.data) ?? []), a.user.nome]));
+    return (iso: string) => m.get(iso) ?? [];
+  }, [aniversarios]);
+  const aniversariosMes = aniversarios.filter((a) => Number(a.data.slice(5, 7)) === mes.mes && Number(a.data.slice(0, 4)) === mes.ano);
+
   const diaAberto = sel?.iso ?? foco;
   const segunda = inicioSemana(diaAberto);
   const semana = Array.from({ length: 7 }, (_, i) => somaDias(segunda, i));
@@ -256,6 +266,7 @@ export default function Agenda({
                   const aberto = c.iso === diaAberto;
                   const especiais = datasDoDia(c.iso, localidade);
                   const feriado = especiais.some((d) => d.tipo !== "comemorativa");
+                  const anivs = aniversariosDoDia(c.iso);
                   return (
                     <div
                       key={c.iso}
@@ -283,6 +294,11 @@ export default function Agenda({
                       {sobrepoe && <span className="sr-only">Sobreposição</span>}
                       {especiais.length > 0 && <span className="sr-only">{especiais.map((d) => d.nome).join(", ")}</span>}
                       <div className="flex min-h-1.5 w-full items-center justify-center gap-0.5 px-1">
+                        {anivs.length > 0 && (
+                          <span title={anivs.map((n) => `Aniversário de ${n}`).join(", ")} className="h-1.5 w-1.5 shrink-0 rounded-full bg-rosa">
+                            <span className="sr-only">{anivs.map((n) => `Aniversário de ${n}`).join(", ")}</span>
+                          </span>
+                        )}
                         {doDia.slice(0, MAX_MARCAS).map((p) => (
                           <button
                             type="button"
@@ -322,7 +338,7 @@ export default function Agenda({
           </div>
           <p className="text-xs text-texto-suave">
             Verde: aprovado. Tracejado: pendente. Contorno rosa: mais de uma pessoa fora. Fundo rosa: feriado. Sublinhado:
-            data comemorativa. Quadrado preto: com presença registada. Pedidos recusados não aparecem.
+            data comemorativa. Quadrado preto: com presença registada. Ponto rosa: aniversário. Pedidos recusados não aparecem.
           </p>
         </div>
 
@@ -426,8 +442,23 @@ export default function Agenda({
               Feriados e datas de {mesesPt[mes.mes - 1]}
             </h3>
             <EscolhaLocalidade id="ag-localidade" compacta />
-            {datasMes.length === 0 && <p className="text-sm text-texto-suave">Sem feriados nem datas neste mês.</p>}
+            {datasMes.length === 0 && aniversariosMes.length === 0 && (
+              <p className="text-sm text-texto-suave">Sem feriados, datas nem aniversários neste mês.</p>
+            )}
             <ul className="flex flex-col gap-1">
+              {aniversariosMes.map((a) => (
+                <li key={`${a.data}-${a.user.id}`}>
+                  <button
+                    type="button"
+                    onClick={(e) => abrir(e, { iso: a.data })}
+                    className={`flex w-full items-center gap-3 rounded-controlo px-2 py-1.5 text-left text-sm hover:bg-campo ${focoCls}`}
+                  >
+                    <span className="w-12 shrink-0 font-medium tabular-nums">{curta(a.data)}</span>
+                    <span className="min-w-0 flex-1 truncate">Aniversário de {a.user.nome}</span>
+                    <span className="shrink-0 rounded-full bg-rosa-suave px-2 text-[0.6875rem] leading-5 text-texto">Aniversário</span>
+                  </button>
+                </li>
+              ))}
               {datasMes.map((d) => (
                 <li key={d.iso + d.nome}>
                   <button
@@ -479,6 +510,15 @@ export default function Agenda({
                   {Number(iso.slice(8, 10))}
                 </span>
                 <span className="text-xs text-texto-suave">{n === 0 ? "livre" : `${n} fora`}</span>
+                {aniversariosDoDia(iso).length > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="max-w-full truncate rounded-full bg-rosa-suave px-2 text-[0.6875rem] font-medium leading-5 text-texto"
+                  >
+                    Aniversário de {aniversariosDoDia(iso)[0]}
+                    {aniversariosDoDia(iso).length > 1 && ` +${aniversariosDoDia(iso).length - 1}`}
+                  </span>
+                )}
                 {especiais[0] && (
                   <span
                     aria-hidden="true"
@@ -568,6 +608,11 @@ export default function Agenda({
                       <span className="font-semibold">{rotuloData(d)}</span> · {d.nome}
                       {d.tipo === "feriado" && " · dia de descanso obrigatório"}
                       {d.tipo === "municipal" && " · só neste concelho"}
+                    </p>
+                  ))}
+                  {aniversariosDoDia(sel.iso).map((nome) => (
+                    <p key={nome} className="self-start rounded-controlo bg-rosa-suave px-3 py-2 text-sm text-texto">
+                      <span className="font-semibold">Aniversário</span> · Aniversário de {nome}
                     </p>
                   ))}
                   {sobreposicaoSel && (
