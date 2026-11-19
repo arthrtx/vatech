@@ -12,13 +12,15 @@ vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
   return {
     ...real,
-    api: { pedidos: vi.fn(), funcionarios: vi.fn(), agenda: vi.fn(), aprovar: vi.fn(), recusar: vi.fn() },
+    api: { pedidos: vi.fn(), funcionarios: vi.fn(), agenda: vi.fn(), aprovar: vi.fn(), recusar: vi.fn(), limites: vi.fn(), feriasResumo: vi.fn() },
   };
 });
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-19T12:00:00"));
+  vi.mocked(api.limites).mockResolvedValue({ limites: [], prazo_ferias: "2026-04-30" });
+  vi.mocked(api.feriasResumo).mockResolvedValue({ resumo: [], prazo_ferias: "2026-04-30" });
 });
 afterEach(() => {
   cleanup();
@@ -58,6 +60,18 @@ const cartao = (rotulo: string) => screen.getByText(rotulo, { selector: "p" }).c
 const falha = () => new Error("rede");
 
 describe("Dashboard admin", () => {
+  it("depois do prazo lista quem tem férias por marcar", async () => {
+    vi.mocked(api.pedidos).mockResolvedValue([]);
+    vi.mocked(api.funcionarios).mockResolvedValue([user(1)]);
+    vi.mocked(api.agenda).mockResolvedValue([]);
+    vi.mocked(api.feriasResumo).mockResolvedValue({
+      resumo: [{ user_id: 2, nome: "Sofia", dias_ano: 22, transitados: 2, usados: 4, por_marcar: 20 }],
+      prazo_ferias: "2026-04-30",
+    });
+    render(<DashboardPage />);
+    expect(await screen.findByText("Sofia: 20 dias")).toBeTruthy();
+  });
+
   beforeEach(() => {
     papel = "admin";
   });
@@ -197,6 +211,17 @@ describe("Dashboard admin", () => {
 describe("Dashboard funcionário", () => {
   beforeEach(() => {
     papel = "funcionario";
+  });
+
+  it("depois do prazo avisa das férias por marcar e mostra as transitadas", async () => {
+    vi.mocked(api.pedidos).mockResolvedValue([]);
+    vi.mocked(api.limites).mockResolvedValue({
+      limites: [{ tipo: "ferias", dias_ano: 22, transitados: 3, usados: 5 }],
+      prazo_ferias: "2026-04-30",
+    });
+    render(<DashboardPage />);
+    expect((await screen.findByRole("status")).textContent).toContain("Tem 20 dias de férias por marcar. O prazo era 30 de abril.");
+    expect(screen.getByText("Férias transitadas: 3 dias")).toBeTruthy();
   });
 
   it("saudação, contadores por estado e só os meus pedidos", async () => {

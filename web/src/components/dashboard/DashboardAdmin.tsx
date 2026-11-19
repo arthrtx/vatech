@@ -13,6 +13,7 @@ import { IconeAgenda, IconeFuncionarios, IconePedidos } from "../Icones";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
+import FeriasPorMarcar from "./FeriasPorMarcar";
 import ListaAusencias from "./ListaAusencias";
 import WidgetFeriados from "./WidgetFeriados";
 
@@ -110,6 +111,7 @@ export default function DashboardAdmin() {
       </ul>
       <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
       </div>
+      <FeriasPorMarcar />
 
       <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
       <BlocoEstado

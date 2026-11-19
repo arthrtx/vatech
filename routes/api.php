@@ -4,6 +4,7 @@ use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AnexoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FuncionarioController;
+use App\Http\Controllers\LimiteController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PresencaController;
 use App\Http\Controllers\TextoController;
@@ -21,11 +22,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/me/avatar', [AuthController::class, 'destroyAvatar'])->middleware('throttle:10,1');
     Route::post('/texto/melhorar', [TextoController::class, 'melhorar'])->middleware('throttle:10,1');
     Route::get('/pedidos', [PedidoController::class, 'index']);
+    Route::get('/limites', [LimiteController::class, 'index']);
     Route::get('/agenda', [AgendaController::class, 'index']);
     Route::get('/aniversarios', [AgendaController::class, 'aniversarios']);
     Route::get('/pedidos/{id}/anexos/{anexo}', [AnexoController::class, 'download']);
 
     Route::middleware('papel:admin')->group(function () {
+        Route::put('/limites', [LimiteController::class, 'update']);
+        Route::get('/ferias-resumo', [LimiteController::class, 'feriasResumo']);
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
         Route::post('/funcionarios', [FuncionarioController::class, 'store']);
         Route::put('/funcionarios/{id}', [FuncionarioController::class, 'update']);

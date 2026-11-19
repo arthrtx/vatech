@@ -1,15 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import EscolhaLocalidade from "@/components/EscolhaLocalidade";
 import CampoData from "@/components/CampoData";
 import EscolhaTema from "@/components/EscolhaTema";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
-import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
+import { ApiError, api, mensagemDeErro, type TipoPedido, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { papeis } from "@/lib/rotulos";
+import { papeis, tipos } from "@/lib/rotulos";
 import { primeiroNome } from "@/lib/saudacao";
 
 const cartao = "flex flex-col gap-4 rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4 md:p-6 has-[[role=dialog]]:relative has-[[role=dialog]]:z-20";
@@ -381,6 +381,94 @@ function DatasEstagio({ user, atualizarUser }: { user: User; atualizarUser: (u: 
   );
 }
 
+const TIPOS_LIMITE: TipoPedido[] = ["ferias", "ausencia", "licenca"];
+
+function LimitesDias() {
+  const [valores, setValores] = useState<Record<TipoPedido, string>>({ ferias: "", ausencia: "", licenca: "" });
+  const [inicial, setInicial] = useState<Record<TipoPedido, string>>({ ferias: "", ausencia: "", licenca: "" });
+  const [carregado, setCarregado] = useState(false);
+  const [erroCarga, setErroCarga] = useState<string | null>(null);
+  const { erros, erroGeral, ok, enviando, submeter, desc, limparOk } = useEnvio(async () => {
+    const guardados = await api.guardarLimites(
+      TIPOS_LIMITE.map((t) => ({ tipo: t, dias_ano: valores[t].trim() === "" ? null : Number(valores[t]) })),
+    );
+    const novos = doServidor(guardados);
+    setValores(novos);
+    setInicial(novos);
+  });
+
+  function doServidor(ls: { tipo: TipoPedido; dias_ano: number | null }[]) {
+    const r: Record<TipoPedido, string> = { ferias: "", ausencia: "", licenca: "" };
+    for (const l of ls) r[l.tipo] = l.dias_ano === null ? "" : String(l.dias_ano);
+    return r;
+  }
+
+  useEffect(() => {
+    let ativo = true;
+    api
+      .limites()
+      .then((r) => {
+        if (!ativo) return;
+        const v = doServidor(r.limites);
+        setValores(v);
+        setInicial(v);
+        setCarregado(true);
+      })
+      .catch((err) => ativo && setErroCarga(mensagemDeErro(err)));
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const sujo = TIPOS_LIMITE.some((t) => valores[t] !== inicial[t]);
+  const validar = (): Record<string, string[]> => {
+    const e: Record<string, string[]> = {};
+    for (const t of TIPOS_LIMITE) {
+      const v = valores[t].trim();
+      if (v !== "" && !/^\d+$/.test(v)) e[t] = ["Indique um número inteiro de dias, ou deixe vazio."];
+    }
+    return e;
+  };
+
+  return (
+    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-limites" className={`${cartao} md:max-w-xl`}>
+      <div>
+        <h2 id="def-limites" className="text-lg font-semibold">
+          Limites de dias por ano
+        </h2>
+        <p className="text-sm text-texto-suave">Máximo de dias que cada pessoa pode pedir por ano. Vazio = sem limite.</p>
+      </div>
+      {erroCarga && (
+        <p role="alert" className={erroCls}>
+          {erroCarga}
+        </p>
+      )}
+      {TIPOS_LIMITE.map((t) => (
+        <Campo key={t} id={`limite_${t}`} rotulo={tipos[t]} erros={erros[t]}>
+          <input
+            id={`limite_${t}`}
+            data-campo={t}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            step={1}
+            disabled={!carregado}
+            className={input}
+            value={valores[t]}
+            aria-invalid={!!erros[t]}
+            aria-describedby={desc(t) ? `limite_${t}-erro` : undefined}
+            onChange={(e) => {
+              setValores((v) => ({ ...v, [t]: e.target.value }));
+              limparOk();
+            }}
+          />
+        </Campo>
+      ))}
+      <Rodape erroGeral={erroGeral} ok={ok} enviando={enviando} sujo={sujo} />
+    </form>
+  );
+}
+
 function Conteudo() {
   const { user, atualizarUser } = useAuth();
   if (!user) return null;
@@ -390,6 +478,7 @@ function Conteudo() {
       <h1 className="text-2xl font-semibold">Definições</h1>
       <FotoPerfil user={user} atualizarUser={atualizarUser} />
       {user.papel === "estagiario" && <DatasEstagio user={user} atualizarUser={atualizarUser} />}
+      {user.papel === "admin" && <LimitesDias />}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
         <DadosConta user={user} atualizarUser={atualizarUser} />
         <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />

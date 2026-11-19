@@ -88,6 +88,25 @@ export interface NovoPedido {
   observacao?: string;
 }
 
+/** Limite anual de dias por tipo de pedido; dias_ano null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */
+export interface Limite {
+  tipo: TipoPedido;
+  dias_ano: number | null;
+  /** Férias não gozadas do ano anterior (só > 0 em «ferias»); somam ao limite do ano. */
+  transitados: number;
+  usados: number;
+}
+
+/** Admin: cúmulo de férias por pessoa; por_marcar = dias_ano + transitados - usados (>= 0). */
+export interface FeriasResumo {
+  user_id: number;
+  nome: string;
+  dias_ano: number | null;
+  transitados: number;
+  usados: number;
+  por_marcar: number;
+}
+
 export class ApiError extends Error {
   status: number;
   errors?: Record<string, string[]>;
@@ -220,6 +239,16 @@ export const api = {
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
   editarPedido: (id: number, b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("PUT", `/pedidos/${id}`, b),
+  limites: async () => {
+    const r = await request<{ data: Limite[]; prazo_ferias: string }>("GET", "/limites");
+    return { limites: r.data, prazo_ferias: r.prazo_ferias };
+  },
+  feriasResumo: async () => {
+    const r = await request<{ data: FeriasResumo[]; prazo_ferias: string }>("GET", "/ferias-resumo");
+    return { resumo: r.data, prazo_ferias: r.prazo_ferias };
+  },
+  guardarLimites: async (limites: { tipo: TipoPedido; dias_ano: number | null }[]) =>
+    (await request<{ data: Limite[] }>("PUT", "/limites", { limites })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
   melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
   enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {

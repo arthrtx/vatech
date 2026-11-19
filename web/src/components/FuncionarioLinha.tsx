@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { mensagemDeErro, type Papel, type User } from "@/lib/api";
+import { mensagemDeErro, type FeriasResumo, type Papel, type User } from "@/lib/api";
 import { papeis } from "@/lib/rotulos";
 import Avatar from "./Avatar";
 import Seletor from "./Seletor";
@@ -13,13 +13,15 @@ interface Props {
   onApagar: () => Promise<void>;
   /** É o próprio utilizador autenticado: não pode mudar o seu tipo nem apagar-se. */
   proprio?: boolean;
+  /** Cúmulo de férias (só admin); sem limite anual não mostra nada. */
+  ferias?: FeriasResumo;
 }
 
 const opcoesPapel = (Object.keys(papeis) as Papel[]).map((valor) => ({ valor, rotulo: papeis[valor] }));
 
 type Modo = "ver" | "editar" | "apagar";
 
-export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = false }: Props) {
+export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = false, ferias }: Props) {
   const [modo, setModo] = useState<Modo>("ver");
   const [nome, setNome] = useState(user.nome);
   const [email, setEmail] = useState(user.email);
@@ -154,6 +156,12 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = 
               <p className="font-medium">{user.nome}</p>
               <p className="break-all text-sm text-texto-suave">{user.email}</p>
               <p className="text-sm text-texto-suave">{papeis[user.papel]}</p>
+              {ferias?.dias_ano != null && (
+                <p className="text-sm text-texto-suave">
+                  Férias: {ferias.usados}/{ferias.dias_ano + ferias.transitados}
+                  {ferias.transitados > 0 && ` (${ferias.transitados} transitados)`}
+                </p>
+              )}
             </div>
           </div>
           {modo === "apagar" ? (
