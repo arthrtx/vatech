@@ -11,7 +11,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
-    Route::put('/me', [AuthController::class, 'updateMe']);
+    Route::put('/me', [AuthController::class, 'updateMe'])->middleware('throttle:5,1');
     Route::get('/pedidos', [PedidoController::class, 'index']);
     Route::get('/agenda', [AgendaController::class, 'index']);
 

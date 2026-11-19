@@ -42,15 +42,25 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $dados = $request->safe()->only(['nome', 'email']);
+        $mudaEmail = $dados['email'] !== $user->email;
+        $mudaPassword = $request->filled('password');
 
-        if ($request->filled('password')) {
+        if ($mudaEmail || $mudaPassword) {
             if (! Hash::check((string) $request->input('password_atual'), $user->password)) {
                 throw ValidationException::withMessages(['password_atual' => ['Palavra-passe atual incorreta.']]);
             }
+        }
+
+        if ($mudaPassword) {
             $dados['password'] = $request->string('password')->toString();
         }
 
         $user->update($dados);
+
+        if ($mudaPassword) {
+            $atualId = $user->currentAccessToken()->id ?? null;
+            $user->tokens()->when($atualId, fn ($q) => $q->where('id', '!=', $atualId))->delete();
+        }
 
         return response()->json(['user' => $user->fresh()->toContrato()]);
     }
