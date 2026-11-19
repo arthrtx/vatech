@@ -35,7 +35,7 @@ export default function CartaoContador({ rotulo, valor, aCarregar, ligacao }: Pr
       {ligacao && (
         <Link
           href={ligacao.href}
-          className="mt-2 inline-block py-1 text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+          className="mt-2 inline-flex min-h-10 items-center text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
         >
           {ligacao.texto}
         </Link>
