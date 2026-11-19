@@ -15,6 +15,7 @@ import {
   IconeSair,
   IconeUtilizador,
 } from "./Icones";
+import FundoQuente, { classeFundoQuente } from "./FundoQuente";
 import Pesquisa from "./Pesquisa";
 
 // Dica com o nome do item: aparece ao passar o rato ou com foco de teclado.
@@ -97,7 +98,10 @@ export default function AppShell({
 
   return (
     <div className={`min-h-screen bg-fundo p-0 text-texto md:p-6 ${ecraInteiro ? "lg:h-screen lg:overflow-hidden" : ""}`}>
-      <div className={`flex min-h-screen flex-col gap-4 bg-painel p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave ${ecraInteiro ? "lg:h-full lg:min-h-0" : ""}`}>
+      <div
+        className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave ${classeFundoQuente} ${ecraInteiro ? "lg:h-full lg:min-h-0" : ""}`}
+      >
+        <FundoQuente />
         <aside className="flex items-center gap-3 rounded-barra bg-primaria px-3 py-2 text-white md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
           <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-white/20 text-base font-semibold">
             <span aria-hidden="true">v</span>

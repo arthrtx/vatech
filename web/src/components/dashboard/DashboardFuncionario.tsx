@@ -9,7 +9,6 @@ import { useFonte } from "@/lib/useFonte";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
-import Fundo from "./Fundo";
 import ListaAusencias from "./ListaAusencias";
 import WidgetContagem from "./WidgetContagem";
 import WidgetFeriados from "./WidgetFeriados";
@@ -26,7 +25,6 @@ export default function DashboardFuncionario({ user }: { user: User }) {
   const aCarregar = !pedidos.erro && pedidos.dados === null;
 
   return (
-    <Fundo>
     <div className="flex flex-col gap-5">
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -91,6 +89,5 @@ export default function DashboardFuncionario({ user }: { user: User }) {
       </BlocoEstado>
       </div>
     </div>
-    </Fundo>
   );
 }
