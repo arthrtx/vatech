@@ -54,92 +54,96 @@ function Conteudo() {
   const visiveis = filtrar(lista ?? [], busca, (u) => [u.nome, u.email]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
       <h1 className="text-2xl font-semibold">Pessoas</h1>
-      <CampoBusca id="busca-funcionarios" rotulo="Pesquisar pessoas" valor={busca} onChange={setBusca} />
-      {lista !== null && visiveis.length === 0 && (
-        <p className="text-texto-suave">
-          {lista.length === 0 ? "Ainda não há utilizadores." : `Nenhum resultado para "${busca.trim()}"`}
-        </p>
-      )}
-      <ul className="flex flex-col gap-2">
-        {visiveis.map((u) => (
-          <FuncionarioLinha
-            key={u.id}
-            user={u}
-            proprio={u.id === eu?.id}
-            onGuardar={async (dados) => {
-              await api.editarFuncionario(u.id, dados);
-              await carregar();
-            }}
-            onApagar={async () => {
-              await api.apagarFuncionario(u.id);
-              await carregar();
-            }}
-          />
-        ))}
-      </ul>
-      <form onSubmit={criar} className="flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10" aria-labelledby="novo-func">
-        <h2 id="novo-func" className="text-lg font-semibold">
-          Novo utilizador
-        </h2>
-        <div>
-          <label htmlFor="f-nome" className={label}>
-            Nome
-          </label>
-          <input id="f-nome" required className={input} value={nome} onChange={(e) => setNome(e.target.value)} />
-        </div>
-        <div>
-          <label htmlFor="f-email" className={label}>
-            Email
-          </label>
-          <input
-            id="f-email"
-            type="email"
-            required
-            className={input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="f-pass" className={label}>
-            Palavra-passe
-          </label>
-          <input
-            id="f-pass"
-            type="password"
-            autoComplete="new-password"
-            required
-            className={input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="f-papel" className={label}>
-            Tipo
-          </label>
-          <Seletor id="f-papel" valor={papel} opcoes={opcoesPapel} onChange={(v) => setPapel(v as Papel)} />
-        </div>
-        {erro && (
-          <p role="alert" className={erroCls}>
-            {erro}
+      <div className="flex flex-col gap-6 lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start">
+        <form onSubmit={criar} className="flex flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10" aria-labelledby="novo-func">
+          <h2 id="novo-func" className="text-lg font-semibold">
+            Novo utilizador
+          </h2>
+          <div>
+            <label htmlFor="f-nome" className={label}>
+              Nome
+            </label>
+            <input id="f-nome" required className={input} value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="f-email" className={label}>
+              Email
+            </label>
+            <input
+              id="f-email"
+              type="email"
+              required
+              className={input}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="f-pass" className={label}>
+              Palavra-passe
+            </label>
+            <input
+              id="f-pass"
+              type="password"
+              autoComplete="new-password"
+              required
+              className={input}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="f-papel" className={label}>
+              Tipo
+            </label>
+            <Seletor id="f-papel" valor={papel} opcoes={opcoesPapel} onChange={(v) => setPapel(v as Papel)} />
+          </div>
+          {erro && (
+            <p role="alert" className={erroCls}>
+              {erro}
+            </p>
+          )}
+          <div>
+            <button type="submit" className={botao}>
+              Criar utilizador
+            </button>
+          </div>
+        </form>
+        <div className="flex min-w-0 flex-col gap-3 lg:max-h-full lg:min-h-0">
+        <CampoBusca id="busca-funcionarios" rotulo="Pesquisar pessoas" valor={busca} onChange={setBusca} />
+        {lista !== null && visiveis.length === 0 && (
+          <p className="text-texto-suave">
+            {lista.length === 0 ? "Ainda não há utilizadores." : `Nenhum resultado para "${busca.trim()}"`}
           </p>
         )}
-        <div>
-          <button type="submit" className={botao}>
-            Criar utilizador
-          </button>
+        <ul className="scroll-fino grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] content-start gap-2 lg:min-h-0 lg:overflow-y-auto">
+          {visiveis.map((u) => (
+            <FuncionarioLinha
+              key={u.id}
+              user={u}
+              proprio={u.id === eu?.id}
+              onGuardar={async (dados) => {
+                await api.editarFuncionario(u.id, dados);
+                await carregar();
+              }}
+              onApagar={async () => {
+                await api.apagarFuncionario(u.id);
+                await carregar();
+              }}
+            />
+          ))}
+        </ul>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
 
 export default function FuncionáriosPage() {
   return (
-    <AppShell soAdmin>
+    <AppShell soAdmin ecraInteiro>
       <Conteudo />
     </AppShell>
   );
