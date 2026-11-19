@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { filtrar } from "@/lib/busca";
-import { input } from "./ui";
+import { IconePesquisa } from "./Icones";
 
 export interface Destino {
   href: string;
@@ -32,12 +32,12 @@ export default function Pesquisa({ destinos, onFechar }: { destinos: Destino[]; 
   }
 
   return (
-    <div className="fixed inset-0 z-20 flex items-start justify-center bg-barra/50 p-4 pt-24" onClick={onFechar}>
+    <div className="fixed inset-0 z-40 flex items-start justify-center bg-barra/40 p-4 pt-24 backdrop-blur-sm" onClick={onFechar}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Pesquisar"
-        className="w-full max-w-md rounded-lg bg-painel p-4 shadow-lg"
+        className="w-full max-w-md rounded-cartao bg-painel/80 p-3 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
         onClick={(e) => e.stopPropagation()}
       >
         <form
@@ -50,27 +50,30 @@ export default function Pesquisa({ destinos, onFechar }: { destinos: Destino[]; 
           <label htmlFor="pesquisa-global" className="sr-only">
             Pesquisar páginas
           </label>
-          <input
-            id="pesquisa-global"
-            ref={ref}
-            type="search"
-            autoComplete="off"
-            placeholder="Pesquisar páginas"
-            className={input}
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
+          <div className="relative">
+            <IconePesquisa className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-texto-suave" />
+            <input
+              id="pesquisa-global"
+              ref={ref}
+              type="search"
+              autoComplete="off"
+              placeholder="Pesquisar páginas"
+              className="h-11 w-full rounded-full bg-painel/70 pl-10 pr-4 text-base text-texto ring-1 ring-white/70 placeholder:text-texto-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria dark:ring-white/10 [&::-webkit-search-cancel-button]:appearance-none"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
         </form>
         {resultados.length === 0 ? (
-          <p className="mt-3 px-3 py-2 text-sm text-texto-suave">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
+          <p className="mt-2 px-4 py-2 text-sm text-texto-suave">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
         ) : (
-          <ul className="mt-3 flex flex-col gap-1">
+          <ul className="mt-2 flex max-h-72 flex-col gap-1 overflow-y-auto scroll-fino">
             {resultados.map((d) => (
               <li key={d.href}>
                 <button
                   type="button"
                   onClick={() => ir(d.href)}
-                  className="w-full rounded-controlo px-3 py-2 text-left text-sm text-texto hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
+                  className="w-full rounded-full px-4 py-2.5 text-left text-sm text-texto hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
                 >
                   {d.texto}
                 </button>
