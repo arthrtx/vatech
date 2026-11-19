@@ -72,7 +72,7 @@ it('bloqueia o pedido que excede o limite e aceita no limite exacto', function (
 
     $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => "$ano-06-01", 'data_fim' => "$ano-06-03"])
         ->assertStatus(422)
-        ->assertJsonPath('errors.data_fim.0', "Excede o limite de 5 dias uteis de ferias em $ano. Restam 2.");
+        ->assertJsonPath('errors.data_fim.0', "Excede o limite de 5 dias úteis de férias em $ano. Restam 2.");
 
     $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => "$ano-06-01", 'data_fim' => "$ano-06-02"])
         ->assertCreated();
@@ -87,7 +87,7 @@ it('o update nao conta o proprio pedido', function () {
 
     $this->putJson("/api/pedidos/{$pedido->id}", ['tipo' => 'ferias', 'data_inicio' => "$ano-03-03", 'data_fim' => "$ano-03-09"])->assertOk();
     $this->putJson("/api/pedidos/{$pedido->id}", ['tipo' => 'ferias', 'data_inicio' => "$ano-03-03", 'data_fim' => "$ano-03-10"])
-        ->assertStatus(422)->assertJsonPath('errors.data_fim.0', "Excede o limite de 5 dias uteis de ferias em $ano. Restam 5.");
+        ->assertStatus(422)->assertJsonPath('errors.data_fim.0', "Excede o limite de 5 dias úteis de férias em $ano. Restam 5.");
 });
 
 it('pedidos recusados nao contam', function () {
@@ -133,7 +133,7 @@ it('pedido a cavalo de anos conta so os dias de cada ano', function () {
     // 3 uteis em $ano (29-31 Dez) + 3 em $prox (4-6 Jan; dia 1 e feriado) => ano seguinte 3+3 > 5
     $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => "$ano-12-29", 'data_fim' => "$prox-01-06"])
         ->assertStatus(422)
-        ->assertJsonPath('errors.data_fim.0', "Excede o limite de 5 dias uteis de ferias em $prox. Restam 2.");
+        ->assertJsonPath('errors.data_fim.0', "Excede o limite de 5 dias úteis de férias em $prox. Restam 2.");
 
     $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => "$ano-12-29", 'data_fim' => "$prox-01-05"])->assertCreated();
     // so os dias do ano actual contam no GET: 3
@@ -152,7 +152,7 @@ it('fins de semana e feriados nao contam para o limite', function () {
 
     $this->postJson('/api/pedidos', ['tipo' => 'ausencia', 'data_inicio' => "$ano-05-06", 'data_fim' => "$ano-05-06"])
         ->assertStatus(422)
-        ->assertJsonPath('errors.data_fim.0', "Excede o limite de 3 dias uteis de ausencia em $ano. Restam 0.");
+        ->assertJsonPath('errors.data_fim.0', "Excede o limite de 3 dias úteis de ausência em $ano. Restam 0.");
 });
 
 describe('cumulo de ferias', function () {
@@ -203,7 +203,7 @@ describe('cumulo de ferias', function () {
             ->assertJsonPath('data.2.transitados', 0);
         $this->postJson('/api/pedidos', ['tipo' => 'ausencia', 'data_inicio' => '2028-06-01', 'data_fim' => '2028-06-08'])
             ->assertStatus(422)
-            ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 5 dias uteis de ausencia em 2028. Restam 5.');
+            ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 5 dias úteis de ausência em 2028. Restam 5.');
     });
 
     it('o limite efectivo permite exceder dias_ano ate dias_ano + transitados', function () {
@@ -215,7 +215,7 @@ describe('cumulo de ferias', function () {
             ->assertCreated();
         $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => '2028-07-03', 'data_fim' => '2028-07-03'])
             ->assertStatus(422)
-            ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 15 dias uteis de ferias em 2028. Restam 0.');
+            ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 15 dias úteis de férias em 2028. Restam 0.');
     });
 
     it('anos futuros usam o limite sem transitados', function () {
@@ -225,7 +225,7 @@ describe('cumulo de ferias', function () {
 
         $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => '2029-06-01', 'data_fim' => '2029-06-08'])
             ->assertStatus(422)
-            ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 5 dias uteis de ferias em 2029. Restam 5.');
+            ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 5 dias úteis de férias em 2029. Restam 5.');
     });
 
     it('ferias-resumo e so para admin', function () {
