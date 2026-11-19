@@ -8,7 +8,7 @@ import { vidro } from "../ui";
 const dias = (de: string, ate: string) => Math.round((Date.parse(`${ate}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / 86400000);
 
 /** Contagem decrescente para a próxima ausência aprovada do próprio. */
-export default function WidgetContagem({ pedidos, hoje }: { pedidos: Pedido[] | null; hoje: string }) {
+export default function WidgetContagem({ pedidos, hoje, className = "" }: { pedidos: Pedido[] | null; hoje: string; className?: string }) {
   const proxima = pedidos ? proximasAusencias(pedidos, hoje)[0] : undefined;
   if (!proxima) return null;
   const falta = dias(hoje, proxima.data_inicio);
@@ -17,7 +17,7 @@ export default function WidgetContagem({ pedidos, hoje }: { pedidos: Pedido[] | 
   const progresso = aDecorrer ? 100 : Math.max(4, Math.round(((60 - Math.min(falta, 60)) / 60) * 100));
 
   return (
-    <section aria-labelledby="w-contagem" className={`${vidro} efeito-saldo flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:80ms]`}>
+    <section aria-labelledby="w-contagem" className={`${vidro} efeito-saldo flex flex-col justify-center gap-3 p-5 motion-safe:animate-subir [animation-delay:80ms] ${className}`}>
       <h2 id="w-contagem" className="font-mono text-sm font-semibold uppercase tracking-wide text-texto-suave">
         {aDecorrer ? `${tipos[proxima.tipo]} a decorrer` : `Faltam para ${tipos[proxima.tipo].toLowerCase()}`}
       </h2>

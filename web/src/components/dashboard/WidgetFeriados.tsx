@@ -22,7 +22,7 @@ const cores = ["border-primaria", "border-violeta"];
  * Próximos feriados nacionais (calculados localmente, não precisam da API).
  * Mesmo desenho do cartão da agenda do HUROH: bloco da data à esquerda, lista à direita.
  */
-export default function WidgetFeriados({ hoje, quantos = 3 }: { hoje: string; quantos?: number }) {
+export default function WidgetFeriados({ hoje, quantos = 3, className = "" }: { hoje: string; quantos?: number; className?: string }) {
   const [localidade] = useLocalidade();
   const ano = Number(hoje.slice(0, 4));
   const limite = maisDias(hoje, 366);
@@ -35,13 +35,13 @@ export default function WidgetFeriados({ hoje, quantos = 3 }: { hoje: string; qu
   return (
     <section
       aria-labelledby="w-feriados"
-      className={`${vidro} arco flex min-h-48 gap-4 p-4 motion-safe:animate-subir [animation-delay:80ms] lg:min-h-0`}
+      className={`${vidro} arco flex min-h-44 gap-4 p-3 motion-safe:animate-subir [animation-delay:80ms] lg:min-h-0 ${className}`}
     >
-      <div className="efeito-data flex w-[46%] max-w-60 shrink-0 flex-col justify-between gap-6 rounded-cartao p-5 shadow-suave ring-1 ring-white/60 dark:ring-white/10">
-        <p className="text-4xl font-bold leading-none tracking-tight">
+      <div className="efeito-data flex w-[44%] max-w-56 shrink-0 flex-col justify-between gap-4 rounded-cartao p-4 shadow-suave ring-1 ring-white/60 dark:ring-white/10">
+        <p className="text-3xl font-bold leading-none tracking-tight">
           {Number(primeiro.iso.slice(8, 10))} {mes(primeiro.iso)}
         </p>
-        <p className="text-base font-semibold leading-snug">
+        <p className="text-sm font-semibold leading-snug">
           <span className="block">{diaDaSemana(primeiro.iso)}</span>
           <span className="block">{quandoFalta(dias(hoje, primeiro.iso))}</span>
         </p>

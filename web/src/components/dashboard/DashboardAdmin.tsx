@@ -80,7 +80,8 @@ export default function DashboardAdmin() {
             }
           />
       </div>
-      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:shrink-0 lg:grid-cols-[repeat(3,minmax(0,17rem))]">
+      <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
+      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:min-w-0 lg:flex-[3]">
         <CartaoContador
           rotulo="Pedidos pendentes"
           valor={num(pedidos.dados?.length)}
@@ -103,9 +104,10 @@ export default function DashboardAdmin() {
           Icone={IconeFuncionarios}
         />
       </ul>
+      <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
+      </div>
 
-      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3">
-      <WidgetFeriados hoje={hoje} quantos={4} />
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
       <BlocoEstado
         efeito="recentes"
         titulo="Ausentes hoje e nos próximos 30 dias"
