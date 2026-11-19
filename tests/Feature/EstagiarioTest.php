@@ -41,7 +41,7 @@ it('estagiario pede ausencia e licenca mas nao ferias', function () {
     $this->postJson('/api/pedidos', ['tipo' => 'ausencia', ...$base])->assertCreated();
     $this->postJson('/api/pedidos', ['tipo' => 'licenca', ...$base])->assertCreated();
     $this->postJson('/api/pedidos', ['tipo' => 'ferias', ...$base])
-        ->assertStatus(422)->assertJsonValidationErrors(['tipo' => 'Estagiarios nao podem pedir ferias.']);
+        ->assertStatus(422)->assertJsonValidationErrors(['tipo' => 'Estagiários não podem pedir férias.']);
 });
 
 it('marca entrada e saida com hora do servidor e valida os estados', function () {

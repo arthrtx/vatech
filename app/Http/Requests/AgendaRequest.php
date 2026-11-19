@@ -17,11 +17,11 @@ class AgendaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'de.required' => 'A data inicial e obrigatoria.',
+            'de.required' => 'A data inicial é obrigatória.',
             'de.date_format' => 'A data inicial tem de estar no formato AAAA-MM-DD.',
-            'ate.required' => 'A data final e obrigatoria.',
+            'ate.required' => 'A data final é obrigatória.',
             'ate.date_format' => 'A data final tem de estar no formato AAAA-MM-DD.',
-            'ate.after_or_equal' => 'A data final nao pode ser anterior a data inicial.',
+            'ate.after_or_equal' => 'A data final não pode ser anterior à data inicial.',
         ];
     }
 }
