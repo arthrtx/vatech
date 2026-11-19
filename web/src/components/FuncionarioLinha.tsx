@@ -158,7 +158,7 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = 
               <p className="text-sm text-texto-suave">{papeis[user.papel]}</p>
               {ferias?.dias_ano != null && (
                 <p className="text-sm text-texto-suave">
-                  Férias: {ferias.usados}/{ferias.dias_ano + ferias.transitados}
+                  Férias: {ferias.usados}/{ferias.dias_ano + ferias.transitados} dias úteis
                   {ferias.transitados > 0 && ` (${ferias.transitados} transitados)`}
                 </p>
               )}

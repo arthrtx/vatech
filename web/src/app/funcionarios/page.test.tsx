@@ -95,8 +95,8 @@ describe("Funcionários: férias por pessoa", () => {
       prazo_ferias: "2026-04-30",
     });
     render(<FuncionariosPage />);
-    expect(await screen.findByText("Férias: 8/30 (8 transitados)")).toBeTruthy();
-    expect(screen.getByText("Férias: 5/22")).toBeTruthy();
+    expect(await screen.findByText("Férias: 8/30 dias úteis (8 transitados)")).toBeTruthy();
+    expect(screen.getByText("Férias: 5/22 dias úteis")).toBeTruthy();
     expect(screen.getAllByText(/^Férias:/)).toHaveLength(2);
   });
 });

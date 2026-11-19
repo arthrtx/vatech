@@ -6,6 +6,7 @@ import { api, mensagemDeErro, type Anexo, type Limite, type Pedido, type Subtipo
 import { hojeIso } from "@/lib/agenda";
 import { tipos } from "@/lib/rotulos";
 import CampoAnexos from "./CampoAnexos";
+import { diasUteis } from "@/lib/diasUteis";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
 import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
@@ -68,13 +69,12 @@ export default function PedidoForm({
 
   const limite = limites.find((l) => l.tipo === tipo);
   const ano = hoje.slice(0, 4);
-  const dias = (de: string, ate: string) => Math.round((Date.parse(`${ate}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / 86400000) + 1;
   // Ao editar um pedido do mesmo tipo, os seus dias já estão em «usados».
-  const proprios = pedido && pedido.tipo === tipo && pedido.estado !== "recusado" ? dias(pedido.data_inicio, pedido.data_fim) : 0;
+  const proprios = pedido && pedido.tipo === tipo && pedido.estado !== "recusado" ? diasUteis(pedido.data_inicio, pedido.data_fim) : 0;
   const usados = limite ? Math.max(0, limite.usados - proprios) : 0;
   const total = limite?.dias_ano != null ? limite.dias_ano + limite.transitados : null;
   const restam = total !== null ? Math.max(0, total - usados) : null;
-  const diasPedidos = inicio && fim && fim >= inicio ? dias(inicio, fim) : 0;
+  const diasPedidos = inicio && fim && fim >= inicio ? diasUteis(inicio, fim) : 0;
   const excede = restam !== null && diasPedidos > restam;
 
   async function melhorar() {
@@ -170,7 +170,7 @@ export default function PedidoForm({
       </div>
       {limite?.dias_ano != null && (
         <p role="status" className="text-sm text-texto-suave">
-          {tipos[tipo]}: {usados} de {total} dias usados em {ano} (
+          {tipos[tipo]}: {usados} de {total} dias úteis usados em {ano} (
           {limite.transitados > 0 ? `${limite.dias_ano} do ano + ${limite.transitados} transitados; ` : ""}restam {restam})
         </p>
       )}
@@ -212,7 +212,7 @@ export default function PedidoForm({
       </div>
       {excede && (
         <p role="alert" className={erroCls}>
-          Este pedido tem {diasPedidos} dias e só restam {restam} de {tipos[tipo].toLowerCase()} em {ano}.
+          Este pedido tem {diasPedidos} dias úteis e só restam {restam} de {tipos[tipo].toLowerCase()} em {ano}.
         </p>
       )}
       <div>
