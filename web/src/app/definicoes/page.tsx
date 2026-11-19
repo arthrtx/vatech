@@ -4,10 +4,12 @@ import { useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import EscolhaLocalidade from "@/components/EscolhaLocalidade";
+import CampoData from "@/components/CampoData";
 import EscolhaTema from "@/components/EscolhaTema";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
 import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { papeis } from "@/lib/rotulos";
 
 const cartao = "flex flex-col gap-4 rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4 md:p-6";
 const botaoGuardar = `${botao} min-h-10`;
@@ -153,7 +155,7 @@ function DadosConta({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
       )}
       <div>
         <p className={label}>Papel</p>
-        <p>{user.papel === "admin" ? "Administrador" : "Funcionário"}</p>
+        <p>{papeis[user.papel]}</p>
         {user.papel !== "admin" && <p className="text-sm text-texto-suave">Só um administrador altera.</p>}
       </div>
       <Rodape erroGeral={erroGeral} ok={ok} enviando={enviando} sujo={sujo} />
@@ -284,7 +286,7 @@ function FotoPerfil({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold">{user.nome}</p>
             <p className="truncate text-sm text-texto-suave">
-              {user.email} · {user.papel === "admin" ? "Administrador" : "Funcionário"}
+              {user.email} · {papeis[user.papel]}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -311,6 +313,56 @@ function FotoPerfil({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
   );
 }
 
+function DatasEstagio({ user, atualizarUser }: { user: User; atualizarUser: (u: User) => void }) {
+  const [inicio, setInicio] = useState(user.estagio_inicio ?? "");
+  const [fim, setFim] = useState(user.estagio_fim ?? "");
+  const { erros, erroGeral, ok, enviando, submeter, desc, limparOk } = useEnvio(async () => {
+    // O PUT /api/me exige nome e email: reenvia os valores actuais da conta.
+    atualizarUser(
+      await api.editarPerfil({ nome: user.nome, email: user.email, estagio_inicio: inicio || null, estagio_fim: fim || null }),
+    );
+  });
+  const sujo = inicio !== (user.estagio_inicio ?? "") || fim !== (user.estagio_fim ?? "");
+  const validar = (): Record<string, string[]> =>
+    inicio && fim && fim < inicio ? { estagio_fim: ["A data de fim não pode ser anterior à de início."] } : {};
+
+  return (
+    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-estagio" className={`${cartao} md:max-w-xl`}>
+      <h2 id="def-estagio" className="text-lg font-semibold">
+        Datas do estágio
+      </h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Campo id="estagio_inicio" rotulo="Início do estágio" erros={erros.estagio_inicio}>
+          <CampoData
+            id="estagio_inicio"
+            valor={inicio}
+            aria-invalid={!!erros.estagio_inicio}
+            aria-describedby={desc("estagio_inicio")}
+            onChange={(v) => {
+              setInicio(v);
+              limparOk();
+            }}
+          />
+        </Campo>
+        <Campo id="estagio_fim" rotulo="Fim do estágio" erros={erros.estagio_fim}>
+          <CampoData
+            id="estagio_fim"
+            min={inicio || undefined}
+            valor={fim}
+            aria-invalid={!!erros.estagio_fim}
+            aria-describedby={desc("estagio_fim")}
+            onChange={(v) => {
+              setFim(v);
+              limparOk();
+            }}
+          />
+        </Campo>
+      </div>
+      <Rodape erroGeral={erroGeral} ok={ok} enviando={enviando} sujo={sujo} />
+    </form>
+  );
+}
+
 function Conteudo() {
   const { user, atualizarUser } = useAuth();
   if (!user) return null;
@@ -319,6 +371,7 @@ function Conteudo() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Definições</h1>
       <FotoPerfil user={user} atualizarUser={atualizarUser} />
+      {user.papel === "estagiario" && <DatasEstagio user={user} atualizarUser={atualizarUser} />}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
         <DadosConta user={user} atualizarUser={atualizarUser} />
         <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />

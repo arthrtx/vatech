@@ -2,7 +2,7 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000
 
 const TOKEN_KEY = "vatech_token";
 
-export type Papel = "admin" | "funcionario";
+export type Papel = "admin" | "funcionario" | "estagiario";
 export type TipoPedido = "ferias" | "ausencia" | "licenca";
 export type SubtipoPedido = "medica" | "documentacao" | "falta_justificada";
 export type EstadoPedido = "pendente" | "aprovado" | "recusado";
@@ -14,6 +14,19 @@ export interface User {
   papel: Papel;
   empresa_id: number;
   avatar_url?: string | null;
+  /** Só estagiários: datas do estágio (Y-m-d). */
+  estagio_inicio?: string | null;
+  estagio_fim?: string | null;
+}
+
+/** Marcação de presença do dia; entrada/saida em ISO8601, hora do servidor. */
+export interface Presenca {
+  id: number;
+  user_id: number;
+  user?: { id: number; nome: string };
+  data: string;
+  entrada: string;
+  saida: string | null;
 }
 
 export interface Anexo {
@@ -154,7 +167,14 @@ export const api = {
     }
   },
   me: async () => (await request<{ user: User }>("GET", "/me")).user,
-  editarPerfil: async (b: { nome: string; email: string; password?: string; password_atual?: string }) =>
+  editarPerfil: async (b: {
+    nome: string;
+    email: string;
+    password?: string;
+    password_atual?: string;
+    estagio_inicio?: string | null;
+    estagio_fim?: string | null;
+  }) =>
     (await request<{ user: User }>("PUT", "/me", b)).user,
   enviarAvatar: async (ficheiro: File) => {
     const f = new FormData();
@@ -163,11 +183,16 @@ export const api = {
   },
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   funcionarios: async () => (await request<{ data: User[] }>("GET", "/funcionarios")).data,
-  criarFuncionario: async (b: { nome: string; email: string; password: string }) =>
+  criarFuncionario: async (b: { nome: string; email: string; password: string; papel: Papel }) =>
     (await request<{ data: User }>("POST", "/funcionarios", b)).data,
-  editarFuncionario: async (id: number, b: { nome: string; email: string; password?: string }) =>
+  editarFuncionario: async (id: number, b: { nome: string; email: string; password?: string; papel?: Papel }) =>
     (await request<{ data: User }>("PUT", `/funcionarios/${id}`, b)).data,
   apagarFuncionario: (id: number) => request<void>("DELETE", `/funcionarios/${id}`),
+  presencaHoje: async () => (await request<{ data: Presenca | null }>("GET", "/presencas/hoje")).data,
+  marcarEntrada: async () => (await request<{ data: Presenca }>("POST", "/presencas/entrada")).data,
+  marcarSaida: async () => (await request<{ data: Presenca }>("POST", "/presencas/saida")).data,
+  presencas: async (de: string, ate: string, userId?: number) =>
+    (await request<{ data: Presenca[] }>("GET", `/presencas?de=${de}&ate=${ate}${userId ? `&user_id=${userId}` : ""}`)).data,
   pedidos: async (estado?: EstadoPedido) =>
     (await request<{ data: Pedido[] }>("GET", `/pedidos${estado ? `?estado=${estado}` : ""}`)).data,
   agenda: async (de: string, ate: string) =>

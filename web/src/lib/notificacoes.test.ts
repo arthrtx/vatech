@@ -54,6 +54,18 @@ describe("detetar", () => {
     expect(re.itens[0].texto).toContain("foi recusado: Equipa curta");
   });
 
+  it("estagiário é tratado como não-admin e vê o motivo da recusa completo", () => {
+    const est = { id: 2, papel: "estagiario" as const };
+    const motivo = "Sem cobertura na equipa nessa semana; volte a pedir para a seguinte, com 15 dias de antecedência.";
+    const base = detetar(vazio, [pedido({ tipo: "ausencia" })], est);
+    const r = detetar(base, [pedido({ tipo: "ausencia", estado: "recusado", motivo_recusa: motivo })], est);
+    expect(r.itens).toHaveLength(1);
+    expect(r.itens[0].texto).toContain(`foi recusado: ${motivo}`);
+    // pedido pendente novo de outra pessoa não avisa o estagiário
+    const outro = detetar(base, [pedido({ tipo: "ausencia" }), pedido({ id: 7, user_id: 9 })], est);
+    expect(outro.itens).toEqual([]);
+  });
+
   it("limita o histórico", () => {
     const antigos = Array.from({ length: MAX_NOTIFICACOES }, (_, i) => ({
       id: `x${i}`,
