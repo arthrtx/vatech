@@ -28,7 +28,7 @@ const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 // Cores de estado com os tokens de globals.css. Aprovado = cheio, pendente = tracejado.
 const estiloEstado = {
-  aprovado: "border-primaria bg-primaria text-white",
+  aprovado: "border-positivo bg-positivo text-texto",
   pendente: "border-dashed border-primaria bg-painel text-texto",
   recusado: "",
 } as const;
