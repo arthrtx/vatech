@@ -9,6 +9,7 @@ interface AuthCtx {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  atualizarUser: (u: User) => void;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -61,7 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace("/login");
   }, [router]);
 
-  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading, login, logout]);
+  const atualizarUser = useCallback((u: User) => setUser(u), []);
+
+  const value = useMemo(
+    () => ({ user, loading, login, logout, atualizarUser }),
+    [user, loading, login, logout, atualizarUser],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

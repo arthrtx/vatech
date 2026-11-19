@@ -145,6 +145,8 @@ export const api = {
     }
   },
   me: async () => (await request<{ user: User }>("GET", "/me")).user,
+  editarPerfil: async (b: { nome: string; email: string; password?: string; password_atual?: string }) =>
+    (await request<{ user: User }>("PUT", "/me", b)).user,
   funcionarios: async () => (await request<{ data: User[] }>("GET", "/funcionarios")).data,
   criarFuncionario: async (b: { nome: string; email: string; password: string }) =>
     (await request<{ data: User }>("POST", "/funcionarios", b)).data,
