@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { primeiroNome, saudacao } from "@/lib/saudacao";
 import {
   IconeAgenda,
   IconeDashboard,
@@ -38,6 +39,7 @@ export default function AppShell({
   const router = useRouter();
   const pathname = usePathname();
   const [pesquisaAberta, setPesquisaAberta] = useState(false);
+  const [agora, setAgora] = useState<Date | null>(null);
   const fecharPesquisa = useCallback(() => setPesquisaAberta(false), []);
 
   useEffect(() => {
@@ -49,6 +51,13 @@ export default function AppShell({
     };
     window.addEventListener("keydown", atalho);
     return () => window.removeEventListener("keydown", atalho);
+  }, []);
+
+  useEffect(() => {
+    const atualizar = () => setAgora(new Date());
+    atualizar();
+    const t = setInterval(atualizar, 15000);
+    return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
@@ -76,8 +85,12 @@ export default function AppShell({
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
-  const data = new Intl.DateTimeFormat("pt", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
-  const hoje = data.charAt(0).toUpperCase() + data.slice(1);
+  let hoje = "";
+  if (agora) {
+    const data = new Intl.DateTimeFormat("pt", { weekday: "long", day: "numeric", month: "long" }).format(agora);
+    const hora = new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" }).format(agora);
+    hoje = `${data.charAt(0).toUpperCase() + data.slice(1)} · ${hora}`;
+  }
 
   return (
     <div className="min-h-screen bg-fundo p-0 text-texto md:p-6">
@@ -126,7 +139,13 @@ export default function AppShell({
         </aside>
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           <header className="flex items-center gap-3">
-            <p className="hidden text-sm text-texto-suave sm:block">{hoje}</p>
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold">
+                {agora ? `${saudacao(agora)}, ` : ""}
+                {primeiroNome(user.nome)}
+              </p>
+              <p className="hidden truncate text-sm text-texto-suave sm:block">{hoje}</p>
+            </div>
             <button
               type="button"
               onClick={() => setPesquisaAberta(true)}
