@@ -131,7 +131,7 @@ export default function PedidoForm({
       </div>
       <div>
         <label htmlFor="observacao" className={label}>
-          Observação
+          Descrição
         </label>
         <textarea
           id="observacao"
