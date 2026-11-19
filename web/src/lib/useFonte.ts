@@ -29,6 +29,17 @@ export function useFonte<T>(carregar: () => Promise<T>): Fonte<T> {
   }, [carregar, volta]);
 
   const atualizar = useCallback(() => setVolta((v) => v + 1), []);
+
+  // Atualização silenciosa (mantém os dados visíveis): 15 s e ao voltar ao separador.
+  useEffect(() => {
+    const t = setInterval(atualizar, 15000);
+    const aoVoltar = () => document.visibilityState === "visible" && atualizar();
+    document.addEventListener("visibilitychange", aoVoltar);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", aoVoltar);
+    };
+  }, [atualizar]);
   const tentar = useCallback(() => {
     setEstado({ dados: null, erro: false });
     setVolta((v) => v + 1);

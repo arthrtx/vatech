@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
+import Avatar from "@/components/Avatar";
 import EscolhaLocalidade from "@/components/EscolhaLocalidade";
 import EscolhaTema from "@/components/EscolhaTema";
-import { botao, erro as erroCls, input, label } from "@/components/ui";
+import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
 import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -240,34 +241,84 @@ function AlterarPalavraPasse({ user, atualizarUser }: { user: User; atualizarUse
   );
 }
 
+const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
+const MAX_FOTO = 2 * 1024 * 1024;
+
+function FotoPerfil({ user, atualizarUser }: { user: User; atualizarUser: (u: User) => void }) {
+  const campo = useRef<HTMLInputElement>(null);
+  const [aEnviar, setAEnviar] = useState(false);
+  const [erroFoto, setErroFoto] = useState<string | null>(null);
+  const [ok, setOk] = useState("");
+
+  async function executar(acao: () => Promise<User>, mensagem: string) {
+    setErroFoto(null);
+    setOk("");
+    setAEnviar(true);
+    try {
+      atualizarUser(await acao());
+      setOk(mensagem);
+    } catch (err) {
+      setErroFoto(mensagemDeErro(err));
+    } finally {
+      setAEnviar(false);
+    }
+  }
+
+  function escolher(e: React.ChangeEvent<HTMLInputElement>) {
+    const ficheiro = e.target.files?.[0];
+    e.target.value = "";
+    if (!ficheiro) return;
+    if (!TIPOS_FOTO.includes(ficheiro.type)) return setErroFoto("Use uma imagem JPG, PNG ou WebP.");
+    if (ficheiro.size > MAX_FOTO) return setErroFoto("A imagem não pode ter mais de 2 MB.");
+    void executar(() => api.enviarAvatar(ficheiro), "Foto atualizada.");
+  }
+
+  return (
+    <section aria-labelledby="foto-perfil" className={`${cartao} md:max-w-xl`}>
+      <h2 id="foto-perfil" className="text-lg font-semibold">
+        Foto de perfil
+      </h2>
+      <div className="flex flex-wrap items-center gap-5">
+        <Avatar nome={user.nome} id={user.id} foto={user.avatar_url} className="h-20 w-20 text-2xl" />
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-lg font-semibold">{user.nome}</p>
+            <p className="truncate text-sm text-texto-suave">
+              {user.email} · {user.papel === "admin" ? "Administrador" : "Funcionário"}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <input ref={campo} type="file" accept={TIPOS_FOTO.join(",")} className="sr-only" aria-label="Escolher foto de perfil" onChange={escolher} />
+            <button type="button" disabled={aEnviar} className={botaoSec} onClick={() => campo.current?.click()}>
+              {aEnviar ? "A enviar..." : user.avatar_url ? "Alterar foto" : "Adicionar foto"}
+            </button>
+            {user.avatar_url && (
+              <button type="button" disabled={aEnviar} className={botaoSec} onClick={() => void executar(api.removerAvatar, "Foto removida.")}>
+                Remover foto
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="text-sm text-texto-suave">JPG, PNG ou WebP, até 2 MB.</p>
+      {erroFoto && (
+        <p role="alert" className={erroCls}>
+          {erroFoto}
+        </p>
+      )}
+      <p role="status">{ok}</p>
+    </section>
+  );
+}
+
 function Conteudo() {
   const { user, atualizarUser } = useAuth();
   if (!user) return null;
 
-  const iniciais = user.nome
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("");
-
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Definições</h1>
-      <div className="flex items-center gap-4">
-        <span
-          aria-hidden="true"
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primaria-suave text-lg font-semibold text-primaria-forte dark:text-texto"
-        >
-          {iniciais}
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-lg font-semibold">{user.nome}</p>
-          <p className="truncate text-sm text-texto-suave">
-            {user.email} · {user.papel === "admin" ? "Administrador" : "Funcionário"}
-          </p>
-        </div>
-      </div>
+      <FotoPerfil user={user} atualizarUser={atualizarUser} />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
         <DadosConta user={user} atualizarUser={atualizarUser} />
         <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />

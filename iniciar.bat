@@ -1,6 +1,8 @@
 @echo off
 setlocal
 chcp 65001 >nul
+rem ComSpec invalido (ex.: a apontar para uma pasta) faz o npm falhar com ENOENT
+set "ComSpec=%SystemRoot%\System32\cmd.exe"
 cd /d "%~dp0"
 title vatech - iniciar
 
@@ -40,7 +42,18 @@ if errorlevel 1 (
   if errorlevel 1 (
     echo [aviso] Docker Desktop nao esta a correr - a saltar a base de dados.
   ) else (
-    docker compose up -d --build mysql api
+    rem O Docker nao le o disco D: neste PC (bind mounts vazios): a API corre a partir de uma copia em C:.
+    rem Sem /MIR: preserva vendor/ e .env da copia. O web nao e preciso na API.
+    set "API_DIR=%USERPROFILE%\vatech-api"
+    echo A copiar a API para %API_DIR% ...
+    robocopy "%~dp0." "%API_DIR%" /E /XD node_modules .next .git web "Ideias e inspirações" /XF *.log /NFL /NDL /NJH /NJS /NP >nul
+    if errorlevel 8 (
+      echo [erro] falhou a copia para %API_DIR% - a saltar a API.
+    ) else (
+      pushd "%API_DIR%"
+      docker compose up -d --build mysql api
+      popd
+    )
   )
 )
 

@@ -17,6 +17,7 @@ import {
   IconeSol,
   IconeUtilizador,
 } from "./Icones";
+import Avatar from "./Avatar";
 import FundoQuente, { classeFundoQuente } from "./FundoQuente";
 import Pesquisa from "./Pesquisa";
 import { useTema } from "@/lib/tema";
@@ -196,12 +197,16 @@ export default function AppShell({
                 aria-label={`${user.nome}, a minha conta`}
                 className={`${vidroTopo} flex shrink-0 items-center gap-3 p-1 hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria sm:pr-5`}
               >
-                <span
-                  aria-hidden="true"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte dark:text-texto"
-                >
-                  {iniciais || <IconeUtilizador />}
-                </span>
+                {user.avatar_url ? (
+                  <Avatar nome={user.nome} id={user.id} foto={user.avatar_url} className="h-10 w-10 text-sm" />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte dark:text-texto"
+                  >
+                    {iniciais || <IconeUtilizador />}
+                  </span>
+                )}
                 <span aria-hidden="true" className="hidden min-w-0 leading-tight sm:block">
                   <span className="block max-w-40 truncate font-semibold">{primeiroNome(user.nome)}</span>
                   <span className="block text-xs text-texto-suave">A minha conta</span>

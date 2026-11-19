@@ -13,6 +13,7 @@ export interface User {
   email: string;
   papel: Papel;
   empresa_id: number;
+  avatar_url?: string | null;
 }
 
 export interface Pedido {
@@ -102,14 +103,14 @@ export function mensagemDeErro(err: unknown): string {
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (body !== undefined && !(body instanceof FormData)) headers["Content-Type"] = "application/json";
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
   });
 
   if (res.status === 204) return undefined as T;
@@ -147,6 +148,12 @@ export const api = {
   me: async () => (await request<{ user: User }>("GET", "/me")).user,
   editarPerfil: async (b: { nome: string; email: string; password?: string; password_atual?: string }) =>
     (await request<{ user: User }>("PUT", "/me", b)).user,
+  enviarAvatar: async (ficheiro: File) => {
+    const f = new FormData();
+    f.append("avatar", ficheiro);
+    return (await request<{ user: User }>("POST", "/me/avatar", f)).user;
+  },
+  removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   funcionarios: async () => (await request<{ data: User[] }>("GET", "/funcionarios")).data,
   criarFuncionario: async (b: { nome: string; email: string; password: string }) =>
     (await request<{ data: User }>("POST", "/funcionarios", b)).data,
@@ -159,6 +166,9 @@ export const api = {
     (await request<{ data: PedidoAgenda[] }>("GET", `/agenda?de=${de}&ate=${ate}`)).data,
   criarPedido: (b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
+  editarPedido: (id: number, b: NovoPedido) =>
+    request<{ data: Pedido; avisos?: string[] }>("PUT", `/pedidos/${id}`, b),
+  apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
   aprovar: async (id: number) =>
     (await request<{ data: Pedido }>("POST", `/pedidos/${id}/aprovar`)).data,
   recusar: async (id: number, motivo_recusa: string) =>

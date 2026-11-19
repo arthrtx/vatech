@@ -5,6 +5,12 @@ import type { Pedido, PedidoAgenda } from "@/lib/api";
 
 afterEach(cleanup);
 
+const escolher = (campo: string, opcao: string) => {
+  fireEvent.click(screen.getByRole("combobox", { name: campo }));
+  fireEvent.click(screen.getByRole("option", { name: opcao }));
+};
+
+
 const p = (o: Partial<Pedido>): Pedido => ({
   id: 1,
   empresa_id: 1,
@@ -44,10 +50,10 @@ describe("Agenda", () => {
   it("filtros alteram a grelha e a sobreposicao persiste ao filtrar", () => {
     render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
     expect(screen.getAllByTitle(/\((aprovado|pendente)\)/).length).toBe(6);
-    fireEvent.change(screen.getByLabelText("Funcionário"), { target: { value: "2" } });
+    escolher("Funcionário", "Rui");
     expect(screen.getAllByTitle(/\((aprovado|pendente)\)/).length).toBe(2);
     expect(screen.getAllByText("Sobreposição").length).toBe(2);
-    fireEvent.change(screen.getByLabelText("Funcionário"), { target: { value: "" } });
+    escolher("Funcionário", "Todos");
     fireEvent.click(screen.getByRole("button", { name: "Licença" }));
     expect(screen.queryAllByTitle(/\((aprovado|pendente)\)/).length).toBe(0);
     expect(screen.getAllByText("Sobreposição").length).toBe(2);
@@ -72,6 +78,7 @@ describe("Agenda", () => {
   it("filtro de funcionario ignora quem so tem recusados", () => {
     const so = [...pedidos, p({ id: 9, user_id: 3, user: { id: 3, nome: "Zé" }, estado: "recusado" })];
     render(<Agenda pedidos={so} admin hoje="2026-12-01" />);
+    fireEvent.click(screen.getByRole("combobox", { name: "Funcionário" }));
     expect(screen.queryByRole("option", { name: "Zé" })).toBeNull();
     expect(screen.getByRole("option", { name: "Rui" })).toBeTruthy();
   });
@@ -186,7 +193,7 @@ describe("Agenda", () => {
 
   it("filtro de funcionario lista colegas pelo user.id", () => {
     render(<Agenda pedidos={[colega]} admin hoje="2026-12-01" />);
-    fireEvent.change(screen.getByLabelText("Funcionário"), { target: { value: "2" } });
+    escolher("Funcionário", "Rui");
     expect(screen.getAllByTitle(/Rui:/).length).toBe(2);
   });
 });

@@ -48,6 +48,49 @@ class PedidoController extends Controller
         return response()->json($resposta, 201);
     }
 
+    /** O funcionario edita um pedido seu enquanto esta pendente. */
+    public function update(StorePedidoRequest $request, int $id): JsonResponse
+    {
+        $pedido = $this->pedidoPendenteDoUtilizador($request, $id);
+        $dados = $request->validated();
+
+        $sobrepoe = Pedido::where('user_id', $pedido->user_id)
+            ->where('id', '!=', $pedido->id)
+            ->whereIn('estado', ['pendente', 'aprovado'])
+            ->where('data_inicio', '<=', $dados['data_fim'])
+            ->where('data_fim', '>=', $dados['data_inicio'])
+            ->exists();
+
+        // Campos opcionais em falta limpam-se (ex.: mudar de ausencia para ferias remove o subtipo).
+        $pedido->update([...$dados, 'subtipo' => $dados['subtipo'] ?? null, 'observacao' => $dados['observacao'] ?? null]);
+
+        $resposta = ['data' => $pedido->refresh()];
+        if ($sobrepoe) {
+            $resposta['avisos'] = ['As datas sobrepoem-se a outro pedido seu.'];
+        }
+
+        return response()->json($resposta);
+    }
+
+    /** O funcionario apaga um pedido seu enquanto esta pendente. */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $this->pedidoPendenteDoUtilizador($request, $id)->delete();
+
+        return response()->json(null, 204);
+    }
+
+    private function pedidoPendenteDoUtilizador(Request $request, int $id): Pedido
+    {
+        $user = $request->user();
+        // 404 para pedidos de outros utilizadores ou empresas (nao revela existencia).
+        $pedido = Pedido::where('empresa_id', $user->empresa_id)->where('user_id', $user->id)->findOrFail($id);
+
+        abort_if($pedido->estado !== 'pendente', 409, 'So e possivel alterar pedidos pendentes.');
+
+        return $pedido;
+    }
+
     public function aprovar(Request $request, int $id): JsonResponse
     {
         return $this->decidir($request, $id, ['estado' => 'aprovado']);

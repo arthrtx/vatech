@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel'])]
+#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -34,9 +35,11 @@ class User extends Authenticatable
         ];
     }
 
-    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null} */
+    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null} */
     public function toContrato(): array
     {
-        return $this->only(['id', 'nome', 'email', 'papel', 'empresa_id']);
+        return $this->only(['id', 'nome', 'email', 'papel', 'empresa_id']) + [
+            'avatar_url' => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
+        ];
     }
 }

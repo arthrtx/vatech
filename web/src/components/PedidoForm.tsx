@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { api, mensagemDeErro, type SubtipoPedido, type TipoPedido } from "@/lib/api";
-import { botao, erro as erroCls, input, label } from "./ui";
+import { api, mensagemDeErro, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
+import CampoData from "./CampoData";
+import Seletor from "./Seletor";
+import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
 
 const subtipos: { v: SubtipoPedido; t: string }[] = [
   { v: "medica", t: "Médica" },
@@ -12,19 +14,27 @@ const subtipos: { v: SubtipoPedido; t: string }[] = [
 
 export default function PedidoForm({
   onCriado,
+  pedido,
+  onCancelar,
   dataInicial = "",
-  className = "flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10",
+  className = "flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 has-[[role=dialog]]:relative has-[[role=dialog]]:z-20",
 }: {
+  /** Chamado depois de criar (ou, em modo de edição, de guardar) o pedido. */
   onCriado?: (avisos: string[]) => void;
+  /** Se existir, o formulário edita este pedido em vez de criar um novo. */
+  pedido?: Pedido;
+  /** Botão "Cancelar" (modo de edição). */
+  onCancelar?: () => void;
   /** Preenche início e fim (ex.: dia escolhido na Agenda). */
   dataInicial?: string;
   className?: string;
 }) {
-  const [tipo, setTipo] = useState<TipoPedido>("ferias");
-  const [subtipo, setSubtipo] = useState<SubtipoPedido | "">("");
-  const [inicio, setInicio] = useState(dataInicial);
-  const [fim, setFim] = useState(dataInicial);
-  const [obs, setObs] = useState("");
+  const edicao = !!pedido;
+  const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? "ferias");
+  const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
+  const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
+  const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
+  const [obs, setObs] = useState(pedido?.observacao ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [avisos, setAvisos] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
@@ -35,17 +45,20 @@ export default function PedidoForm({
     setAvisos([]);
     setEnviando(true);
     try {
-      const r = await api.criarPedido({
+      const corpo = {
         tipo,
         ...(tipo === "ausencia" && subtipo ? { subtipo } : {}),
         data_inicio: inicio,
         data_fim: fim,
         ...(obs ? { observacao: obs } : {}),
-      });
+      };
+      const r = pedido ? await api.editarPedido(pedido.id, corpo) : await api.criarPedido(corpo);
       setAvisos(r.avisos ?? []);
-      setInicio("");
-      setFim("");
-      setObs("");
+      if (!pedido) {
+        setInicio("");
+        setFim("");
+        setObs("");
+      }
       onCriado?.(r.avisos ?? []);
     } catch (err) {
       setErro(mensagemDeErro(err));
@@ -57,41 +70,34 @@ export default function PedidoForm({
   return (
     <form onSubmit={enviar} className={className} aria-labelledby="novo-pedido">
       <h2 id="novo-pedido" className="text-lg font-semibold">
-        Novo pedido
+        {edicao ? "Editar pedido" : "Novo pedido"}
       </h2>
       <div>
         <label htmlFor="tipo" className={label}>
           Tipo
         </label>
-        <select
+        <Seletor
           id="tipo"
-          className={input}
-          value={tipo}
-          onChange={(e) => setTipo(e.target.value as TipoPedido)}
-        >
-          <option value="ferias">Férias</option>
-          <option value="ausencia">Ausência</option>
-          <option value="licenca">Licença</option>
-        </select>
+          valor={tipo}
+          opcoes={[
+            { valor: "ferias", rotulo: "Férias" },
+            { valor: "ausencia", rotulo: "Ausência" },
+            { valor: "licenca", rotulo: "Licença" },
+          ]}
+          onChange={(v) => setTipo(v as TipoPedido)}
+        />
       </div>
       {tipo === "ausencia" && (
         <div>
           <label htmlFor="subtipo" className={label}>
             Subtipo
           </label>
-          <select
+          <Seletor
             id="subtipo"
-            className={input}
-            value={subtipo}
-            onChange={(e) => setSubtipo(e.target.value as SubtipoPedido | "")}
-          >
-            <option value="">Sem subtipo</option>
-            {subtipos.map((s) => (
-              <option key={s.v} value={s.v}>
-                {s.t}
-              </option>
-            ))}
-          </select>
+            valor={subtipo}
+            opcoes={[{ valor: "", rotulo: "Sem subtipo" }, ...subtipos.map((x) => ({ valor: x.v, rotulo: x.t }))]}
+            onChange={(v) => setSubtipo(v as SubtipoPedido | "")}
+          />
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -99,28 +105,13 @@ export default function PedidoForm({
           <label htmlFor="data_inicio" className={label}>
             Data de início
           </label>
-          <input
-            id="data_inicio"
-            type="date"
-            required
-            className={input}
-            value={inicio}
-            onChange={(e) => setInicio(e.target.value)}
-          />
+          <CampoData id="data_inicio" required valor={inicio} onChange={setInicio} />
         </div>
         <div>
           <label htmlFor="data_fim" className={label}>
             Data de fim
           </label>
-          <input
-            id="data_fim"
-            type="date"
-            required
-            min={inicio || undefined}
-            className={input}
-            value={fim}
-            onChange={(e) => setFim(e.target.value)}
-          />
+          <CampoData id="data_fim" required min={inicio || undefined} valor={fim} onChange={setFim} />
         </div>
       </div>
       <div>
@@ -142,7 +133,7 @@ export default function PedidoForm({
       )}
       {avisos.length > 0 && (
         <div role="status" className={erroCls}>
-          <p className="font-medium">Pedido criado, com avisos:</p>
+          <p className="font-medium">{edicao ? "Pedido guardado, com avisos:" : "Pedido criado, com avisos:"}</p>
           <ul className="list-disc pl-5">
             {avisos.map((a) => (
               <li key={a}>{a}</li>
@@ -150,10 +141,15 @@ export default function PedidoForm({
           </ul>
         </div>
       )}
-      <div>
+      <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={enviando} className={botao}>
-          {enviando ? "A enviar..." : "Submeter pedido"}
+          {enviando ? "A enviar..." : edicao ? "Guardar alterações" : "Submeter pedido"}
         </button>
+        {edicao && onCancelar && (
+          <button type="button" onClick={onCancelar} className={botaoSec}>
+            Cancelar
+          </button>
+        )}
       </div>
     </form>
   );

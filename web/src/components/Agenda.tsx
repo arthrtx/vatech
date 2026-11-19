@@ -27,10 +27,11 @@ import { datasDoAno, datasDoDia, type DataEspecial } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { subtipos, tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
-import { botao, botaoSec, input, label } from "./ui";
+import { botao, botaoSec, label } from "./ui";
 import GrupoChips from "./GrupoChips";
 import PainelFiltros from "./PainelFiltros";
 import PedidoForm from "./PedidoForm";
+import Seletor from "./Seletor";
 
 // Marcas por dia no calendário pequeno; o dia aberto mostra sempre todos.
 const MAX_MARCAS = 3;
@@ -324,19 +325,13 @@ export default function Agenda({
                 <label htmlFor="ag-func" className={label}>
                   Funcionário
                 </label>
-                <select
+                <Seletor
                   id="ag-func"
-                  className={`${input} min-h-11`}
-                  value={filtros.funcionarioId ?? ""}
-                  onChange={(e) => setFiltros((f) => ({ ...f, funcionarioId: e.target.value ? Number(e.target.value) : null }))}
-                >
-                  <option value="">Todos</option>
-                  {pessoas.map(([id, nome]) => (
-                    <option key={id} value={id}>
-                      {nome}
-                    </option>
-                  ))}
-                </select>
+                  className="min-h-11"
+                  valor={filtros.funcionarioId === null ? "" : String(filtros.funcionarioId)}
+                  opcoes={[{ valor: "", rotulo: "Todos" }, ...pessoas.map(([id, nome]) => ({ valor: String(id), rotulo: nome }))]}
+                  onChange={(v) => setFiltros((f) => ({ ...f, funcionarioId: v ? Number(v) : null }))}
+                />
               </div>
             )}
           </PainelFiltros>

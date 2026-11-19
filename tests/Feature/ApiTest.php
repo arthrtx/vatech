@@ -243,3 +243,66 @@ it('devolve 404 antes de validar o body no PUT de funcionario alheio ou inexiste
     $this->putJson("/api/funcionarios/{$alheio->id}", [])->assertStatus(404);
     $this->putJson('/api/funcionarios/99999', ['email' => 'invalido'])->assertStatus(404);
 });
+
+it('permite ao funcionario editar um pedido seu pendente', function () {
+    $func = User::factory()->create();
+    $pedido = Pedido::factory()->create(['user_id' => $func->id, 'empresa_id' => $func->empresa_id, 'estado' => 'pendente', 'tipo' => 'ausencia', 'subtipo' => 'medica']);
+    Sanctum::actingAs($func);
+
+    $this->putJson("/api/pedidos/{$pedido->id}", novoPedido(['data_inicio' => '2026-12-10', 'data_fim' => '2026-12-12']))
+        ->assertOk()
+        ->assertJsonPath('data.tipo', 'ferias')
+        ->assertJsonPath('data.subtipo', null)
+        ->assertJsonPath('data.data_inicio', '2026-12-10')
+        ->assertJsonPath('data.estado', 'pendente');
+});
+
+it('valida o corpo ao editar um pedido', function () {
+    $func = User::factory()->create();
+    $pedido = Pedido::factory()->create(['user_id' => $func->id, 'empresa_id' => $func->empresa_id, 'estado' => 'pendente']);
+    Sanctum::actingAs($func);
+
+    $this->putJson("/api/pedidos/{$pedido->id}", novoPedido(['data_fim' => '2026-11-01']))
+        ->assertStatus(422)->assertJsonValidationErrors('data_fim');
+});
+
+it('permite ao funcionario apagar um pedido seu pendente', function () {
+    $func = User::factory()->create();
+    $pedido = Pedido::factory()->create(['user_id' => $func->id, 'empresa_id' => $func->empresa_id, 'estado' => 'pendente']);
+    Sanctum::actingAs($func);
+
+    $this->deleteJson("/api/pedidos/{$pedido->id}")->assertStatus(204);
+    expect(Pedido::find($pedido->id))->toBeNull();
+});
+
+it('nao deixa editar nem apagar pedidos ja decididos (409)', function () {
+    $func = User::factory()->create();
+    Sanctum::actingAs($func);
+
+    foreach (['aprovado', 'recusado'] as $estado) {
+        $pedido = Pedido::factory()->create(['user_id' => $func->id, 'empresa_id' => $func->empresa_id, 'estado' => $estado]);
+        $this->putJson("/api/pedidos/{$pedido->id}", novoPedido())->assertStatus(409);
+        $this->deleteJson("/api/pedidos/{$pedido->id}")->assertStatus(409);
+        expect(Pedido::find($pedido->id))->not->toBeNull();
+    }
+});
+
+it('devolve 404 ao editar ou apagar pedidos de outro utilizador', function () {
+    $func = User::factory()->create();
+    $colega = User::factory()->create(['empresa_id' => $func->empresa_id]);
+    $alheio = Pedido::factory()->create(['user_id' => $colega->id, 'empresa_id' => $func->empresa_id, 'estado' => 'pendente']);
+    Sanctum::actingAs($func);
+
+    $this->putJson("/api/pedidos/{$alheio->id}", novoPedido())->assertStatus(404);
+    $this->deleteJson("/api/pedidos/{$alheio->id}")->assertStatus(404);
+    expect(Pedido::find($alheio->id))->not->toBeNull();
+});
+
+it('devolve 403 ao admin ao editar ou apagar pedidos', function () {
+    $func = User::factory()->create();
+    $pedido = Pedido::factory()->create(['user_id' => $func->id, 'empresa_id' => $func->empresa_id, 'estado' => 'pendente']);
+    Sanctum::actingAs(User::factory()->admin()->create(['empresa_id' => $func->empresa_id]));
+
+    $this->putJson("/api/pedidos/{$pedido->id}", novoPedido())->assertStatus(403);
+    $this->deleteJson("/api/pedidos/{$pedido->id}")->assertStatus(403);
+});

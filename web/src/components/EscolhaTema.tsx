@@ -1,7 +1,8 @@
 "use client";
 
 import { useTema, type Tema } from "@/lib/tema";
-import { input, label } from "./ui";
+import Seletor from "./Seletor";
+import { label } from "./ui";
 
 const OPCOES: { valor: Tema; rotulo: string }[] = [
   { valor: "sistema", rotulo: "Igual ao sistema" },
@@ -17,13 +18,7 @@ export default function EscolhaTema({ id = "tema" }: { id?: string }) {
       <label htmlFor={id} className={label}>
         Tema
       </label>
-      <select id={id} className={input} value={tema} onChange={(e) => definir(e.target.value as Tema)}>
-        {OPCOES.map((o) => (
-          <option key={o.valor} value={o.valor}>
-            {o.rotulo}
-          </option>
-        ))}
-      </select>
+      <Seletor id={id} valor={tema} opcoes={OPCOES} onChange={(v) => definir(v as Tema)} />
     </div>
   );
 }

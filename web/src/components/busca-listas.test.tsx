@@ -6,6 +6,12 @@ import type { Pedido } from "@/lib/api";
 
 afterEach(cleanup);
 
+const escolher = (campo: string, opcao: string) => {
+  fireEvent.click(screen.getByRole("combobox", { name: campo }));
+  fireEvent.click(screen.getByRole("option", { name: opcao }));
+};
+
+
 const base: Pedido = {
   id: 1,
   empresa_id: 1,
@@ -141,7 +147,7 @@ describe("filtro Funcionário", () => {
   it("existe no admin e filtra", () => {
     render(<PedidosAdmin pedidos={pedidos} onAprovar={vi.fn()} onRecusar={vi.fn()} />);
     limparFiltros();
-    fireEvent.change(screen.getByLabelText("Funcionário"), { target: { value: "3" } });
+    escolher("Funcionário", "João");
     expect(itens()).toBe(1);
     expect(screen.getByRole("listitem").textContent).toMatch(/João/);
     expect(screen.getByRole("status").textContent).toBe("1 de 3 pedidos");
