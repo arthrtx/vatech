@@ -182,13 +182,13 @@ export default function AppShell({
               <button
                 type="button"
                 aria-pressed={escuro}
-                aria-label="Modo escuro"
+                aria-label="Tema João"
                 onClick={() => definirTema(escuro ? "claro" : "escuro")}
                 className={`${vidroTopo} ${botaoTopo}`}
               >
                 {escuro ? <IconeSol className="h-4 w-4" /> : <IconeLua className="h-4 w-4" />}
                 <span aria-hidden="true" className={dicaAbaixo}>
-                  {escuro ? "Mudar para claro" : "Mudar para escuro"}
+                  {escuro ? "Mudar para Tema Joana" : "Mudar para Tema João"}
                 </span>
               </button>
               <Link
