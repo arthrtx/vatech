@@ -1,34 +1,35 @@
 @import "tailwindcss";
 
 /*
- * Tokens medidos nas referências do Arthur (dashboard claro em lilás, nov/2026).
+ * Paleta Setuptech (nov/2026): #FF0B71 #08F2B0 #1A181E #2D262D #FFFFFF; fundo, campo,
+ * suave e linhas são tons claros derivados de #2D262D (aprovados pelo dono).
  * Ver docs/DESIGN.md, secção "Tokens". Valores marcados "ajustado" foram escurecidos
  * para cumprir contraste 4.5:1; os restantes são o pixel medido.
  * TODO: token em falta (família de fonte da referência não identificada; fica system-ui).
  */
 @theme {
-  --color-fundo: #cfd5e5;
+  --color-fundo: #e7e4e8;
   --color-painel: #ffffff;
-  --color-campo: #f3f3f3;
-  --color-trilho: #e8e9ed;
-  --color-primaria: #7163ba;
-  --color-primaria-forte: #55479f;
-  --color-primaria-escura: #5a5082;
-  --color-primaria-suave: #f1e8ff;
-  --color-rosa: #f1648f;
-  --color-rosa-suave: #fde3ec; /* ajustado: fundo claro para texto escuro legível */
-  --color-positivo: #16b53f;
-  --color-texto: #3c3755;
-  --color-texto-suave: #625f78; /* ajustado: medido #9998a0 não passa 4.5:1 */
-  --color-linha: #e8e9ed;
-  --color-linha-forte: #8f8aa8; /* ajustado: borda de campo com 3:1 sobre branco */
+  --color-campo: #f4f2f5;
+  --color-trilho: #e7e4e8;
+  --color-primaria: #1a181e;
+  --color-primaria-forte: #2d262d;
+  --color-primaria-escura: #2d262d;
+  --color-primaria-suave: #ece9ed;
+  --color-rosa: #ff0b71;
+  --color-rosa-suave: #ffe3ee; /* ajustado: fundo claro para texto escuro legível */
+  --color-positivo: #08f2b0;
+  --color-texto: #1a181e;
+  --color-texto-suave: #5c555d; /* ajustado: medido #9998a0 não passa 4.5:1 */
+  --color-linha: #e7e4e8;
+  --color-linha-forte: #8a838b; /* ajustado: borda de campo com 3:1 sobre branco */
 
   --radius-controlo: 0.75rem;
   --radius-cartao: 1.5rem;
   --radius-barra: 2rem;
   --radius-painel: 2.5rem;
 
-  --shadow-suave: 0 12px 32px -14px rgb(60 55 85 / 0.28);
+  --shadow-suave: 0 12px 32px -14px rgb(26 24 30 / 0.28);
 }
 
 body {
