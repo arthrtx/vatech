@@ -135,7 +135,7 @@ it('presenca atrasada rejeita futura, anterior ao estagio, duplicada e horas inv
 
     $post(['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'])->assertCreated();
     $post(['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'])
-        ->assertStatus(422)->assertJsonValidationErrors(['data' => 'Ja existe presenca nesse dia.']);
+        ->assertStatus(422)->assertJsonValidationErrors(['data' => 'Já existe presença nesse dia.']);
 });
 
 it('presenca atrasada e so para estagiarios', function () {
