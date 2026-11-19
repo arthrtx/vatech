@@ -28,8 +28,7 @@ export default function DashboardFuncionario({ user }: { user: User }) {
 
   return (
     <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
-      <div className="grid gap-4 lg:shrink-0 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="lg:shrink-0">
           <Cabecalho
             nome={user.nome}
             hoje={hoje}
@@ -57,13 +56,9 @@ export default function DashboardFuncionario({ user }: { user: User }) {
               </>
             }
           />
-        </div>
-        <div className="flex flex-col gap-4">
-          <WidgetContagem pedidos={pedidos.dados} hoje={hoje} />
-          <WidgetFeriados hoje={hoje} quantos={proximasAusencias(pedidos.dados ?? [], hoje).length > 0 ? 1 : 3} />
-        </div>
       </div>
-      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:shrink-0 lg:grid-cols-[repeat(3,minmax(0,17rem))]">
+      <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
+      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:min-w-0 lg:flex-[2]">
         <CartaoContador
           rotulo="Pendentes"
           valor={n?.pendente ?? null}
@@ -74,6 +69,9 @@ export default function DashboardFuncionario({ user }: { user: User }) {
         <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} Icone={IconePedidos} />
         <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} Icone={IconePedidos} />
       </ul>
+      <WidgetContagem pedidos={pedidos.dados} hoje={hoje} className="lg:min-w-0 lg:flex-1" />
+      <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
+      </div>
 
       <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
       <BlocoEstado
