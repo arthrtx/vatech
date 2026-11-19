@@ -37,7 +37,6 @@ export default function Notificacoes({ user, className }: { user: Pick<User, "id
   useEffect(() => {
     let vivo = true;
     atual.current = carregar(user.id);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega o histórico guardado deste utilizador
     setEstado(atual.current);
     pronto.current = true;
 
