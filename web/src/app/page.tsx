@@ -86,7 +86,13 @@ function Conteudo() {
           onEditar={(p) => setEditando(p)}
           onApagar={async (p) => {
             if (editando?.id === p.id) setEditando(null);
-            await decidir(() => api.apagarPedido(p.id));
+            try {
+              await api.apagarPedido(p.id);
+              // Sai da lista já; a atualização periódica confirma com o servidor.
+              setPedidos((ps) => ps.filter((x) => x.id !== p.id));
+            } catch (e) {
+              setErro(mensagemDeErro(e));
+            }
           }}
         />
       )}
