@@ -199,7 +199,7 @@ describe("Dashboard funcionário", () => {
     papel = "funcionario";
   });
 
-  it("saudação, contadores por estado e listas", async () => {
+  it("saudação, contadores por estado e só os meus pedidos", async () => {
     vi.mocked(api.pedidos).mockResolvedValue([
       ped(1, { estado: "pendente" }),
       ped(2, { estado: "aprovado", data_inicio: "2026-12-22", data_fim: "2027-01-02" }),
@@ -207,9 +207,8 @@ describe("Dashboard funcionário", () => {
       ped(4, { estado: "recusado" }),
       ped(5, { estado: "recusado" }),
     ]);
-    vi.mocked(api.agenda).mockResolvedValue([ag(7, 2, "Ana Ribeiro")]);
     render(<DashboardPage />);
-    await screen.findByText("Ana Ribeiro");
+    await screen.findByText("Os meus pedidos");
 
     expect(screen.getByRole("heading", { level: 1, name: "Boa tarde, Marta" })).toBeTruthy();
     expect(within(cartao("Pendentes")).getByText("1")).toBeTruthy();
@@ -217,43 +216,27 @@ describe("Dashboard funcionário", () => {
     expect(within(cartao("Recusados")).getByText("2")).toBeTruthy();
     expect(within(cartao("Pendentes")).getByRole("link", { name: "Ver pedidos" })).toBeTruthy();
     expect(within(cartao("Aprovados")).queryByRole("link")).toBeNull();
-    // só a ausência futura
-    expect(screen.getByText("2026-12-22 a 2027-01-02 · 12 dias")).toBeTruthy();
-    expect(screen.queryByText(/2026-10-01/)).toBeNull();
-    expect(api.agenda).toHaveBeenCalledWith("2026-11-19", "2026-11-19");
+    // todos os pedidos feitos, de qualquer estado, com o estado visível
+    expect(screen.getByRole("heading", { name: "Os meus pedidos" })).toBeTruthy();
+    expect(screen.getAllByText(/· Pendente$/).length).toBe(1);
+    expect(screen.getAllByText(/· Recusado$/).length).toBe(2);
+    expect(screen.getByText(/2026-10-01 · 1 dia/)).toBeTruthy();
     expect(api.pedidos).toHaveBeenCalledWith(); // todos, sem filtro de estado
   });
 
-  it("D7: de colegas só nome, tipo e datas; exclui os próprios e os pendentes", async () => {
+  it("não mostra nem pede nada da equipa", async () => {
     vi.mocked(api.pedidos).mockResolvedValue([]);
-    vi.mocked(api.agenda).mockResolvedValue([
-      // colega: chega reduzido, mas mesmo que viessem campos extra nunca se mostram
-      {
-        ...ag(7, 2, "Ana Ribeiro", { tipo: "ausencia" }),
-        subtipo: "medica",
-        observacao: "Cirurgia delicada",
-        motivo_recusa: "segredo",
-      },
-      ag(8, 1, "Marta Sousa", { user_id: 1 }), // eu
-      ag(9, 3, "Rui Pendente", { estado: "pendente" }),
-    ]);
     render(<DashboardPage />);
-    await screen.findByText("Ana Ribeiro");
-    expect(screen.getByText("Ausência · 2026-11-17 a 2026-11-21")).toBeTruthy();
-    expect(screen.queryByText(/Médica/)).toBeNull();
-    expect(screen.queryByText(/Cirurgia/)).toBeNull();
-    expect(screen.queryByText(/segredo/)).toBeNull();
-    expect(screen.queryByText("Rui Pendente")).toBeNull();
-    expect(screen.queryByText("Marta Sousa")).toBeNull();
+    await screen.findByText("Ainda não fez pedidos");
+    expect(api.agenda).not.toHaveBeenCalled();
+    expect(screen.queryByText(/equipa/i)).toBeNull();
   });
 
-  it("vazio: contadores a 0, ação 'Fazer um pedido' e equipa presente", async () => {
+  it("vazio: contadores a 0 e ação 'Fazer um pedido'", async () => {
     vi.mocked(api.pedidos).mockResolvedValue([]);
-    vi.mocked(api.agenda).mockResolvedValue([]);
     render(<DashboardPage />);
-    await screen.findByText("Sem ausências aprovadas");
+    await screen.findByText("Ainda não fez pedidos");
     expect(screen.getByRole("link", { name: "Fazer um pedido" })).toBeTruthy();
-    expect(screen.getByText("Toda a equipa está presente.")).toBeTruthy();
     for (const r of ["Pendentes", "Aprovados", "Recusados"]) {
       expect(within(cartao(r)).getByText("0")).toBeTruthy();
     }
@@ -261,36 +244,20 @@ describe("Dashboard funcionário", () => {
 
   it("não mostra vazio nem 0 enquanto carrega", () => {
     vi.mocked(api.pedidos).mockReturnValue(new Promise(() => {}));
-    vi.mocked(api.agenda).mockReturnValue(new Promise(() => {}));
     const { container } = render(<DashboardPage />);
-    expect(container.querySelectorAll("[data-skeleton]").length).toBe(3 + 2 + 2);
-    expect(screen.queryByText("Sem ausências aprovadas")).toBeNull();
-    expect(screen.queryByText("Toda a equipa está presente.")).toBeNull();
+    expect(container.querySelectorAll("[data-skeleton]").length).toBe(3 + 2);
+    expect(screen.queryByText("Ainda não fez pedidos")).toBeNull();
     expect(screen.queryByText("0")).toBeNull();
   });
 
-  it("erro em /pedidos: contadores '-' e só esse lado em alerta; a equipa continua", async () => {
+  it("erro em /pedidos: contadores '-' e alerta", async () => {
     vi.mocked(api.pedidos).mockRejectedValue(falha());
-    vi.mocked(api.agenda).mockResolvedValue([ag(7, 2, "Ana Ribeiro")]);
     render(<DashboardPage />);
-    await screen.findByText("Ana Ribeiro");
-    const alertas = screen.getAllByRole("alert");
-    expect(alertas.length).toBe(1);
-    expect(alertas[0].textContent).toContain("Não foi possível carregar os seus pedidos.");
+    const alerta = await screen.findByRole("alert");
+    expect(alerta.textContent).toContain("Não foi possível carregar os seus pedidos.");
     for (const r of ["Pendentes", "Aprovados", "Recusados"]) {
       expect(cartao(r).textContent).toContain("-");
       expect(within(cartao(r)).queryByText("0")).toBeNull();
     }
-  });
-
-  it("erro na agenda: alerta com Tentar de novo; contadores intactos", async () => {
-    vi.mocked(api.pedidos).mockResolvedValue([ped(1, { estado: "pendente" })]);
-    vi.mocked(api.agenda).mockRejectedValueOnce(falha()).mockResolvedValue([]);
-    render(<DashboardPage />);
-    const alerta = await screen.findByRole("alert");
-    expect(alerta.textContent).toContain("Não foi possível carregar a agenda da equipa.");
-    expect(within(cartao("Pendentes")).getByText("1")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
-    await screen.findByText("Toda a equipa está presente.");
   });
 });
