@@ -83,8 +83,9 @@ export default function ListaPedidos({ pedidos, formulario, onEditar, onApagar }
               {p.estado === "recusado" && p.motivo_recusa && (
                 <p className="mt-1 break-words text-sm">Motivo da recusa: {p.motivo_recusa}</p>
               )}
+              </div>
               {p.estado === "pendente" && (onEditar || onApagar) && (
-                <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   {aApagar === p.id ? (
                     <>
                       <span className="text-sm font-medium">Apagar este pedido?</span>
