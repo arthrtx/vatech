@@ -6,6 +6,8 @@ import { api, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { contarPorEstado, equipaForaHoje, proximasAusencias } from "@/lib/dashboard";
 import { useFonte } from "@/lib/useFonte";
+import { IconeAgenda, IconePedidos } from "../Icones";
+import { acao, acaoDestaque } from "../ui";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
@@ -25,28 +27,55 @@ export default function DashboardFuncionario({ user }: { user: User }) {
   const aCarregar = !pedidos.erro && pedidos.dados === null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid gap-5 lg:grid-cols-3">
+    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
+      <div className="grid gap-4 lg:shrink-0 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Cabecalho titulo={`Olá, ${user.nome.split(" ")[0]}`} hoje={hoje} resumo="Os teus pedidos, quem da equipa está fora e o próximo descanso." />
+          <Cabecalho
+            nome={user.nome}
+            hoje={hoje}
+            resumo={
+              n === null ? (
+                <span className="text-texto-suave">Os teus pedidos, quem da equipa está fora e o próximo descanso.</span>
+              ) : n.pendente === 0 ? (
+                "Não tens pedidos à espera de resposta."
+              ) : (
+                <>
+                  Tens <strong>{n.pendente}</strong> {n.pendente === 1 ? "pedido" : "pedidos"} à espera de resposta.
+                </>
+              )
+            }
+            acoes={
+              <>
+                <Link href="/agenda" className={acao}>
+                  <IconeAgenda className="h-4 w-4" />
+                  Agenda
+                </Link>
+                <Link href="/" className={acaoDestaque}>
+                  <IconePedidos className="h-4 w-4" />
+                  Novo pedido
+                </Link>
+              </>
+            }
+          />
         </div>
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           <WidgetContagem pedidos={pedidos.dados} hoje={hoje} />
           <WidgetFeriados hoje={hoje} quantos={proximasAusencias(pedidos.dados ?? [], hoje).length > 0 ? 1 : 3} />
         </div>
       </div>
-      <ul className="grid grid-cols-3 gap-2 md:gap-5">
+      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:shrink-0 lg:grid-cols-[repeat(3,minmax(0,17rem))]">
         <CartaoContador
           rotulo="Pendentes"
           valor={n?.pendente ?? null}
           aCarregar={aCarregar}
           ligacao={{ href: "/", texto: "Ver pedidos" }}
+          Icone={IconePedidos}
         />
-        <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} />
-        <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} />
+        <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} Icone={IconePedidos} />
+        <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} Icone={IconePedidos} />
       </ul>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
       <BlocoEstado
         efeito="recentes"
         titulo="As minhas próximas ausências"
