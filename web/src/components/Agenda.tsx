@@ -221,7 +221,7 @@ export default function Agenda({
       {/* Coluna da esquerda: criar, mês pequeno, filtros e lista do mês (rola por dentro). */}
       <aside
         aria-label="Calendário do mês"
-        className="flex w-full shrink-0 flex-col gap-5 lg:min-h-0 lg:w-80 lg:overflow-y-auto lg:scroll-fino lg:border-r lg:border-linha lg:pr-5"
+        className="flex w-full shrink-0 flex-col gap-5 lg:min-h-0 lg:w-[26rem] xl:w-[32rem] lg:overflow-y-auto lg:scroll-fino lg:border-r lg:border-linha lg:pr-5"
       >
         {podeCriar && (
           <button type="button" className={`${botao} self-start`} onClick={() => setNovo({ data: sel?.iso ?? "" })}>
@@ -283,7 +283,7 @@ export default function Agenda({
                           e.stopPropagation();
                           abrir(e, { iso: c.iso });
                         }}
-                        className={`flex h-7 w-7 items-center justify-center rounded-full text-sm tabular-nums ${focoCls} ${
+                        className={`flex h-9 w-9 items-center justify-center rounded-full text-base tabular-nums ${focoCls} ${
                           eHoje ? "bg-primaria font-semibold text-white" : feriado ? "bg-rosa-suave font-semibold" : ""
                         } ${especiais.length > 0 && !feriado ? "underline decoration-dotted underline-offset-2" : ""}`}
                       >
