@@ -43,4 +43,4 @@ Cada merge no `main` faz o Render e o Vercel publicarem a versão nova sozinhos.
 ## Limitações do plano grátis
 
 - A API adormece após 15 minutos sem pedidos. O primeiro pedido a seguir demora cerca de um minuto.
-- O disco do Render apaga-se a cada arranque: as fotos de perfil perdem-se até passarem para a base de dados ou para um armazenamento externo.
+- O disco do Render apaga-se a cada arranque. Os anexos dos pedidos ficam na base de dados (tabela `anexo_conteudos`, máximo 5 MB por ficheiro; o TiDB limita a linha a 6 MB). As fotos de perfil ainda perdem-se até passarem também para a base de dados.
