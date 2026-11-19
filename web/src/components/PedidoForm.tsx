@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { api, mensagemDeErro, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
+import { api, mensagemDeErro, type Anexo, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
+import CampoAnexos from "./CampoAnexos";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
 import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
@@ -35,6 +36,8 @@ export default function PedidoForm({
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
   const [obs, setObs] = useState(pedido?.observacao ?? "");
+  const [novos, setNovos] = useState<File[]>([]);
+  const [guardados, setGuardados] = useState<Anexo[]>(pedido?.anexos ?? []);
   const [erro, setErro] = useState<string | null>(null);
   const [avisos, setAvisos] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
@@ -54,11 +57,23 @@ export default function PedidoForm({
       };
       const r = pedido ? await api.editarPedido(pedido.id, corpo) : await api.criarPedido(corpo);
       setAvisos(r.avisos ?? []);
+      let falhaAnexos: string | null = null;
+      if (novos.length > 0) {
+        try {
+          const criados = await api.enviarAnexos(r.data.id, novos);
+          setGuardados((g) => [...g, ...criados]);
+        } catch (err) {
+          falhaAnexos = `${edicao ? "Alterações guardadas" : "Pedido criado"}, mas os anexos não foram enviados: ${mensagemDeErro(err)}`;
+        }
+        setNovos([]);
+      }
       if (!pedido) {
         setInicio("");
         setFim("");
         setObs("");
+        setGuardados([]);
       }
+      if (falhaAnexos) setErro(`${falhaAnexos}${edicao ? "" : " Edite o pedido para os juntar."}`);
       onCriado?.(r.avisos ?? []);
     } catch (err) {
       setErro(mensagemDeErro(err));
@@ -126,6 +141,20 @@ export default function PedidoForm({
           onChange={(e) => setObs(e.target.value)}
         />
       </div>
+      <CampoAnexos
+        novos={novos}
+        onNovos={setNovos}
+        guardados={guardados}
+        onRemoverGuardado={async (a) => {
+          if (!pedido) return;
+          try {
+            await api.apagarAnexo(pedido.id, a.id);
+            setGuardados((g) => g.filter((x) => x.id !== a.id));
+          } catch (err) {
+            setErro(mensagemDeErro(err));
+          }
+        }}
+      />
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}
