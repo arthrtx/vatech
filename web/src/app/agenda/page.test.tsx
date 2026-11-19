@@ -3,9 +3,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 
 const agenda = vi.fn();
 const presencas = vi.fn().mockResolvedValue([]);
+const aniversarios = vi.fn().mockResolvedValue([]);
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: "funcionario" } }) }));
-vi.mock("@/lib/api", async (orig) => ({ ...(await orig<typeof import("@/lib/api")>()), api: { agenda: (...a: unknown[]) => agenda(...a), presencas: (...a: unknown[]) => presencas(...a) } }));
+vi.mock("@/lib/api", async (orig) => ({ ...(await orig<typeof import("@/lib/api")>()), api: { agenda: (...a: unknown[]) => agenda(...a), presencas: (...a: unknown[]) => presencas(...a), aniversarios: (...a: unknown[]) => aniversarios(...a) } }));
 
 import AgendaPage from "./page";
 
@@ -13,6 +14,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   agenda.mockReset();
+  aniversarios.mockReset().mockResolvedValue([]);
 });
 
 describe("pagina da agenda", () => {
@@ -34,6 +36,24 @@ describe("pagina da agenda", () => {
     await waitFor(() => expect(agenda).toHaveBeenCalled());
     expect(presencas).not.toHaveBeenCalled();
     expect(screen.queryByText("Não foi possível carregar as presenças.")).toBeNull();
+  });
+
+  it("mostra o aniversario de um colega no dia", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-12-10T12:00:00") });
+    agenda.mockResolvedValue([]);
+    aniversarios.mockResolvedValue([{ user: { id: 2, nome: "Bia Lopes" }, data: "2026-12-10" }]);
+    render(<AgendaPage />);
+    await waitFor(() => expect(aniversarios).toHaveBeenCalledWith("2026-11-30", "2027-01-03"));
+    expect((await screen.findAllByText(/Aniversário de Bia Lopes/)).length).toBeGreaterThan(0);
+  });
+
+  it("a agenda abre sem aniversarios se o pedido falhar", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-12-10T12:00:00") });
+    agenda.mockResolvedValue([]);
+    aniversarios.mockRejectedValue(new Error("x"));
+    render(<AgendaPage />);
+    await waitFor(() => expect(aniversarios).toHaveBeenCalled());
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("mostra A carregar e depois o erro da API", async () => {

@@ -76,7 +76,7 @@ class AuthController extends Controller
     public function updateMe(UpdatePerfilRequest $request): JsonResponse
     {
         $user = $request->user();
-        $dados = $request->safe()->only(['nome', 'email', 'estagio_inicio', 'estagio_fim']);
+        $dados = $request->safe()->only(['nome', 'email', 'data_nascimento', 'estagio_inicio', 'estagio_fim']);
         $mudaEmail = $dados['email'] !== $user->email;
         $mudaPassword = $request->filled('password');
 

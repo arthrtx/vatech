@@ -50,8 +50,21 @@ describe("Definições", () => {
     escrever("Nome", "Ana B");
     fireEvent.click(guardar(dados()));
     await within(dados()).findByText("Dados guardados.");
-    expect(api.editarPerfil).toHaveBeenCalledWith({ nome: "Ana B", email: "ana@x.pt" });
+    expect(api.editarPerfil).toHaveBeenCalledWith({ nome: "Ana B", email: "ana@x.pt", data_nascimento: null });
     expect(atualizarUser).toHaveBeenCalledWith({ ...user, nome: "Ana B" });
+  });
+
+  it("a data de nascimento é opcional: guarda-se ao escrevê-la e pode ser apagada", async () => {
+    vi.mocked(api.editarPerfil).mockResolvedValue({ ...user, data_nascimento: "1990-05-17" });
+    render(<DefinicoesPage />);
+    const campo = screen.getByLabelText("Data de nascimento (opcional)") as HTMLInputElement;
+    expect(campo.value).toBe("");
+    expect(guardar(dados()).disabled).toBe(true);
+    fireEvent.change(campo, { target: { value: "17/05/1990" } });
+    expect(guardar(dados()).disabled).toBe(false);
+    fireEvent.click(guardar(dados()));
+    await within(dados()).findByText("Dados guardados.");
+    expect(api.editarPerfil).toHaveBeenCalledWith({ nome: "Ana", email: "ana@x.pt", data_nascimento: "1990-05-17" });
   });
 
   it("altera a palavra-passe reenviando nome e email actuais, e limpa os campos", async () => {
@@ -109,7 +122,7 @@ describe("Definições", () => {
     fireEvent.change(within(dados()).getByLabelText("Palavra-passe atual"), { target: { value: "velha123" } });
     fireEvent.click(guardar(dados()));
     await within(dados()).findByText("Dados guardados.");
-    expect(api.editarPerfil).toHaveBeenCalledWith({ nome: "Ana", email: "novo@x.pt", password_atual: "velha123" });
+    expect(api.editarPerfil).toHaveBeenCalledWith({ nome: "Ana", email: "novo@x.pt", data_nascimento: null, password_atual: "velha123" });
     expect(atualizarUser).toHaveBeenCalledWith({ ...user, email: "novo@x.pt" });
   });
 

@@ -10,6 +10,7 @@ import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui"
 import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { papeis } from "@/lib/rotulos";
+import { primeiroNome } from "@/lib/saudacao";
 
 const cartao = "flex flex-col gap-4 rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4 md:p-6";
 const botaoGuardar = `${botao} min-h-10`;
@@ -87,13 +88,15 @@ function useEnvio(enviar: () => Promise<void>) {
 function DadosConta({ user, atualizarUser }: { user: User; atualizarUser: (u: User) => void }) {
   const [nome, setNome] = useState(user.nome);
   const [email, setEmail] = useState(user.email);
+  const [nascimento, setNascimento] = useState(user.data_nascimento ?? "");
   const [atual, setAtual] = useState("");
   const emailMudou = email !== user.email;
   const { erros, erroGeral, ok, enviando, submeter, desc, limparOk } = useEnvio(async () => {
-    atualizarUser(await api.editarPerfil(emailMudou ? { nome, email, password_atual: atual } : { nome, email }));
+    const dados = { nome, email, data_nascimento: nascimento || null };
+    atualizarUser(await api.editarPerfil(emailMudou ? { ...dados, password_atual: atual } : dados));
     setAtual("");
   });
-  const sujo = nome !== user.nome || emailMudou;
+  const sujo = nome !== user.nome || emailMudou || nascimento !== (user.data_nascimento ?? "");
   const validar = (): Record<string, string[]> =>
     emailMudou && !atual ? { password_atual: ["Indique a palavra-passe atual para alterar o email."] } : {};
 
@@ -133,6 +136,21 @@ function DadosConta({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
             limparOk();
           }}
         />
+      </Campo>
+      <Campo id="data_nascimento" rotulo="Data de nascimento (opcional)" erros={erros.data_nascimento}>
+        <CampoData
+          id="data_nascimento"
+          valor={nascimento}
+          aria-invalid={!!erros.data_nascimento}
+          aria-describedby={[erros.data_nascimento?.length ? "data_nascimento-erro" : "", "data_nascimento-ajuda"].filter(Boolean).join(" ")}
+          onChange={(v) => {
+            setNascimento(v);
+            limparOk();
+          }}
+        />
+        <p id="data_nascimento-ajuda" className="mt-1 text-sm text-texto-suave">
+          Se indicar, a equipa vê «Aniversário de {primeiroNome(nome) || "…"}» na agenda nesse dia (só o dia e o mês).
+        </p>
       </Campo>
       {emailMudou && (
         <Campo id="conta_password_atual" rotulo="Palavra-passe atual" erros={erros.password_atual}>

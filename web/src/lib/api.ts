@@ -14,6 +14,8 @@ export interface User {
   papel: Papel;
   empresa_id: number;
   avatar_url?: string | null;
+  /** Opcional (Y-m-d). Aparece na agenda como «Aniversário de …». */
+  data_nascimento?: string | null;
   /** Só estagiários: datas do estágio (Y-m-d). */
   estagio_inicio?: string | null;
   estagio_fim?: string | null;
@@ -53,6 +55,12 @@ export interface Pedido {
   decidido_em: string | null;
   motivo_recusa: string | null;
   user?: { id: number; nome: string };
+}
+
+/** Aniversário de alguém da empresa num dia do intervalo pedido (a API não revela o ano de nascimento). */
+export interface Aniversario {
+  user: { id: number; nome: string };
+  data: string;
 }
 
 /** Pedido na agenda: completo (admin e proprios); de colegas so id, user, tipo, datas e estado. */
@@ -178,6 +186,7 @@ export const api = {
     email: string;
     password?: string;
     password_atual?: string;
+    data_nascimento?: string | null;
     estagio_inicio?: string | null;
     estagio_fim?: string | null;
   }) =>
@@ -205,6 +214,8 @@ export const api = {
     (await request<{ data: Pedido[] }>("GET", `/pedidos${estado ? `?estado=${estado}` : ""}`)).data,
   agenda: async (de: string, ate: string) =>
     (await request<{ data: PedidoAgenda[] }>("GET", `/agenda?de=${de}&ate=${ate}`)).data,
+  aniversarios: async (de: string, ate: string) =>
+    (await request<{ data: Aniversario[] }>("GET", `/aniversarios?de=${de}&ate=${ate}`)).data,
   criarPedido: (b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
   editarPedido: (id: number, b: NovoPedido) =>

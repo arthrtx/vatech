@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Agenda from "@/components/Agenda";
-import { api, mensagemDeErro, type PedidoAgenda, type Presenca } from "@/lib/api";
+import { api, mensagemDeErro, type Aniversario, type PedidoAgenda, type Presenca } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { estagiosDe, hojeIso, intervaloDoMes, mesDe, type Estagio, type Mes } from "@/lib/agenda";
 import { erro as erroCls } from "@/components/ui";
@@ -32,6 +32,20 @@ function Conteudo() {
       vivo = false;
     };
   }, [de, ate, chave, versao]);
+
+  // Aniversários do intervalo; se falhar, a agenda mostra-se sem eles.
+  const [anivs, setAnivs] = useState<{ chave: string; lista: Aniversario[] } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .aniversarios(de, ate)
+      .then((lista) => vivo && setAnivs({ chave, lista }))
+      .catch(() => vivo && setAnivs({ chave, lista: [] }));
+    return () => {
+      vivo = false;
+    };
+  }, [de, ate, chave, versao]);
+  const aniversarios = anivs?.chave === chave ? anivs.lista : [];
 
   // Presenças do intervalo (a API devolve só as próprias a quem não é admin).
   const [pres, setPres] = useState<{ chave: string; lista: Presenca[]; erro: boolean } | null>(null);
@@ -89,6 +103,7 @@ function Conteudo() {
       <Agenda
         presencas={presencas}
         estagios={estagios}
+        aniversarios={aniversarios}
         pedidos={pedidos}
         admin={admin}
         nomeProprio={user?.nome}
