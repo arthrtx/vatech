@@ -1,5 +1,6 @@
 "use client";
 
+import PontoUrgente from "./PontoUrgente";
 import { useState } from "react";
 import type { Pedido } from "@/lib/api";
 import { filtrar } from "@/lib/busca";
@@ -76,6 +77,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca =
                 <Avatar nome={p.user?.nome ?? "?"} id={p.user_id} />
                 <div className="min-w-0">
                   <p className="font-medium">
+                    {p.urgente && <PontoUrgente />}
                     {p.user?.nome ?? `Utilizador ${p.user_id}`} · {tipos[p.tipo]}
                     {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}
                     {p.estado !== "pendente" && ` · ${estados[p.estado]}`}
