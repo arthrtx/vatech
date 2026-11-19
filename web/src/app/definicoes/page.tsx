@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { papeis } from "@/lib/rotulos";
 import { primeiroNome } from "@/lib/saudacao";
 
-const cartao = "flex flex-col gap-4 rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4 md:p-6";
+const cartao = "flex flex-col gap-4 rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4 md:p-6 has-[[role=dialog]]:relative has-[[role=dialog]]:z-20";
 const botaoGuardar = `${botao} min-h-10`;
 
 function Campo({ id, rotulo, erros, children }: { id: string; rotulo: string; erros?: string[]; children: React.ReactNode }) {
