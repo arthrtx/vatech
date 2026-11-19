@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('papel:admin')->group(function () {
         Route::put('/limites', [LimiteController::class, 'update']);
+        Route::get('/ferias-resumo', [LimiteController::class, 'feriasResumo']);
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
         Route::post('/funcionarios', [FuncionarioController::class, 'store']);
         Route::put('/funcionarios/{id}', [FuncionarioController::class, 'update']);

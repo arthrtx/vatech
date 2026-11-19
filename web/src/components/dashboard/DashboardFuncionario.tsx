@@ -9,6 +9,7 @@ import { estados, tipos } from "@/lib/rotulos";
 import { useFonte } from "@/lib/useFonte";
 import { IconeAgenda, IconePedidos } from "../Icones";
 import { acao, acaoDestaque } from "../ui";
+import AvisoFerias from "./AvisoFerias";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
@@ -58,6 +59,7 @@ export default function DashboardFuncionario({ user }: { user: User }) {
             }
           />
       </div>
+      <AvisoFerias comTransitadas />
       <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
       <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:min-w-0 lg:flex-[2]">
         <CartaoContador

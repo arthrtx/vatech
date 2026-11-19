@@ -213,13 +213,13 @@ describe("Definições", () => {
 
 describe("Limites de dias por ano", () => {
   const lista = [
-    { tipo: "ferias" as const, dias_ano: 22, usados: 0 },
-    { tipo: "ausencia" as const, dias_ano: null, usados: 0 },
-    { tipo: "licenca" as const, dias_ano: 5, usados: 0 },
+    { tipo: "ferias" as const, dias_ano: 22, transitados: 0, usados: 0 },
+    { tipo: "ausencia" as const, dias_ano: null, transitados: 0, usados: 0 },
+    { tipo: "licenca" as const, dias_ano: 5, transitados: 0, usados: 0 },
   ];
   const comoAdmin = () => {
     user = { ...user, papel: "admin" };
-    vi.mocked(api.limites).mockResolvedValue(lista);
+    vi.mocked(api.limites).mockResolvedValue({ limites: lista, prazo_ferias: "2026-04-30" });
   };
   afterEach(() => {
     user = { ...user, papel: "funcionario" };
@@ -234,9 +234,9 @@ describe("Limites de dias por ano", () => {
   it("carrega os valores (vazio = sem limite), edita e guarda", async () => {
     comoAdmin();
     vi.mocked(api.guardarLimites).mockResolvedValue([
-      { tipo: "ferias", dias_ano: 25, usados: 0 },
-      { tipo: "ausencia", dias_ano: null, usados: 0 },
-      { tipo: "licenca", dias_ano: 5, usados: 0 },
+      { tipo: "ferias", dias_ano: 25, transitados: 0, usados: 0 },
+      { tipo: "ausencia", dias_ano: null, transitados: 0, usados: 0 },
+      { tipo: "licenca", dias_ano: 5, transitados: 0, usados: 0 },
     ]);
     render(<DefinicoesPage />);
     const f = await screen.findByRole("form", { name: "Limites de dias por ano" });

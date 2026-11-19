@@ -407,9 +407,9 @@ function LimitesDias() {
     let ativo = true;
     api
       .limites()
-      .then((ls) => {
+      .then((r) => {
         if (!ativo) return;
-        const v = doServidor(ls);
+        const v = doServidor(r.limites);
         setValores(v);
         setInicial(v);
         setCarregado(true);

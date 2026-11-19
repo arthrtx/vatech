@@ -13,11 +13,14 @@ vi.mock("@/lib/api", async (orig) => {
 });
 
 beforeEach(() => {
-  vi.mocked(api.limites).mockResolvedValue([
-    { tipo: "ferias", dias_ano: 22, usados: 8 },
-    { tipo: "ausencia", dias_ano: null, usados: 0 },
-    { tipo: "licenca", dias_ano: 5, usados: 0 },
-  ]);
+  vi.mocked(api.limites).mockResolvedValue({
+    limites: [
+      { tipo: "ferias", dias_ano: 22, transitados: 0, usados: 8 },
+      { tipo: "ausencia", dias_ano: null, transitados: 0, usados: 0 },
+      { tipo: "licenca", dias_ano: 5, transitados: 0, usados: 0 },
+    ],
+    prazo_ferias: "2026-04-30",
+  });
 });
 
 afterEach(() => {
@@ -77,6 +80,19 @@ describe("PedidoForm limites", () => {
     fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
     fireEvent.click(screen.getByRole("option", { name: "Ausência" }));
     expect(screen.queryByText(/dias usados em/)).toBeNull();
+  });
+
+  it("mostra o cúmulo com os dias transitados e conta-os no aviso de exceder", async () => {
+    vi.mocked(api.limites).mockResolvedValue({
+      limites: [{ tipo: "ferias", dias_ano: 22, transitados: 8, usados: 8 }],
+      prazo_ferias: "2026-04-30",
+    });
+    render(<PedidoForm />);
+    expect(await screen.findByText(`Férias: 8 de 30 dias usados em ${ano} (22 do ano + 8 transitados; restam 22)`)).toBeTruthy();
+    datas(`${ano + 1}-01-01`, `${ano + 1}-01-22`);
+    expect(screen.queryByText(/só restam/)).toBeNull();
+    datas(`${ano + 1}-01-01`, `${ano + 1}-01-23`);
+    expect(screen.getByText(`Este pedido tem 23 dias e só restam 22 de férias em ${ano}.`)).toBeTruthy();
   });
 
   it("avisa antes de submeter quando o pedido excede o que resta", async () => {

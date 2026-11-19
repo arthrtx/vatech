@@ -56,7 +56,7 @@ export default function PedidoForm({
     let ativo = true;
     api
       .limites()
-      .then((ls) => ativo && setLimites(ls))
+      .then((r) => ativo && setLimites(r.limites))
       .catch(() => {
         // Sem saldo visível; a validação final é do servidor.
       });
@@ -71,7 +71,8 @@ export default function PedidoForm({
   // Ao editar um pedido do mesmo tipo, os seus dias já estão em «usados».
   const proprios = pedido && pedido.tipo === tipo && pedido.estado !== "recusado" ? dias(pedido.data_inicio, pedido.data_fim) : 0;
   const usados = limite ? Math.max(0, limite.usados - proprios) : 0;
-  const restam = limite?.dias_ano != null ? Math.max(0, limite.dias_ano - usados) : null;
+  const total = limite?.dias_ano != null ? limite.dias_ano + limite.transitados : null;
+  const restam = total !== null ? Math.max(0, total - usados) : null;
   const diasPedidos = inicio && fim && fim >= inicio ? dias(inicio, fim) : 0;
   const excede = restam !== null && diasPedidos > restam;
 
@@ -151,7 +152,8 @@ export default function PedidoForm({
       </div>
       {limite?.dias_ano != null && (
         <p role="status" className="text-sm text-texto-suave">
-          {tipos[tipo]}: {usados} de {limite.dias_ano} dias usados em {ano} (restam {restam})
+          {tipos[tipo]}: {usados} de {total} dias usados em {ano} (
+          {limite.transitados > 0 ? `${limite.dias_ano} do ano + ${limite.transitados} transitados; ` : ""}restam {restam})
         </p>
       )}
       {tipo === "ausencia" && (

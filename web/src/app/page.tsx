@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
+import AvisoFerias from "@/components/dashboard/AvisoFerias";
 import ListaPedidos from "@/components/ListaPedidos";
 import PedidoForm from "@/components/PedidoForm";
 import PedidosAdmin from "@/components/PedidosAdmin";
@@ -73,6 +74,7 @@ function Conteudo() {
           {erro}
         </p>
       )}
+      {!admin && <AvisoFerias />}
       {admin ? (
         <PedidosAdmin
           pedidos={pedidos}

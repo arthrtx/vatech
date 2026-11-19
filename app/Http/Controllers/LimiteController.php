@@ -12,7 +12,7 @@ class LimiteController extends Controller
 {
     public function index(Request $request, LimitesPedidoService $limites): JsonResponse
     {
-        return response()->json(['data' => $limites->resumo($request->user())]);
+        return $this->resposta($limites, $request->user());
     }
 
     public function update(Request $request, LimitesPedidoService $limites): JsonResponse
@@ -31,6 +31,19 @@ class LimiteController extends Controller
             );
         }
 
-        return response()->json(['data' => $limites->resumo($user)]);
+        return $this->resposta($limites, $user);
+    }
+
+    public function feriasResumo(Request $request, LimitesPedidoService $limites): JsonResponse
+    {
+        return response()->json([
+            'data' => $limites->feriasResumo($request->user()),
+            'prazo_ferias' => $limites->prazoFerias(),
+        ]);
+    }
+
+    private function resposta(LimitesPedidoService $limites, $user): JsonResponse
+    {
+        return response()->json(['data' => $limites->resumo($user), 'prazo_ferias' => $limites->prazoFerias()]);
     }
 }
