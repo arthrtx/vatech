@@ -4,7 +4,7 @@
 > Contexto pessoal de cada colaborador vive no Brain do proprio JOCA.
 
 ## Estado actual
-Versão funcional completa para uso interno, só website (D2; o Electron foi removido, #31/#35). Em `main`: login, funcionários (editar/apagar), pedidos com aprovação, agenda da equipa com privacidade para colegas (D7), dashboard para admin e funcionário, filtros e pesquisa global, menu lateral de ícones, paleta Setuptech, Definições editáveis (`PUT /api/me`, palavra-passe atual exigida) e API com opcache. CI (Pint + Pest, web, Vercel) verde. Produção grátis no ar (D8): site em https://vatech-eight.vercel.app, API em https://vatech-api.onrender.com, base de dados no TiDB Cloud Starter (passos em `docs/DEPLOY.md`). Falta a limpeza das issues abertas (#7, #9, #10, #11, #12, #17, #24) e guardar as fotos de perfil fora do disco do Render.
+Versão funcional completa para uso interno, só website (D2; o Electron foi removido, #31/#35). Em `main`: login, funcionários (editar/apagar), pedidos com aprovação, agenda da equipa com privacidade para colegas (D7), dashboard para admin e funcionário, filtros e pesquisa global, menu lateral de ícones, paleta Setuptech, Definições editáveis (`PUT /api/me`, palavra-passe atual exigida) e API com opcache. CI (Pint + Pest, web, Vercel) verde. Produção grátis no ar (D8): site em https://vatech-eight.vercel.app, API em https://vatech-api.onrender.com, base de dados no TiDB Cloud Starter (passos em `docs/DEPLOY.md`). Depois: data de nascimento e aniversários na agenda, anexos com pré-visualização (#77), pedido urgente, limites de dias por tipo e cúmulo de férias/ausências/licenças (#80, #83), pontes da empresa, ecrãs sem altura fixa em janelas baixas. Falta a limpeza das issues abertas (#7, #9, #10, #11, #12, #17, #24) e guardar as fotos de perfil fora do disco do Render.
 
 ## Workflows
 tipo: [aplicacao]
@@ -31,6 +31,7 @@ tipo: [aplicacao]
 |---|---|---|---|
 
 ## Diario (mais recente primeiro)
+- 2026-11-19 · Windows · retoma via /start: PROGRESSO sincronizado com o git (main em 70a444b, até #83); 7 issues abertas, nenhum PR aberto
 - 2026-11-19 · Windows · fundidos #44 menu lateral, #45 filtros, #47 paleta Setuptech, #48 Definições editáveis (`PUT /api/me`); API reiniciada; worktrees antigos removidos; dev server web reiniciado com cache limpo
 - 2026-11-19 · Windows · fundidos #36 (sem Electron), #39 (opcache/workers), #42 (dashboard), #34 (busca sempre visível)
 - 2026-11-18 · Windows · agenda, funcionários CRUD, pedidos e aprovação, privacidade D7 (#4 a #32)
