@@ -24,10 +24,10 @@ import { useTema } from "@/lib/tema";
 // Dica com o nome do item: aparece ao passar o rato ou com foco de teclado.
 // Abaixo do ícone no telemóvel (barra de topo), à direita no desktop (barra lateral).
 const dica =
-  "pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:left-full md:top-1/2 md:mt-0 md:ml-3 md:translate-x-0 md:-translate-y-1/2";
+  "pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:left-full md:top-1/2 md:mt-0 md:ml-3 md:translate-x-0 md:-translate-y-1/2";
 // Dica para o avatar na barra de topo: sempre por baixo, alinhada à direita.
 const dicaAbaixo =
-  "pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
+  "pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
 // Peças de vidro da barra de topo (relógio, página actual, botões e conta).
 const vidroTopo = "rounded-full bg-painel/55 text-texto ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10";
 const botaoTopo =
@@ -107,7 +107,7 @@ export default function AppShell({
         className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave ${classeFundoQuente} ${ecraInteiro ? "lg:h-full lg:min-h-0" : ""}`}
       >
         <FundoQuente />
-        <aside className="flex items-center gap-3 rounded-barra bg-painel/45 px-3 py-2 text-texto shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
+        <aside className="relative z-30 flex items-center gap-3 rounded-barra bg-painel/45 px-3 py-2 text-texto shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
           <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-texto text-base font-semibold text-painel">
             <span aria-hidden="true">v</span>
             <span className="sr-only">vatech</span>
@@ -150,7 +150,7 @@ export default function AppShell({
           </div>
         </aside>
         <div className={`flex min-w-0 flex-1 flex-col ${ecraInteiro ? "gap-4 lg:min-h-0" : "gap-6"}`}>
-          <header className="flex items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr]">
+          <header className="relative z-30 flex items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr]">
             <div className="min-w-0">
               {agora && (
                 <time dateTime={agora.toISOString()} className="block text-3xl font-bold leading-none tabular-nums">

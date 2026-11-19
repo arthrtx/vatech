@@ -88,6 +88,7 @@ export default function DashboardAdmin() {
           aCarregar={!pedidos.erro && pedidos.dados === null}
           ligacao={{ href: "/", texto: "Ver pedidos" }}
           Icone={IconePedidos}
+          cor="violeta"
         />
         <CartaoContador
           rotulo="Ausentes hoje"
@@ -95,6 +96,7 @@ export default function DashboardAdmin() {
           aCarregar={!agenda.erro && agenda.dados === null}
           ligacao={{ href: "/agenda", texto: "Ver agenda" }}
           Icone={IconeAgenda}
+          cor="rosa"
         />
         <CartaoContador
           rotulo="Funcionários"
@@ -102,6 +104,7 @@ export default function DashboardAdmin() {
           aCarregar={!funcionarios.erro && funcionarios.dados === null}
           ligacao={{ href: "/funcionarios", texto: "Ver funcionários" }}
           Icone={IconeFuncionarios}
+          cor="positivo"
         />
       </ul>
       <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />

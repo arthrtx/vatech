@@ -65,9 +65,10 @@ export default function DashboardFuncionario({ user }: { user: User }) {
           aCarregar={aCarregar}
           ligacao={{ href: "/", texto: "Ver pedidos" }}
           Icone={IconePedidos}
+          cor="violeta"
         />
-        <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} Icone={IconePedidos} />
-        <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} Icone={IconePedidos} />
+        <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} Icone={IconePedidos} cor="positivo" />
+        <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} Icone={IconePedidos} cor="rosa" />
       </ul>
       <WidgetContagem pedidos={pedidos.dados} hoje={hoje} className="lg:min-w-0 lg:flex-1" />
       <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
