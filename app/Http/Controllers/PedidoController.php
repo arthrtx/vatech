@@ -7,7 +7,6 @@ use App\Http\Requests\StorePedidoRequest;
 use App\Models\Pedido;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PedidoController extends Controller
 {
@@ -77,8 +76,7 @@ class PedidoController extends Controller
     public function destroy(Request $request, int $id): JsonResponse
     {
         $pedido = $this->pedidoPendenteDoUtilizador($request, $id);
-        // As linhas dos anexos saem em cascata; os ficheiros apagam-se do disco aqui.
-        Storage::disk('local')->deleteDirectory('anexos/'.$pedido->id);
+        // Os anexos (e os seus bytes) saem em cascata.
         $pedido->delete();
 
         return response()->json(null, 204);
