@@ -59,10 +59,16 @@ describe.each(listas)("busca em %s", (_nome, montar) => {
   });
 });
 
-describe("estado vazio original", () => {
-  it("lista sem pedidos mantém a mensagem própria e não mostra busca", () => {
-    render(<ListaPedidos pedidos={[]} />);
-    expect(screen.getByText("Ainda não há pedidos.")).toBeTruthy();
-    expect(screen.queryByLabelText("Pesquisar pedidos")).toBeNull();
+describe.each([
+  ["PedidosAdmin", () => <PedidosAdmin pedidos={[]} onAprovar={vi.fn()} onRecusar={vi.fn()} />, "Sem pedidos pendentes."],
+  ["ListaPedidos", () => <ListaPedidos pedidos={[]} />, "Ainda não há pedidos."],
+] as const)("lista vazia em %s", (_nome, montar, vazio) => {
+  it("mostra o campo de busca e a mensagem de vazio, sem «Nenhum resultado»", () => {
+    render(montar());
+    const campo = screen.getByLabelText("Pesquisar pedidos");
+    expect(screen.getByText(vazio)).toBeTruthy();
+    fireEvent.change(campo, { target: { value: "x" } });
+    expect(screen.getByText(vazio)).toBeTruthy();
+    expect(screen.queryByText(/Nenhum resultado/)).toBeNull();
   });
 });

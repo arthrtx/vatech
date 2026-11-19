@@ -8,13 +8,14 @@ import CampoBusca from "./CampoBusca";
 
 export default function ListaPedidos({ pedidos }: { pedidos: Pedido[] }) {
   const [busca, setBusca] = useState("");
-  if (pedidos.length === 0) return <p className="text-zinc-700">Ainda não há pedidos.</p>;
   const visiveis = filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo], estados[p.estado]]);
   return (
     <div className="flex flex-col gap-3">
       <CampoBusca id="busca-meus-pedidos" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
       {visiveis.length === 0 ? (
-        <p className="text-zinc-700">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
+        <p className="text-zinc-700">
+          {pedidos.length === 0 ? "Ainda não há pedidos." : `Nenhum resultado para "${busca.trim()}"`}
+        </p>
       ) : (
         <ul className="flex flex-col gap-3">
           {visiveis.map((p) => (
