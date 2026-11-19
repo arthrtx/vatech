@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RecusarPedidoRequest;
 use App\Http\Requests\StorePedidoRequest;
 use App\Models\Pedido;
+use App\Services\LimitesPedidoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PedidoController extends Controller
 {
+    public function __construct(private LimitesPedidoService $limites) {}
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -31,6 +35,7 @@ class PedidoController extends Controller
     {
         $user = $request->user();
         $dados = $request->validated();
+        $this->garantirLimite($user, $dados);
 
         $sobrepoe = Pedido::where('user_id', $user->id)
             ->whereIn('estado', ['pendente', 'aprovado'])
@@ -53,6 +58,7 @@ class PedidoController extends Controller
     {
         $pedido = $this->pedidoPendenteDoUtilizador($request, $id);
         $dados = $request->validated();
+        $this->garantirLimite($request->user(), $dados, $pedido->id);
 
         $sobrepoe = Pedido::where('user_id', $pedido->user_id)
             ->where('id', '!=', $pedido->id)
@@ -70,6 +76,14 @@ class PedidoController extends Controller
         }
 
         return response()->json($resposta);
+    }
+
+    private function garantirLimite($user, array $dados, ?int $excluirId = null): void
+    {
+        $erro = $this->limites->excedido($user, $dados['tipo'], $dados['data_inicio'], $dados['data_fim'], $excluirId);
+        if ($erro !== null) {
+            throw ValidationException::withMessages(['data_fim' => $erro]);
+        }
     }
 
     /** O funcionario apaga um pedido seu enquanto esta pendente. */

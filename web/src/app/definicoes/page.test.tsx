@@ -4,13 +4,13 @@ import DefinicoesPage from "./page";
 import { ApiError, api } from "@/lib/api";
 
 const atualizarUser = vi.fn();
-const user = { id: 1, nome: "Ana", email: "ana@x.pt", papel: "funcionario" as const, empresa_id: 1 };
+let user: { id: number; nome: string; email: string; papel: "admin" | "funcionario" | "estagiario"; empresa_id: number } = { id: 1, nome: "Ana", email: "ana@x.pt", papel: "funcionario" as const, empresa_id: 1 };
 
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user, atualizarUser }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
-  return { ...real, api: { editarPerfil: vi.fn() } };
+  return { ...real, api: { editarPerfil: vi.fn(), limites: vi.fn(), guardarLimites: vi.fn() } };
 });
 
 afterEach(() => {
@@ -208,5 +208,60 @@ describe("Definições", () => {
     expect((b as HTMLButtonElement).disabled).toBe(true);
     fim(user);
     await waitFor(() => expect(within(dados()).getByText("Dados guardados.")).toBeTruthy());
+  });
+});
+
+describe("Limites de dias por ano", () => {
+  const lista = [
+    { tipo: "ferias" as const, dias_ano: 22, usados: 0 },
+    { tipo: "ausencia" as const, dias_ano: null, usados: 0 },
+    { tipo: "licenca" as const, dias_ano: 5, usados: 0 },
+  ];
+  const comoAdmin = () => {
+    user = { ...user, papel: "admin" };
+    vi.mocked(api.limites).mockResolvedValue(lista);
+  };
+  afterEach(() => {
+    user = { ...user, papel: "funcionario" };
+  });
+
+  it("só o admin vê a secção", () => {
+    render(<DefinicoesPage />);
+    expect(screen.queryByRole("form", { name: "Limites de dias por ano" })).toBeNull();
+    expect(api.limites).not.toHaveBeenCalled();
+  });
+
+  it("carrega os valores (vazio = sem limite), edita e guarda", async () => {
+    comoAdmin();
+    vi.mocked(api.guardarLimites).mockResolvedValue([
+      { tipo: "ferias", dias_ano: 25, usados: 0 },
+      { tipo: "ausencia", dias_ano: null, usados: 0 },
+      { tipo: "licenca", dias_ano: 5, usados: 0 },
+    ]);
+    render(<DefinicoesPage />);
+    const f = await screen.findByRole("form", { name: "Limites de dias por ano" });
+    await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
+    expect((within(f).getByLabelText("Ausência") as HTMLInputElement).value).toBe("");
+    expect((within(f).getByLabelText("Licença") as HTMLInputElement).value).toBe("5");
+    expect(guardar(f).disabled).toBe(true);
+    fireEvent.change(within(f).getByLabelText("Férias"), { target: { value: "25" } });
+    fireEvent.click(guardar(f));
+    await within(f).findByText("Dados guardados.");
+    expect(api.guardarLimites).toHaveBeenCalledWith([
+      { tipo: "ferias", dias_ano: 25 },
+      { tipo: "ausencia", dias_ano: null },
+      { tipo: "licenca", dias_ano: 5 },
+    ]);
+  });
+
+  it("mostra o erro do servidor ao guardar", async () => {
+    comoAdmin();
+    vi.mocked(api.guardarLimites).mockRejectedValue(new ApiError(500, "Falhou."));
+    render(<DefinicoesPage />);
+    const f = await screen.findByRole("form", { name: "Limites de dias por ano" });
+    await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
+    fireEvent.change(within(f).getByLabelText("Férias"), { target: { value: "" } });
+    fireEvent.click(guardar(f));
+    await within(f).findByText("Falhou.");
   });
 });

@@ -88,6 +88,13 @@ export interface NovoPedido {
   observacao?: string;
 }
 
+/** Limite anual de dias por tipo de pedido; dias_ano null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */
+export interface Limite {
+  tipo: TipoPedido;
+  dias_ano: number | null;
+  usados: number;
+}
+
 export class ApiError extends Error {
   status: number;
   errors?: Record<string, string[]>;
@@ -220,6 +227,9 @@ export const api = {
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
   editarPedido: (id: number, b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("PUT", `/pedidos/${id}`, b),
+  limites: async () => (await request<{ data: Limite[] }>("GET", "/limites")).data,
+  guardarLimites: async (limites: { tipo: TipoPedido; dias_ano: number | null }[]) =>
+    (await request<{ data: Limite[] }>("PUT", "/limites", { limites })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
   melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
   enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {

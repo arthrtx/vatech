@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { api, mensagemDeErro, type Anexo, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
+import { api, mensagemDeErro, type Anexo, type Limite, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
+import { tipos } from "@/lib/rotulos";
 import CampoAnexos from "./CampoAnexos";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
@@ -49,6 +50,30 @@ export default function PedidoForm({
   const [erro, setErro] = useState<string | null>(null);
   const [avisos, setAvisos] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
+
+  const [limites, setLimites] = useState<Limite[]>([]);
+  useEffect(() => {
+    let ativo = true;
+    api
+      .limites()
+      .then((ls) => ativo && setLimites(ls))
+      .catch(() => {
+        // Sem saldo visível; a validação final é do servidor.
+      });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const limite = limites.find((l) => l.tipo === tipo);
+  const ano = hoje.slice(0, 4);
+  const dias = (de: string, ate: string) => Math.round((Date.parse(`${ate}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / 86400000) + 1;
+  // Ao editar um pedido do mesmo tipo, os seus dias já estão em «usados».
+  const proprios = pedido && pedido.tipo === tipo && pedido.estado !== "recusado" ? dias(pedido.data_inicio, pedido.data_fim) : 0;
+  const usados = limite ? Math.max(0, limite.usados - proprios) : 0;
+  const restam = limite?.dias_ano != null ? Math.max(0, limite.dias_ano - usados) : null;
+  const diasPedidos = inicio && fim && fim >= inicio ? dias(inicio, fim) : 0;
+  const excede = restam !== null && diasPedidos > restam;
 
   async function melhorar() {
     setErroTexto(null);
@@ -124,6 +149,11 @@ export default function PedidoForm({
           onChange={(v) => setTipo(v as TipoPedido)}
         />
       </div>
+      {limite?.dias_ano != null && (
+        <p role="status" className="text-sm text-texto-suave">
+          {tipos[tipo]}: {usados} de {limite.dias_ano} dias usados em {ano} (restam {restam})
+        </p>
+      )}
       {tipo === "ausencia" && (
         <div>
           <label htmlFor="subtipo" className={label}>
@@ -160,6 +190,11 @@ export default function PedidoForm({
           <CampoData id="data_fim" required min={inicio && inicio > hoje ? inicio : hoje} valor={fim} onChange={setFim} />
         </div>
       </div>
+      {excede && (
+        <p role="alert" className={erroCls}>
+          Este pedido tem {diasPedidos} dias e só restam {restam} de {tipos[tipo].toLowerCase()} em {ano}.
+        </p>
+      )}
       <div>
         <label htmlFor="observacao" className={label}>
           Descrição
