@@ -23,7 +23,7 @@ export default function CampoBusca({ id, rotulo, valor, onChange, placeholder = 
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texto-suave"
       >
         <circle cx="8.5" cy="8.5" r="5.5" />
         <path d="M13 13l4 4" />
@@ -45,7 +45,7 @@ export default function CampoBusca({ id, rotulo, valor, onChange, placeholder = 
             onChange("");
             ref.current?.focus();
           }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-controlo px-2 py-1 text-sm text-texto-suave hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
         >
           Limpar
         </button>

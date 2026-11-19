@@ -1,8 +1,39 @@
 @import "tailwindcss";
 
-/* TODO: token em falta (cores e fontes da identidade visual); neutro ate ser medido. */
+/*
+ * Paleta Setuptech (nov/2026): #FF0B71 #08F2B0 #1A181E #2D262D #FFFFFF; fundo, campo,
+ * suave e linhas são tons claros derivados de #2D262D (aprovados pelo dono).
+ * Ver docs/DESIGN.md, secção "Tokens". Valores marcados "ajustado" foram escurecidos
+ * para cumprir contraste 4.5:1; os restantes são o pixel medido.
+ * TODO: token em falta (família de fonte da referência não identificada; fica system-ui).
+ */
+@theme {
+  --color-fundo: #e7e4e8;
+  --color-painel: #ffffff;
+  --color-campo: #f4f2f5;
+  --color-trilho: #e7e4e8;
+  --color-primaria: #1a181e;
+  --color-primaria-forte: #2d262d;
+  --color-primaria-escura: #2d262d;
+  --color-primaria-suave: #ece9ed;
+  --color-rosa: #ff0b71;
+  --color-rosa-suave: #ffe3ee; /* ajustado: fundo claro para texto escuro legível */
+  --color-positivo: #08f2b0;
+  --color-texto: #1a181e;
+  --color-texto-suave: #5c555d; /* ajustado: medido #9998a0 não passa 4.5:1 */
+  --color-linha: #e7e4e8;
+  --color-linha-forte: #8a838b; /* ajustado: borda de campo com 3:1 sobre branco */
+
+  --radius-controlo: 0.75rem;
+  --radius-cartao: 1.5rem;
+  --radius-barra: 2rem;
+  --radius-painel: 2.5rem;
+
+  --shadow-suave: 0 12px 32px -14px rgb(26 24 30 / 0.28);
+}
+
 body {
-  background: #ffffff;
-  color: #18181b;
+  background: var(--color-fundo);
+  color: var(--color-texto);
   font-family: system-ui, sans-serif;
 }

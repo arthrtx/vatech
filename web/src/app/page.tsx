@@ -17,12 +17,12 @@ function Conteudo() {
 
   const carregar = useCallback(async () => {
     try {
-      setPedidos(await api.pedidos(admin ? "pendente" : undefined));
+      setPedidos(await api.pedidos());
       setErro(null);
     } catch (e) {
       setErro(mensagemDeErro(e));
     }
-  }, [admin]);
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carregamento inicial de dados remotos
@@ -41,7 +41,7 @@ function Conteudo() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-semibold">{admin ? "Pedidos pendentes" : "Os meus pedidos"}</h1>
+      <h1 className="text-2xl font-semibold">{admin ? "Pedidos" : "Os meus pedidos"}</h1>
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}
