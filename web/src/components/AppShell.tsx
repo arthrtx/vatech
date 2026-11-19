@@ -68,7 +68,7 @@ export default function AppShell({
   ];
   if (user.papel === "admin") links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
   const definicoes = { href: "/definicoes", texto: "Definições" };
-  const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-primaria-escura" : itemInativo}`;
+  const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa" : itemInativo}`;
 
   const iniciais = user.nome
     .split(/\s+/)
