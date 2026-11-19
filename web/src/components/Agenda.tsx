@@ -158,7 +158,6 @@ export default function Agenda({
     setFoco(iso);
     if (sel) setSel({ iso });
   };
-  const mudarSemana = (n: number) => irPara({ iso: somaDias(sel?.iso ?? foco, n * 7) });
 
   const pessoas = useMemo(() => {
     const m = new Map<number, string>();
@@ -451,17 +450,6 @@ export default function Agenda({
       {/* Área principal: a semana no topo e o dia aberto por baixo. */}
       <div className="flex min-w-0 flex-1 flex-col gap-4 lg:min-h-0">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 rounded-controlo bg-campo p-1">
-            <button type="button" className={navCls} onClick={() => irPara({ iso: hoje })}>
-              Hoje
-            </button>
-            <button type="button" className={navCls} onClick={() => mudarSemana(-1)}>
-              Semana anterior
-            </button>
-            <button type="button" className={navCls} onClick={() => mudarSemana(1)}>
-              Semana seguinte
-            </button>
-          </div>
           <p className="text-lg font-semibold">{tituloSemana(segunda)}</p>
         </div>
 
