@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { mensagemDeErro, type Papel, type User } from "@/lib/api";
 import { papeis } from "@/lib/rotulos";
+import Avatar from "./Avatar";
 import Seletor from "./Seletor";
 import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
 
@@ -147,9 +148,14 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = 
         </form>
       ) : (
         <>
-          <p className="font-medium">{user.nome}</p>
-          <p className="break-all text-sm text-texto-suave">{user.email}</p>
-          <p className="text-sm text-texto-suave">{papeis[user.papel]}</p>
+          <div className="flex items-center gap-3">
+            <Avatar nome={user.nome} id={user.id} foto={user.avatar_url} className="h-8 w-8 text-xs" />
+            <div className="min-w-0">
+              <p className="font-medium">{user.nome}</p>
+              <p className="break-all text-sm text-texto-suave">{user.email}</p>
+              <p className="text-sm text-texto-suave">{papeis[user.papel]}</p>
+            </div>
+          </div>
           {modo === "apagar" ? (
             <div role="alertdialog" aria-label={`Apagar ${user.nome}`} className="mt-3 flex flex-col gap-2">
               <p className="text-sm text-texto">Apagar {user.nome}? Os pedidos deixam de aparecer.</p>
