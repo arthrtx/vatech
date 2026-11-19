@@ -161,6 +161,10 @@ export const api = {
     setToken(r.token);
     return r.user;
   },
+  esqueciPassword: async (email: string) =>
+    (await request<{ message: string }>("POST", "/esqueci-password", { email })).message,
+  redefinirPassword: async (b: { token: string; email: string; password: string; password_confirmation: string }) =>
+    (await request<{ message: string }>("POST", "/redefinir-password", b)).message,
   logout: async () => {
     try {
       await request<void>("POST", "/logout");

@@ -7,7 +7,10 @@ use App\Http\Requests\UpdatePerfilRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -25,6 +28,37 @@ class AuthController extends Controller
             'token' => $user->createToken('api')->plainTextToken,
             'user' => $user->toContrato(),
         ]);
+    }
+
+    /** Pede o email de recuperacao. Resposta sempre igual, exista ou nao a conta (nao revela contas). */
+    public function esqueciPassword(Request $request): JsonResponse
+    {
+        $dados = $request->validate(['email' => ['required', 'email', 'max:255']]);
+
+        Password::sendResetLink(['email' => $dados['email']]);
+
+        return response()->json(['message' => 'Se o email existir, enviámos um link para definir uma nova palavra-passe.']);
+    }
+
+    public function redefinirPassword(Request $request): JsonResponse
+    {
+        $dados = $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $estado = Password::reset($dados, function (User $user, string $password) {
+            $user->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();
+            $user->tokens()->delete();
+            event(new PasswordReset($user));
+        });
+
+        if ($estado !== Password::PASSWORD_RESET) {
+            throw ValidationException::withMessages(['token' => ['O link é inválido ou expirou. Peça um novo.']]);
+        }
+
+        return response()->json(['message' => 'Palavra-passe alterada. Já pode entrar.']);
     }
 
     public function logout(Request $request): JsonResponse
