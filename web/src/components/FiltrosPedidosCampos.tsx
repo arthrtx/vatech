@@ -4,9 +4,11 @@ import { useId } from "react";
 import type { EstadoPedido, Pedido, TipoPedido } from "@/lib/api";
 import { contarAtivos, filtrosVazios, type FiltrosPedidos } from "@/lib/filtros";
 import { estados, tipos } from "@/lib/rotulos";
+import CampoData from "./CampoData";
 import GrupoChips from "./GrupoChips";
+import Seletor from "./Seletor";
 import PainelFiltros from "./PainelFiltros";
-import { input, label } from "./ui";
+import { label } from "./ui";
 
 export const filtrosIniciais: FiltrosPedidos = { ...filtrosVazios, estados: ["pendente"] };
 
@@ -25,9 +27,10 @@ interface Props {
   pedidos: Pedido[];
   mostrarFuncionario: boolean;
   mostrados: number;
+  semResumo?: boolean;
 }
 
-export default function FiltrosPedidosCampos({ filtros, onChange, pedidos, mostrarFuncionario, mostrados }: Props) {
+export default function FiltrosPedidosCampos({ filtros, onChange, pedidos, mostrarFuncionario, mostrados, semResumo }: Props) {
   const id = useId();
   const efetivos = filtrosEfetivos(filtros);
   const periodoInvalido = filtros.de !== "" && filtros.ate !== "" && filtros.ate < filtros.de;
@@ -44,6 +47,7 @@ export default function FiltrosPedidosCampos({ filtros, onChange, pedidos, mostr
       total={pedidos.length}
       mostrados={mostrados}
       rotuloItens="pedidos"
+      semResumo={semResumo}
       onLimpar={() => onChange(filtrosVazios)}
     >
       <GrupoChips
@@ -63,19 +67,13 @@ export default function FiltrosPedidosCampos({ filtros, onChange, pedidos, mostr
           <label htmlFor={`${id}-func`} className={label}>
             Funcionário
           </label>
-          <select
+          <Seletor
             id={`${id}-func`}
-            className={`${input} min-h-11`}
-            value={filtros.funcionarioId ?? ""}
-            onChange={(e) => onChange({ ...filtros, funcionarioId: e.target.value ? Number(e.target.value) : null })}
-          >
-            <option value="">Todos</option>
-            {lista.map(([uid, nome]) => (
-              <option key={uid} value={uid}>
-                {nome}
-              </option>
-            ))}
-          </select>
+            className="min-h-11"
+            valor={filtros.funcionarioId === null ? "" : String(filtros.funcionarioId)}
+            opcoes={[{ valor: "", rotulo: "Todos" }, ...lista.map(([uid, nome]) => ({ valor: String(uid), rotulo: nome }))]}
+            onChange={(v) => onChange({ ...filtros, funcionarioId: v ? Number(v) : null })}
+          />
         </div>
       )}
       <div className="min-w-0">
@@ -84,26 +82,19 @@ export default function FiltrosPedidosCampos({ filtros, onChange, pedidos, mostr
             <label htmlFor={`${id}-de`} className={label}>
               De
             </label>
-            <input
-              id={`${id}-de`}
-              type="date"
-              className={`${input} min-h-11`}
-              value={filtros.de}
-              onChange={(e) => onChange({ ...filtros, de: e.target.value })}
-            />
+            <CampoData id={`${id}-de`} className="min-h-11" valor={filtros.de} onChange={(de) => onChange({ ...filtros, de })} />
           </div>
           <div>
             <label htmlFor={`${id}-ate`} className={label}>
               Até
             </label>
-            <input
+            <CampoData
               id={`${id}-ate`}
-              type="date"
-              className={`${input} min-h-11`}
-              value={filtros.ate}
+              className="min-h-11"
+              valor={filtros.ate}
               aria-invalid={periodoInvalido}
               aria-describedby={periodoInvalido ? `${id}-erro` : undefined}
-              onChange={(e) => onChange({ ...filtros, ate: e.target.value })}
+              onChange={(ate) => onChange({ ...filtros, ate })}
             />
           </div>
         </div>

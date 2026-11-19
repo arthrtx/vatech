@@ -12,6 +12,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::put('/me', [AuthController::class, 'updateMe'])->middleware('throttle:5,1');
+    Route::post('/me/avatar', [AuthController::class, 'updateAvatar'])->middleware('throttle:10,1');
+    Route::delete('/me/avatar', [AuthController::class, 'destroyAvatar'])->middleware('throttle:10,1');
     Route::get('/pedidos', [PedidoController::class, 'index']);
     Route::get('/agenda', [AgendaController::class, 'index']);
 
@@ -24,5 +26,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
     });
 
-    Route::post('/pedidos', [PedidoController::class, 'store'])->middleware('papel:funcionario');
+    Route::middleware('papel:funcionario')->group(function () {
+        Route::post('/pedidos', [PedidoController::class, 'store']);
+        Route::put('/pedidos/{id}', [PedidoController::class, 'update']);
+        Route::delete('/pedidos/{id}', [PedidoController::class, 'destroy']);
+    });
 });

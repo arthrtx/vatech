@@ -30,7 +30,8 @@ describe("PedidoForm", () => {
     expect(screen.getByLabelText("Data de fim")).toBeTruthy();
     expect(screen.getByLabelText("Observação")).toBeTruthy();
     expect(screen.queryByLabelText("Subtipo")).toBeNull();
-    fireEvent.change(screen.getByLabelText("Tipo"), { target: { value: "ausencia" } });
+    fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
+    fireEvent.click(screen.getByRole("option", { name: "Ausência" }));
     expect(screen.getByLabelText("Subtipo")).toBeTruthy();
   });
 });

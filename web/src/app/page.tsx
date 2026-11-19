@@ -14,6 +14,7 @@ function Conteudo() {
   const admin = user?.papel === "admin";
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [editando, setEditando] = useState<Pedido | null>(null);
 
   const carregar = useCallback(async () => {
     try {
@@ -27,6 +28,17 @@ function Conteudo() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carregamento inicial de dados remotos
     carregar();
+  }, [carregar]);
+
+  // Pedidos novos de outros utilizadores: atualiza de 15 em 15 s e ao voltar ao separador.
+  useEffect(() => {
+    const t = setInterval(carregar, 15000);
+    const aoVoltar = () => document.visibilityState === "visible" && carregar();
+    document.addEventListener("visibilitychange", aoVoltar);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", aoVoltar);
+    };
   }, [carregar]);
 
   async function decidir(fn: () => Promise<unknown>) {
@@ -54,10 +66,29 @@ function Conteudo() {
           onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
         />
       ) : (
-        <>
-          <PedidoForm onCriado={carregar} />
-          <ListaPedidos pedidos={pedidos} />
-        </>
+        <ListaPedidos
+          pedidos={pedidos}
+          formulario={
+            editando ? (
+              <PedidoForm
+                key={editando.id}
+                pedido={editando}
+                onCriado={async () => {
+                  setEditando(null);
+                  await carregar();
+                }}
+                onCancelar={() => setEditando(null)}
+              />
+            ) : (
+              <PedidoForm onCriado={carregar} />
+            )
+          }
+          onEditar={(p) => setEditando(p)}
+          onApagar={async (p) => {
+            if (editando?.id === p.id) setEditando(null);
+            await decidir(() => api.apagarPedido(p.id));
+          }}
+        />
       )}
     </div>
   );
