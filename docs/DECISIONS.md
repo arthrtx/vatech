@@ -54,7 +54,7 @@
 
 ## D5: Alojamento no Ploi, repositório privado
 
-**Data:** 2026-11-18 · **Estado:** aceite · **Decidido por:** Arthur
+**Data:** 2026-11-18 · **Estado:** substituída por D8 · **Decidido por:** Arthur
 
 **Contexto:** distribuição privada; a API tem de estar num servidor acessível ao website alojado.
 
@@ -90,3 +90,18 @@
 - Alargar `GET /api/pedidos` a colegas: rejeitada, exporia campos sensiveis por omissao.
 
 **Consequencias:** campos novos do pedido nao chegam a colegas ate serem acrescentados a lista; `GET /api/pedidos` mantem-se so com os proprios pedidos.
+
+## D8: Produção grátis com TiDB Cloud Starter e Render
+
+**Data:** 2026-11-19 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** cada PC corria a sua base de dados, por isso os pedidos de uma pessoa não apareciam aos outros. Funcionários e chefe precisam de ver os mesmos dados. O Ploi (D5) custa dinheiro e não há conta da empresa para isto.
+
+**Decisão:** base de dados no **TiDB Cloud Starter** (compatível com MySQL, grátis até 5 GiB por instância), API no **Render** (plano grátis, imagem `docker/api/Dockerfile.prod`, definida em `render.yaml`), site no **Vercel** como já estava. Passos em `docs/DEPLOY.md`.
+
+**Alternativas consideradas:**
+- Ploi: rejeitada por custo.
+- Supabase: rejeitada, é PostgreSQL (D1 pede MySQL) e o plano grátis pausa projetos com pouca atividade.
+- Aiven MySQL grátis: deixou de aceitar serviços novos em novembro de 2026.
+
+**Consequências:** a API adormece após 15 minutos sem pedidos e o primeiro pedido a seguir demora cerca de um minuto. O disco do Render apaga-se a cada arranque, por isso as fotos de perfil guardadas no disco perdem-se até passarem para a base de dados ou para um armazenamento externo. O TiDB não suporta procedimentos guardados nem triggers (o vatech não usa).
