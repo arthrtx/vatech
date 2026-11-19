@@ -15,6 +15,8 @@ interface Props<T> {
   children: (dados: T) => ReactNode;
   /** Classes extra de grelha (ex.: lg:col-span-2). */
   className?: string;
+  /** "recentes": fundo de cor do HUROH com o conteúdo num painel interior; "vidro": só vidro. */
+  efeito?: "recentes" | "vidro";
 }
 
 /** Um bloco com os 4 estados: a carregar (skeleton), erro, vazio, com dados. */
@@ -29,6 +31,7 @@ export default function BlocoEstado<T>({
   vazioAcao,
   children,
   className = "",
+  efeito = "vidro",
 }: Props<T>) {
   let corpo: ReactNode;
   if (fonte.erro) {
@@ -69,9 +72,15 @@ export default function BlocoEstado<T>({
   }
 
   return (
-    <section className={`${vidro} arco brilho-violeta flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] ${className}`}>
+    <section
+      className={`${vidro} ${efeito === "recentes" ? "arco efeito-recentes" : "brilho-violeta"} flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] ${className}`}
+    >
       <h2 className="text-lg font-semibold">{titulo}</h2>
-      {corpo}
+      {efeito === "recentes" ? (
+        <div className="efeito-interior flex flex-col gap-2 rounded-cartao p-3 ring-1 ring-white/50 dark:ring-white/10">{corpo}</div>
+      ) : (
+        corpo
+      )}
     </section>
   );
 }
