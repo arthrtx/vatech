@@ -5,6 +5,7 @@ use App\Http\Controllers\AnexoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FuncionarioController;
 use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\PresencaController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -28,7 +29,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
     });
 
-    Route::middleware('papel:funcionario')->group(function () {
+    Route::middleware('papel:admin,estagiario')->get('/presencas', [PresencaController::class, 'index']);
+
+    Route::middleware('papel:estagiario')->group(function () {
+        Route::get('/presencas/hoje', [PresencaController::class, 'hoje']);
+        Route::post('/presencas/entrada', [PresencaController::class, 'entrada']);
+        Route::post('/presencas/saida', [PresencaController::class, 'saida']);
+    });
+
+    Route::middleware('papel:funcionario,estagiario')->group(function () {
         Route::post('/pedidos', [PedidoController::class, 'store']);
         Route::put('/pedidos/{id}', [PedidoController::class, 'update']);
         Route::delete('/pedidos/{id}', [PedidoController::class, 'destroy']);

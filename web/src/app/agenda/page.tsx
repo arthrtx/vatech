@@ -53,7 +53,7 @@ function Conteudo() {
         aCarregar={aCarregar}
         comErro={erro !== null}
         aoMudarMes={aoMudarMes}
-        podeCriar={user?.papel === "funcionario"}
+        podeCriar={!!user && user.papel !== "admin"}
         aoCriar={recarregar}
       />
     </div>

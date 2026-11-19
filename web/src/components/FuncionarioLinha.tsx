@@ -1,22 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { mensagemDeErro, type User } from "@/lib/api";
+import { mensagemDeErro, type Papel, type User } from "@/lib/api";
+import { papeis } from "@/lib/rotulos";
+import Seletor from "./Seletor";
 import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
 
 interface Props {
   user: User;
-  onGuardar: (dados: { nome: string; email: string; password?: string }) => Promise<void>;
+  onGuardar: (dados: { nome: string; email: string; password?: string; papel?: Papel }) => Promise<void>;
   onApagar: () => Promise<void>;
+  /** É o próprio utilizador autenticado: não pode mudar o seu tipo nem apagar-se. */
+  proprio?: boolean;
 }
+
+const opcoesPapel = (Object.keys(papeis) as Papel[]).map((valor) => ({ valor, rotulo: papeis[valor] }));
 
 type Modo = "ver" | "editar" | "apagar";
 
-export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
+export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = false }: Props) {
   const [modo, setModo] = useState<Modo>("ver");
   const [nome, setNome] = useState(user.nome);
   const [email, setEmail] = useState(user.email);
   const [password, setPassword] = useState("");
+  const [papel, setPapel] = useState<Papel>(user.papel);
   const [erro, setErro] = useState<string | null>(null);
   const [aGravar, setAGravar] = useState(false);
   const nomeRef = useRef<HTMLInputElement>(null);
@@ -38,6 +45,7 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
     setNome(user.nome);
     setEmail(user.email);
     setPassword("");
+    setPapel(user.papel);
     setModo(m);
   }
 
@@ -75,7 +83,7 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
           aria-label={`Editar ${user.nome}`}
           onSubmit={(e) => {
             e.preventDefault();
-            executar(() => onGuardar({ nome, email, ...(password ? { password } : {}) }));
+            executar(() => onGuardar({ nome, email, ...(password ? { password } : {}), ...(!proprio && papel !== user.papel ? { papel } : {}) }));
           }}
         >
           <div>
@@ -117,6 +125,16 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+          <div>
+            <label htmlFor={`e-papel-${user.id}`} className={label}>
+              Tipo
+            </label>
+            {proprio ? (
+              <input id={`e-papel-${user.id}`} disabled readOnly className={`${input} opacity-60`} value={papeis[user.papel]} />
+            ) : (
+              <Seletor id={`e-papel-${user.id}`} valor={papel} opcoes={opcoesPapel} onChange={(v) => setPapel(v as Papel)} />
+            )}
+          </div>
           {aviso}
           <div className="flex gap-2">
             <button type="submit" className={botao} disabled={aGravar}>
@@ -131,6 +149,7 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
         <>
           <p className="font-medium">{user.nome}</p>
           <p className="break-all text-sm text-texto-suave">{user.email}</p>
+          <p className="text-sm text-texto-suave">{papeis[user.papel]}</p>
           {modo === "apagar" ? (
             <div role="alertdialog" aria-label={`Apagar ${user.nome}`} className="mt-3 flex flex-col gap-2">
               <p className="text-sm text-texto">Apagar {user.nome}? Os pedidos deixam de aparecer.</p>
@@ -161,15 +180,17 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
               >
                 Editar
               </button>
-              <button
-                type="button"
-                ref={apagarRef}
-                className={botaoSec}
-                aria-label={`Apagar ${user.nome}`}
-                onClick={() => abrir("apagar")}
-              >
-                Apagar
-              </button>
+              {!proprio && (
+                <button
+                  type="button"
+                  ref={apagarRef}
+                  className={botaoSec}
+                  aria-label={`Apagar ${user.nome}`}
+                  onClick={() => abrir("apagar")}
+                >
+                  Apagar
+                </button>
+              )}
             </div>
           )}
         </>
