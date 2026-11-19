@@ -2,6 +2,10 @@
 
 Gestão de férias, ausências e licenças. Next.js (`web/`), Laravel (API, raiz), MySQL. Produto só website.
 
+**Site:** https://vatech-eight.vercel.app
+
+A versão online atualiza-se sozinha sempre que há alterações no `main`. Na primeira abertura do dia pode demorar cerca de um minuto, porque a API acorda (plano grátis). Como está montada: `docs/DEPLOY.md`.
+
 ## Arrancar (qualquer máquina com Git, Node e Docker Desktop)
 
 Duplo clique em `iniciar.bat` na raiz. Cada vez que corre, faz `git pull` da última versão, instala as dependências, sobe a API e a base de dados em Docker, sobe o web e abre http://localhost:3000 no browser.
