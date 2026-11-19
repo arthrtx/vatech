@@ -68,7 +68,7 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
   );
 
   return (
-    <li className="rounded-md border border-zinc-300 bg-white p-3">
+    <li className="rounded-cartao bg-painel shadow-suave p-3">
       {modo === "editar" ? (
         <form
           className="flex max-w-xl flex-col gap-3"
@@ -130,10 +130,10 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar }: Props) {
       ) : (
         <>
           <p className="font-medium">{user.nome}</p>
-          <p className="break-all text-sm text-zinc-700">{user.email}</p>
+          <p className="break-all text-sm text-texto-suave">{user.email}</p>
           {modo === "apagar" ? (
             <div role="alertdialog" aria-label={`Apagar ${user.nome}`} className="mt-3 flex flex-col gap-2">
-              <p className="text-sm text-zinc-900">Apagar {user.nome}? Os pedidos deixam de aparecer.</p>
+              <p className="text-sm text-texto">Apagar {user.nome}? Os pedidos deixam de aparecer.</p>
               {aviso}
               <div className="flex gap-2">
                 <button

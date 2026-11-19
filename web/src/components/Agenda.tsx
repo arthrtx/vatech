@@ -24,14 +24,14 @@ import { botaoSec, input, label } from "./ui";
 
 const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
-// TODO: token em falta (cores de estado). Aprovado = cheio, pendente = tracejado, em zinc neutro.
+// Cores de estado com os tokens de globals.css. Aprovado = cheio, pendente = tracejado.
 const estiloEstado = {
-  aprovado: "border-zinc-900 bg-zinc-900 text-white",
-  pendente: "border-dashed border-zinc-600 bg-white text-zinc-900",
+  aprovado: "border-primaria bg-primaria text-white",
+  pendente: "border-dashed border-primaria bg-painel text-texto",
   recusado: "",
 } as const;
 
-const focoCls = "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-1";
+const focoCls = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
 
 const nomeDe = (p: Pedido, proprio?: string) => p.user?.nome ?? proprio ?? "Eu";
 const descricao = (p: Pedido) => `${tipos[p.tipo]}${p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}`;
@@ -154,13 +154,13 @@ export default function Agenda({
         )}
       </div>
 
-      <p className="text-sm text-zinc-700">Cheio: aprovado. Tracejado: pendente. Pedidos recusados não aparecem.</p>
+      <p className="text-sm text-texto-suave">Cheio: aprovado. Tracejado: pendente. Pedidos recusados não aparecem.</p>
 
       <div className="overflow-x-auto">
         <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="min-w-[42rem]">
           <div role="row" className="grid grid-cols-7 gap-1">
             {diasSemana.map((d) => (
-              <div key={d} role="columnheader" className="px-1 text-xs font-medium uppercase text-zinc-700">
+              <div key={d} role="columnheader" className="px-1 text-xs font-medium uppercase text-texto-suave">
                 {d}
               </div>
             ))}
@@ -177,9 +177,9 @@ export default function Agenda({
                   role="gridcell"
                   aria-current={eHoje ? "date" : undefined}
                   onClick={(e) => abrir(e, { iso: c.iso })}
-                  className={`flex min-h-24 flex-col gap-1 rounded-md border p-1 ${
-                    c.doMes ? "bg-white" : "bg-zinc-100 text-zinc-600"
-                  } ${sobrepoe ? "border-2 border-zinc-900" : "border-zinc-300"}`}
+                  className={`flex min-h-24 flex-col gap-1 rounded-controlo border p-1 ${
+                    c.doMes ? "bg-painel" : "bg-campo text-texto-suave"
+                  } ${sobrepoe ? "border-2 border-primaria" : "border-linha"}`}
                 >
                   <button
                     type="button"
@@ -187,7 +187,7 @@ export default function Agenda({
                       e.stopPropagation();
                       abrir(e, { iso: c.iso });
                     }}
-                    className={`self-start rounded px-1.5 text-sm ${focoCls} ${eHoje ? "bg-zinc-900 font-semibold text-white" : "hover:bg-zinc-200"}`}
+                    className={`self-start rounded px-1.5 text-sm ${focoCls} ${eHoje ? "bg-primaria font-semibold text-white" : "hover:bg-primaria-suave"}`}
                   >
                     {c.dia}
                     <span className="sr-only"> de {mesesPt[Number(c.iso.slice(5, 7)) - 1]}</span>
@@ -223,7 +223,7 @@ export default function Agenda({
           tabIndex={-1}
           onKeyDown={aoTecla}
           aria-labelledby="ag-detalhe"
-          className="flex flex-col gap-3 rounded-md border-2 border-zinc-900 bg-white p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2"
+          className="flex flex-col gap-3 rounded-controlo border-2 border-primaria bg-painel p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2"
         >
           <div className="flex items-start justify-between gap-3">
             <h3 id="ag-detalhe" className="text-base font-semibold">
@@ -275,7 +275,7 @@ export default function Agenda({
                 <p className="text-sm font-medium">Sobreposição: mais de uma pessoa fora neste dia.</p>
               )}
               {doDiaSel.length === 0 ? (
-                <p className="text-sm text-zinc-700">Sem pedidos neste dia.</p>
+                <p className="text-sm text-texto-suave">Sem pedidos neste dia.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {doDiaSel.map((p) => (
@@ -283,12 +283,12 @@ export default function Agenda({
                       <button
                         type="button"
                         onClick={() => setSel({ iso: sel.iso, pedidoId: p.id })}
-                        className={`w-full rounded-md border border-zinc-300 bg-white p-2 text-left text-sm hover:bg-zinc-100 ${focoCls}`}
+                        className={`w-full rounded-cartao bg-painel shadow-suave p-2 text-left text-sm hover:bg-primaria-suave ${focoCls}`}
                       >
                         <span className="font-medium">
                           {nomeDe(p, nomeProprio)} · {descricao(p)} · {p.estado === "aprovado" ? "Aprovado" : "Pendente"}
                         </span>
-                        <span className="block text-zinc-700">
+                        <span className="block text-texto-suave">
                           {p.data_inicio} a {p.data_fim}
                         </span>
                       </button>
@@ -306,19 +306,19 @@ export default function Agenda({
           Pedidos de {mesesPt[mes.mes - 1]} {mes.ano}
         </h3>
         {aCarregar ? (
-          <p className="text-zinc-700">A carregar pedidos...</p>
+          <p className="text-texto-suave">A carregar pedidos...</p>
         ) : comErro ? (
-          <p className="text-zinc-700">Não foi possível carregar os pedidos.</p>
+          <p className="text-texto-suave">Não foi possível carregar os pedidos.</p>
         ) : doMes.length === 0 ? (
-          <p className="text-zinc-700">Sem pedidos neste mês.</p>
+          <p className="text-texto-suave">Sem pedidos neste mês.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {doMes.map((p) => (
-              <li key={p.id} className="rounded-md border border-zinc-300 bg-white p-3">
+              <li key={p.id} className="rounded-cartao bg-painel shadow-suave p-3">
                 <p className="font-medium">
                   {nomeDe(p, nomeProprio)} · {descricao(p)} · {p.estado === "aprovado" ? "Aprovado" : "Pendente"}
                 </p>
-                <p className="text-sm text-zinc-700">
+                <p className="text-sm text-texto-suave">
                   {p.data_inicio} a {p.data_fim}
                 </p>
               </li>
