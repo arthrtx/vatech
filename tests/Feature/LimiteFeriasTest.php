@@ -48,7 +48,7 @@ it('recusa mais de 22 dias uteis num so pedido, com erro em data_fim', function 
     pedirFerias($this, '2027-02-01', '2027-03-03')
         ->assertStatus(422)
         ->assertJsonValidationErrors('data_fim')
-        ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 22 dias uteis de ferias em 2027. Restam 22.');
+        ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 22 dias úteis de férias em 2027. Restam 22.');
     expect(Pedido::count())->toBe(0);
 });
 
@@ -62,7 +62,7 @@ it('soma os pedidos do ano (pendentes e aprovados) e ignora recusados, outros ti
 
     pedirFerias($this, '2027-03-01', '2027-03-10')
         ->assertStatus(422)
-        ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 22 dias uteis de ferias em 2027. Restam 7.');
+        ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 22 dias úteis de férias em 2027. Restam 7.');
 
     pedirFerias($this, '2027-03-01', '2027-03-09')->assertCreated(); // 7 uteis: fecha os 22
     pedirFerias($this, '2027-04-05', '2027-04-05')->assertStatus(422); // ja nao resta nenhum
@@ -88,7 +88,7 @@ it('um pedido que atravessa o ano conta em cada ano separadamente', function () 
     // 28/12/2026 a 8/1/2027: 4 uteis em 2026 (28-31) e 5 em 2027 (1/1 e feriado; 4-8): 20 + 5 > 22.
     pedirFerias($this, '2026-12-28', '2027-01-08')
         ->assertStatus(422)
-        ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 22 dias uteis de ferias em 2027. Restam 2.');
+        ->assertJsonPath('errors.data_fim.0', 'Excede o limite de 22 dias úteis de férias em 2027. Restam 2.');
 
     // Ate 6/1/2027 sao 3 uteis em 2027 (4-6): 20 + 3 = 23 > 22; ate 5/1 sao 2: cabe.
     pedirFerias($this, '2026-12-28', '2027-01-05')->assertCreated();

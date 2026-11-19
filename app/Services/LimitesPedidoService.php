@@ -13,6 +13,9 @@ class LimitesPedidoService
 {
     public const TIPOS = ['ferias', 'ausencia', 'licenca'];
 
+    /** Rotulo legivel de cada tipo, para mensagens ao utilizador. */
+    public const ROTULOS = ['ferias' => 'férias', 'ausencia' => 'ausência', 'licenca' => 'licença'];
+
     public const ANO_INICIO_CUMULO = 2026;
 
     /** Limite de ferias (dias uteis por ano) quando a empresa nao configurou nenhum. */
@@ -132,7 +135,9 @@ class LimitesPedidoService
             if ($usados + $this->diasNoAno($de, $ate, $ano) > $limite) {
                 $restantes = max(0, $limite - $usados);
 
-                return "Excede o limite de {$limite} dias uteis de {$tipo} em {$ano}. Restam {$restantes}.";
+                $rotulo = self::ROTULOS[$tipo] ?? $tipo;
+
+                return "Excede o limite de {$limite} dias úteis de {$rotulo} em {$ano}. Restam {$restantes}.";
             }
         }
 
