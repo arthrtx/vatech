@@ -40,7 +40,7 @@ describe("PedidosAdmin", () => {
     const aprovar = vi.fn();
     const recusar = vi.fn();
     render(<PedidosAdmin pedidos={[pedido]} onAprovar={aprovar} onRecusar={recusar} />);
-    expect(screen.getByText(/Ana/)).toBeTruthy();
+    expect(screen.getByText(/Ana ·/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Aprovar" }));
     expect(aprovar).toHaveBeenCalledWith(7);
     fireEvent.click(screen.getByRole("button", { name: "Recusar" }));
