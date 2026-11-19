@@ -9,10 +9,13 @@ import { useFonte } from "@/lib/useFonte";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
+import Fundo from "./Fundo";
 import ListaAusencias from "./ListaAusencias";
+import WidgetContagem from "./WidgetContagem";
+import WidgetFeriados from "./WidgetFeriados";
 
 const MAX = 5;
-const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900";
+const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
 export default function DashboardFuncionario({ user }: { user: User }) {
   const [hoje] = useState(() => hojeIso());
@@ -23,9 +26,18 @@ export default function DashboardFuncionario({ user }: { user: User }) {
   const aCarregar = !pedidos.erro && pedidos.dados === null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <Cabecalho titulo={`Olá, ${user.nome.split(" ")[0]}`} hoje={hoje} />
-      <ul className="grid grid-cols-3 gap-2 md:gap-4">
+    <Fundo>
+    <div className="flex flex-col gap-5">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Cabecalho titulo={`Olá, ${user.nome.split(" ")[0]}`} hoje={hoje} resumo="Os teus pedidos, quem da equipa está fora e o próximo descanso." />
+        </div>
+        <div className="flex flex-col gap-5">
+          <WidgetContagem pedidos={pedidos.dados} hoje={hoje} />
+          <WidgetFeriados hoje={hoje} quantos={proximasAusencias(pedidos.dados ?? [], hoje).length > 0 ? 1 : 3} />
+        </div>
+      </div>
+      <ul className="grid grid-cols-3 gap-2 md:gap-5">
         <CartaoContador
           rotulo="Pendentes"
           valor={n?.pendente ?? null}
@@ -36,6 +48,7 @@ export default function DashboardFuncionario({ user }: { user: User }) {
         <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} />
       </ul>
 
+      <div className="grid gap-5 lg:grid-cols-2">
       <BlocoEstado
         titulo="As minhas próximas ausências"
         fonte={pedidos}
@@ -72,10 +85,12 @@ export default function DashboardFuncionario({ user }: { user: User }) {
         {(d) => (
           <>
             <ListaAusencias pedidos={equipaForaHoje(d, hoje, user.id)} titulo="nome" />
-            <p className="text-xs text-zinc-700">Só nome, tipo e datas (agenda reduzida).</p>
+            <p className="text-xs text-texto-suave">Só nome, tipo e datas (agenda reduzida).</p>
           </>
         )}
       </BlocoEstado>
+      </div>
     </div>
+    </Fundo>
   );
 }

@@ -31,9 +31,12 @@ const botaoIcone =
 export default function AppShell({
   children,
   soAdmin = false,
+  ecraInteiro = false,
 }: {
   children: React.ReactNode;
   soAdmin?: boolean;
+  /** Em ecrã grande (lg+) a página cabe na janela, sem scroll; o conteúdo gere o próprio espaço. */
+  ecraInteiro?: boolean;
 }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -93,8 +96,8 @@ export default function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-fundo p-0 text-texto md:p-6">
-      <div className="flex min-h-screen flex-col gap-4 bg-painel p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave">
+    <div className={`min-h-screen bg-fundo p-0 text-texto md:p-6 ${ecraInteiro ? "lg:h-screen lg:overflow-hidden" : ""}`}>
+      <div className={`flex min-h-screen flex-col gap-4 bg-painel p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave ${ecraInteiro ? "lg:h-full lg:min-h-0" : ""}`}>
         <aside className="flex items-center gap-3 rounded-barra bg-primaria px-3 py-2 text-white md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
           <p className="flex h-10 w-10 items-center justify-center rounded-controlo bg-white/20 text-base font-semibold">
             <span aria-hidden="true">v</span>
@@ -137,7 +140,7 @@ export default function AppShell({
             </button>
           </div>
         </aside>
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
+        <div className={`flex min-w-0 flex-1 flex-col ${ecraInteiro ? "gap-4 lg:min-h-0" : "gap-6"}`}>
           <header className="flex items-center gap-3">
             <div className="min-w-0">
               <p className="truncate text-base font-semibold">
@@ -169,7 +172,7 @@ export default function AppShell({
               </span>
             </span>
           </header>
-          <main className="min-w-0 flex-1 md:pr-2">{children}</main>
+          <main className={`min-w-0 flex-1 md:pr-2 ${ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : ""}`}>{children}</main>
         </div>
       </div>
       {pesquisaAberta && (

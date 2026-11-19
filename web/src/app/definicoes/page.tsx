@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
+import EscolhaLocalidade from "@/components/EscolhaLocalidade";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -270,6 +271,17 @@ function Conteudo() {
         <DadosConta user={user} atualizarUser={atualizarUser} />
         <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />
       </div>
+      <section aria-labelledby="def-localidade" className={`${cartao} md:max-w-xl`}>
+        <div>
+          <h2 id="def-localidade" className="text-lg font-semibold">
+            Localidade
+          </h2>
+          <p className="text-sm text-texto-suave">
+            Escolhe o concelho para a Agenda mostrar o feriado municipal. Fica guardado neste navegador.
+          </p>
+        </div>
+        <EscolhaLocalidade />
+      </section>
     </div>
   );
 }

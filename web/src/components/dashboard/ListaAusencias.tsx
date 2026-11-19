@@ -21,11 +21,14 @@ export default function ListaAusencias({ pedidos, titulo, comDias = false }: Pro
         const partes = titulo === "nome" ? [tipos[p.tipo], datas] : [datas];
         if (comDias) partes.push(dias(diasDoPedido(p)));
         return (
-          <li key={p.id} className="rounded-md border border-zinc-300 bg-white px-4 py-3">
+          <li key={p.id} className="flex gap-3 rounded-controlo bg-painel/75 px-4 py-3 ring-1 ring-linha">
+            <span aria-hidden="true" className="w-1 shrink-0 rounded-full bg-positivo" />
+            <div className="min-w-0">
             <p className="font-medium [overflow-wrap:anywhere]">
               {titulo === "nome" ? (p.user?.nome ?? "Colega") : tipos[p.tipo]}
             </p>
-            <p className="text-sm text-zinc-700">{partes.join(" · ")}</p>
+            <p className="text-sm text-texto-suave">{partes.join(" · ")}</p>
+            </div>
           </li>
         );
       })}

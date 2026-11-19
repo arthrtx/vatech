@@ -19,6 +19,9 @@ function Conteudo() {
   const { de, ate } = intervaloDoMes(mes);
   const chave = `${de}|${ate}`;
 
+  const [versao, setVersao] = useState(0);
+  const recarregar = useCallback(() => setVersao((v) => v + 1), []);
+
   useEffect(() => {
     let vivo = true;
     api
@@ -28,7 +31,7 @@ function Conteudo() {
     return () => {
       vivo = false;
     };
-  }, [de, ate, chave]);
+  }, [de, ate, chave, versao]);
 
   // A carregar enquanto a resposta guardada nao for do intervalo pedido.
   const aCarregar = res?.chave !== chave;
@@ -36,8 +39,8 @@ function Conteudo() {
   const pedidos = res?.pedidos ?? [];
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Agenda</h1>
+    <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
+      <h1 className="sr-only">Agenda</h1>
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}
@@ -50,6 +53,8 @@ function Conteudo() {
         aCarregar={aCarregar}
         comErro={erro !== null}
         aoMudarMes={aoMudarMes}
+        podeCriar={user?.papel === "funcionario"}
+        aoCriar={recarregar}
       />
     </div>
   );
@@ -57,7 +62,7 @@ function Conteudo() {
 
 export default function AgendaPage() {
   return (
-    <AppShell>
+    <AppShell ecraInteiro>
       <Conteudo />
     </AppShell>
   );

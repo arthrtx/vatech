@@ -11,10 +11,13 @@ import { erro as erroCls } from "../ui";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import CartaoContador from "./CartaoContador";
+import Fundo from "./Fundo";
 import ListaAusencias from "./ListaAusencias";
+import WidgetFeriados from "./WidgetFeriados";
+import WidgetSemana from "./WidgetSemana";
 
 const MAX = 5;
-const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900";
+const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
 export default function DashboardAdmin() {
   const [hoje] = useState(() => hojeIso());
@@ -44,9 +47,15 @@ export default function DashboardAdmin() {
   const num = (v: number | undefined) => (v === undefined ? null : v);
 
   return (
-    <div className="flex flex-col gap-6">
-      <Cabecalho titulo="Dashboard" hoje={hoje} />
-      <ul className="grid grid-cols-3 gap-2 md:gap-4">
+    <Fundo>
+    <div className="flex flex-col gap-5">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Cabecalho titulo="Dashboard" hoje={hoje} resumo="Quem está fora, o que falta aprovar e o que vem aí." />
+        </div>
+        <WidgetFeriados hoje={hoje} />
+      </div>
+      <ul className="grid grid-cols-3 gap-2 md:gap-5">
         <CartaoContador
           rotulo="Pedidos pendentes"
           valor={num(pedidos.dados?.length)}
@@ -67,7 +76,10 @@ export default function DashboardAdmin() {
         />
       </ul>
 
+      <div className="grid gap-5 lg:grid-cols-3">
+      {agenda.dados && <WidgetSemana agenda={agenda.dados} hoje={hoje} />}
       <BlocoEstado
+        className={agenda.dados ? "lg:col-span-2" : "lg:col-span-3"}
         titulo="Ausentes hoje e nos próximos 30 dias"
         fonte={agenda}
         mensagemErro="Não foi possível carregar a agenda. Verifique a ligação."
@@ -80,11 +92,11 @@ export default function DashboardAdmin() {
           <>
             {grupos.map((g) => (
               <div key={g.titulo} className="flex flex-col gap-2">
-                <h3 className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-700">
+                <h3 className="mt-2 text-xs font-semibold uppercase tracking-wide text-texto-suave">
                   {g.titulo} ({g.lista.length})
                 </h3>
                 {g.lista.length === 0 ? (
-                  <p className="text-sm text-zinc-700">{g.vazio}</p>
+                  <p className="text-sm text-texto-suave">{g.vazio}</p>
                 ) : (
                   <ListaAusencias pedidos={g.lista.slice(0, MAX)} titulo="nome" comDias />
                 )}
@@ -95,10 +107,11 @@ export default function DashboardAdmin() {
                 )}
               </div>
             ))}
-            <p className="text-xs text-zinc-700">Só pedidos aprovados.</p>
+            <p className="text-xs text-texto-suave">Só pedidos aprovados.</p>
           </>
         )}
       </BlocoEstado>
+      </div>
 
       <BlocoEstado
         titulo="Pedidos pendentes"
@@ -129,5 +142,6 @@ export default function DashboardAdmin() {
         )}
       </BlocoEstado>
     </div>
+    </Fundo>
   );
 }
