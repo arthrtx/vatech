@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import type { Papel } from "@/lib/api";
 import { primeiroNome } from "@/lib/saudacao";
 import {
   IconeAgenda,
@@ -41,10 +42,13 @@ const botaoIcone =
 export default function AppShell({
   children,
   soAdmin = false,
+  papeis,
   ecraInteiro = false,
 }: {
   children: React.ReactNode;
   soAdmin?: boolean;
+  /** Papéis com acesso à página; os outros são redirecionados para «/». */
+  papeis?: Papel[];
   /** Em ecrã grande (lg+) a página cabe na janela, sem scroll; o conteúdo gere o próprio espaço. */
   ecraInteiro?: boolean;
 }) {
@@ -54,6 +58,7 @@ export default function AppShell({
   const [pesquisaAberta, setPesquisaAberta] = useState(false);
   const { escuro, definir: definirTema } = useTema();
   const [agora, setAgora] = useState<Date | null>(null);
+  const semAcesso = !!user && ((soAdmin && user.papel !== "admin") || (!!papeis && !papeis.includes(user.papel)));
   const fecharPesquisa = useCallback(() => setPesquisaAberta(false), []);
 
   useEffect(() => {
@@ -77,10 +82,10 @@ export default function AppShell({
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace("/login");
-    else if (soAdmin && user.papel !== "admin") router.replace("/");
-  }, [loading, user, soAdmin, router]);
+    else if (semAcesso) router.replace("/");
+  }, [loading, user, semAcesso, router]);
 
-  if (loading || !user || (soAdmin && user.papel !== "admin")) {
+  if (loading || !user || semAcesso) {
     return <p className="p-6 text-texto-suave">A carregar...</p>;
   }
 
@@ -91,6 +96,8 @@ export default function AppShell({
   ];
   if (user.papel === "admin") {
     links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
+  }
+  if (user.papel === "admin" || user.papel === "estagiario") {
     links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });
   }
   const definicoes = { href: "/definicoes", texto: "Definições" };
