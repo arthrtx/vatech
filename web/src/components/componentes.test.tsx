@@ -1,13 +1,32 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PedidoForm from "./PedidoForm";
 import PedidosAdmin from "./PedidosAdmin";
-import type { Papel, Pedido } from "@/lib/api";
+import { ApiError, api, type Papel, type Pedido } from "@/lib/api";
 
 let papelAtual: Papel = "funcionario";
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 2, nome: "Ana", papel: papelAtual } }) }));
 
-afterEach(cleanup);
+vi.mock("@/lib/api", async (orig) => {
+  const real = await orig<typeof import("@/lib/api")>();
+  return { ...real, api: { limites: vi.fn(), criarPedido: vi.fn() } };
+});
+
+beforeEach(() => {
+  vi.mocked(api.limites).mockResolvedValue({
+    limites: [
+      { tipo: "ferias", dias_ano: 22, transitados: 0, usados: 8 },
+      { tipo: "ausencia", dias_ano: null, transitados: 0, usados: 0 },
+      { tipo: "licenca", dias_ano: 5, transitados: 0, usados: 0 },
+    ],
+    prazo_ferias: "2026-04-30",
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 const pedido: Pedido = {
   id: 7,
@@ -45,6 +64,56 @@ describe("PedidoForm", () => {
     expect(screen.queryByRole("option", { name: "Férias" })).toBeNull();
     expect(screen.getByRole("option", { name: "Licença" })).toBeTruthy();
     papelAtual = "funcionario";
+  });
+});
+
+describe("PedidoForm limites", () => {
+  const ano = new Date().getFullYear();
+  const datas = (de: string, ate: string) => {
+    fireEvent.change(screen.getByLabelText("Data de início"), { target: { value: de } });
+    fireEvent.change(screen.getByLabelText("Data de fim"), { target: { value: ate } });
+  };
+
+  it("mostra o saldo do tipo escolhido e nada quando não há limite", async () => {
+    render(<PedidoForm />);
+    expect(await screen.findByText(`Férias: 8 de 22 dias usados em ${ano} (restam 14)`)).toBeTruthy();
+    fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
+    fireEvent.click(screen.getByRole("option", { name: "Ausência" }));
+    expect(screen.queryByText(/dias usados em/)).toBeNull();
+  });
+
+  it("mostra o cúmulo com os dias transitados e conta-os no aviso de exceder", async () => {
+    vi.mocked(api.limites).mockResolvedValue({
+      limites: [{ tipo: "ferias", dias_ano: 22, transitados: 8, usados: 8 }],
+      prazo_ferias: "2026-04-30",
+    });
+    render(<PedidoForm />);
+    expect(await screen.findByText(`Férias: 8 de 30 dias usados em ${ano} (22 do ano + 8 transitados; restam 22)`)).toBeTruthy();
+    datas(`${ano + 1}-01-01`, `${ano + 1}-01-22`);
+    expect(screen.queryByText(/só restam/)).toBeNull();
+    datas(`${ano + 1}-01-01`, `${ano + 1}-01-23`);
+    expect(screen.getByText(`Este pedido tem 23 dias e só restam 22 de férias em ${ano}.`)).toBeTruthy();
+  });
+
+  it("avisa antes de submeter quando o pedido excede o que resta", async () => {
+    render(<PedidoForm />);
+    await screen.findByText(/restam 14/);
+    expect(screen.queryByText(/só restam/)).toBeNull();
+    datas(`${ano + 1}-01-01`, `${ano + 1}-01-20`);
+    expect(screen.getByText(`Este pedido tem 20 dias e só restam 14 de férias em ${ano}.`)).toBeTruthy();
+    datas(`${ano + 1}-01-01`, `${ano + 1}-01-10`);
+    expect(screen.queryByText(/só restam/)).toBeNull();
+  });
+
+  it("mostra o erro 422 do servidor ao submeter", async () => {
+    vi.mocked(api.criarPedido).mockRejectedValue(
+      new ApiError(422, "Erro", { data_fim: [`Excede o limite de 22 dias de ferias em ${ano}. Restam 14.`] }),
+    );
+    render(<PedidoForm />);
+    await screen.findByText(/restam 14/);
+    datas(`${ano + 1}-01-01`, `${ano + 1}-01-03`);
+    fireEvent.click(screen.getByRole("button", { name: "Submeter pedido" }));
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("Excede o limite de 22 dias de ferias"));
   });
 });
 

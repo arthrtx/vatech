@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import FuncionariosPage from "./page";
 import { api } from "@/lib/api";
@@ -7,9 +7,12 @@ vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: Re
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1 } }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
-  return { ...real, api: { funcionarios: vi.fn(), criarFuncionario: vi.fn() } };
+  return { ...real, api: { funcionarios: vi.fn(), criarFuncionario: vi.fn(), feriasResumo: vi.fn() } };
 });
 
+beforeEach(() => {
+  vi.mocked(api.feriasResumo).mockResolvedValue({ resumo: [], prazo_ferias: "2026-04-30" });
+});
 afterEach(cleanup);
 
 const mk = (id: number, nome: string, email: string) => ({ id, nome, email, papel: "funcionario" as const, empresa_id: 1 });
@@ -77,5 +80,23 @@ describe("Funcionários: tipo", () => {
     await waitFor(() =>
       expect(api.criarFuncionario).toHaveBeenCalledWith({ nome: "Novo", email: "n@x.pt", password: "segredo123", papel: "estagiario" }),
     );
+  });
+});
+
+describe("Funcionários: férias por pessoa", () => {
+  it("mostra usados/total com transitados, e nada sem limite anual", async () => {
+    vi.mocked(api.funcionarios).mockResolvedValue([mk(1, "João", "j@x.pt"), mk(2, "Ana", "ana@y.pt"), mk(3, "Rui", "r@z.pt")]);
+    vi.mocked(api.feriasResumo).mockResolvedValue({
+      resumo: [
+        { user_id: 1, nome: "João", dias_ano: 22, transitados: 8, usados: 8, por_marcar: 22 },
+        { user_id: 2, nome: "Ana", dias_ano: 22, transitados: 0, usados: 5, por_marcar: 17 },
+        { user_id: 3, nome: "Rui", dias_ano: null, transitados: 0, usados: 0, por_marcar: 0 },
+      ],
+      prazo_ferias: "2026-04-30",
+    });
+    render(<FuncionariosPage />);
+    expect(await screen.findByText("Férias: 8/30 (8 transitados)")).toBeTruthy();
+    expect(screen.getByText("Férias: 5/22")).toBeTruthy();
+    expect(screen.getAllByText(/^Férias:/)).toHaveLength(2);
   });
 });

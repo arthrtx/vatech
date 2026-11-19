@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { api, mensagemDeErro, type Papel, type User } from "@/lib/api";
+import { api, mensagemDeErro, type FeriasResumo, type Papel, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { papeis } from "@/lib/rotulos";
 import Seletor from "@/components/Seletor";
@@ -22,6 +22,7 @@ function Conteudo() {
   const [papel, setPapel] = useState<Papel>("funcionario");
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [ferias, setFerias] = useState<Map<number, FeriasResumo>>(new Map());
 
   const carregar = useCallback(async () => {
     try {
@@ -35,6 +36,19 @@ function Conteudo() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carregamento inicial de dados remotos
     carregar();
   }, [carregar]);
+
+  useEffect(() => {
+    let ativo = true;
+    api.feriasResumo().then(
+      (r) => ativo && setFerias(new Map(r.resumo.map((f) => [f.user_id, f]))),
+      () => {
+        // Sem resumo, a linha fica sem o saldo de férias.
+      },
+    );
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   async function criar(e: React.FormEvent) {
     e.preventDefault();
@@ -124,6 +138,7 @@ function Conteudo() {
               key={u.id}
               user={u}
               proprio={u.id === eu?.id}
+              ferias={ferias.get(u.id)}
               onGuardar={async (dados) => {
                 await api.editarFuncionario(u.id, dados);
                 await carregar();
