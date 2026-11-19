@@ -103,7 +103,7 @@ it('sem limite nao restringe', function () {
     Sanctum::actingAs($user);
 
     $this->postJson('/api/pedidos', ['tipo' => 'licenca', 'data_inicio' => "$ano-01-01", 'data_fim' => "$ano-12-31"])->assertCreated();
-    $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => "$ano-01-01", 'data_fim' => "$ano-12-31"])->assertCreated();
+    $this->postJson('/api/pedidos', ['tipo' => 'ausencia', 'data_inicio' => "$ano-01-01", 'data_fim' => "$ano-12-31"])->assertCreated();
 });
 
 it('os limites sao isolados por empresa', function () {
