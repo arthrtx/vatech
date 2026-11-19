@@ -33,46 +33,53 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 p-4">
-      <h1 className="text-2xl font-semibold">vatech</h1>
-      <form onSubmit={enviar} className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="email" className={label}>
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="username"
-            required
-            className={input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="password" className={label}>
-            Palavra-passe
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className={input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        {erro && (
-          <p role="alert" className={erroCls}>
-            {erro}
-          </p>
-        )}
-        <button type="submit" disabled={enviando} className={botao}>
-          {enviando ? "A entrar..." : "Entrar"}
-        </button>
-      </form>
+    <main className="flex min-h-screen items-center justify-center bg-fundo p-4">
+      <div className="flex w-full max-w-sm flex-col gap-6 rounded-cartao bg-painel p-8 shadow-suave">
+        <h1 className="flex items-center gap-3 text-2xl font-semibold">
+          <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-controlo bg-primaria text-base text-white">
+            v
+          </span>
+          vatech
+        </h1>
+        <form onSubmit={enviar} className="flex flex-col gap-4">
+          <div>
+            <label htmlFor="email" className={label}>
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="username"
+              required
+              className={input}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className={label}>
+              Palavra-passe
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className={input}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          {erro && (
+            <p role="alert" className={erroCls}>
+              {erro}
+            </p>
+          )}
+          <button type="submit" disabled={enviando} className={botao}>
+            {enviando ? "A entrar..." : "Entrar"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }
