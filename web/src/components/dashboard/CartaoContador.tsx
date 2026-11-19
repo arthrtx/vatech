@@ -27,7 +27,7 @@ export default function CartaoContador({ rotulo, valor, aCarregar, ligacao, Icon
   return (
     <li className="flex flex-col gap-3 rounded-cartao bg-painel/80 p-3 shadow-suave ring-1 ring-white/70 backdrop-blur-xl motion-safe:animate-subir dark:ring-white/10 md:p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold leading-snug text-texto">{rotulo}</p>
+        <p className="text-base font-semibold leading-snug text-texto md:text-lg">{rotulo}</p>
         {Icone && (
           <span aria-hidden="true" className={`hidden h-9 w-9 shrink-0 items-center justify-center rounded-full sm:flex ${c.icone}`}>
             <Icone className="h-[18px] w-[18px]" />
