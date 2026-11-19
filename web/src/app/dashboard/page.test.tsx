@@ -69,7 +69,7 @@ describe("Dashboard admin", () => {
       prazo_ferias: "2026-04-30",
     });
     render(<DashboardPage />);
-    expect(await screen.findByText("Sofia: 20 dias")).toBeTruthy();
+    expect(await screen.findByText("Sofia: 20 dias úteis")).toBeTruthy();
   });
 
   beforeEach(() => {
@@ -220,8 +220,8 @@ describe("Dashboard funcionário", () => {
       prazo_ferias: "2026-04-30",
     });
     render(<DashboardPage />);
-    expect((await screen.findByRole("status")).textContent).toContain("Tem 20 dias de férias por marcar. O prazo era 30 de abril.");
-    expect(screen.getByText("Férias transitadas: 3 dias")).toBeTruthy();
+    expect((await screen.findByRole("status")).textContent).toContain("Tem 20 dias úteis de férias por marcar. O prazo era 30 de abril.");
+    expect(screen.getByText("Férias transitadas: 3 dias úteis")).toBeTruthy();
   });
 
   it("saudação, contadores por estado e só os meus pedidos", async () => {

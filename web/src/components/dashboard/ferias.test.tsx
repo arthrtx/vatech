@@ -29,7 +29,7 @@ describe("AvisoFerias", () => {
     limites(22, 8, 10);
     render(<AvisoFerias />);
     const aviso = await screen.findByRole("status");
-    expect(aviso.textContent).toContain("Tem 20 dias de férias por marcar. O prazo era 30 de abril.");
+    expect(aviso.textContent).toContain("Tem 20 dias úteis de férias por marcar. O prazo era 30 de abril.");
     expect(screen.getByRole("link", { name: "Fazer pedido de férias" }).getAttribute("href")).toBe("/");
   });
 
@@ -61,7 +61,7 @@ describe("AvisoFerias", () => {
     vi.setSystemTime(new Date(2026, 2, 1, 12));
     limites(22, 8, 0);
     render(<AvisoFerias comTransitadas />);
-    expect(await screen.findByText("Férias transitadas: 8 dias")).toBeTruthy();
+    expect(await screen.findByText("Férias transitadas: 8 dias úteis")).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
   });
 });
@@ -77,8 +77,8 @@ describe("FeriasPorMarcar (admin)", () => {
     vi.setSystemTime(new Date(2026, 4, 2, 12));
     vi.mocked(api.feriasResumo).mockResolvedValue({ resumo, prazo_ferias: prazo });
     render(<FeriasPorMarcar />);
-    expect(await screen.findByText("Ana: 16 dias")).toBeTruthy();
-    expect(screen.getByText("Eva: 23 dias")).toBeTruthy();
+    expect(await screen.findByText("Ana: 16 dias úteis")).toBeTruthy();
+    expect(screen.getByText("Eva: 23 dias úteis")).toBeTruthy();
     expect(screen.queryByText(/Rui/)).toBeNull();
   });
 
@@ -86,7 +86,7 @@ describe("FeriasPorMarcar (admin)", () => {
     vi.setSystemTime(new Date(2026, 2, 2, 12));
     vi.mocked(api.feriasResumo).mockResolvedValue({ resumo, prazo_ferias: prazo });
     render(<FeriasPorMarcar />);
-    expect(await screen.findByText("Férias transitadas na equipa: 5 dias.")).toBeTruthy();
+    expect(await screen.findByText("Férias transitadas na equipa: 5 dias úteis.")).toBeTruthy();
     expect(screen.queryByText(/Ana:/)).toBeNull();
   });
 

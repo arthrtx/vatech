@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\LimitePedido;
 use App\Models\Pedido;
 use App\Models\User;
+use App\Support\LimiteFerias;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -14,6 +15,9 @@ class LimitesPedidoService
 
     public const ANO_INICIO_CUMULO = 2026;
 
+    /** Limite de ferias (dias uteis por ano) quando a empresa nao configurou nenhum. */
+    public const FERIAS_DIAS_POR_ANO = 22;
+
     /** Mes-dia limite (ano corrente) para marcar as ferias transitadas. */
     public const PRAZO_FERIAS = '04-30';
 
@@ -21,11 +25,10 @@ class LimitesPedidoService
     public function resumo(User $user, ?int $ano = null): array
     {
         $ano ??= now()->year;
-        $limites = LimitePedido::where('empresa_id', $user->empresa_id)->pluck('dias_ano', 'tipo');
 
         return array_map(fn (string $tipo) => [
             'tipo' => $tipo,
-            'dias_ano' => isset($limites[$tipo]) ? (int) $limites[$tipo] : null,
+            'dias_ano' => $this->limiteDias($user, $tipo),
             'transitados' => $user->isAdmin() ? 0 : $this->transitados($user, $tipo, $ano),
             'usados' => $user->isAdmin() ? 0 : $this->usados($user, $tipo, $ano),
         ], self::TIPOS);
@@ -85,13 +88,16 @@ class LimitesPedidoService
 
     private function limiteDias(User $user, string $tipo): ?int
     {
-        $limite = LimitePedido::where('empresa_id', $user->empresa_id)->where('tipo', $tipo)->value('dias_ano');
+        $linha = LimitePedido::where('empresa_id', $user->empresa_id)->where('tipo', $tipo)->first();
+        if ($linha === null) {
+            return $tipo === 'ferias' ? self::FERIAS_DIAS_POR_ANO : null;
+        }
 
-        return $limite === null ? null : (int) $limite;
+        return $linha->dias_ano === null ? null : (int) $linha->dias_ano;
     }
 
     /**
-     * Dias de calendario (inclusivos) de pedidos do utilizador nesse ano (por omissao pendentes+aprovados).
+     * Dias uteis (seg-sex, sem feriados nacionais) de pedidos do utilizador nesse ano (por omissao pendentes+aprovados).
      *
      * @param  array<int, string>  $estados
      */
@@ -126,7 +132,7 @@ class LimitesPedidoService
             if ($usados + $this->diasNoAno($de, $ate, $ano) > $limite) {
                 $restantes = max(0, $limite - $usados);
 
-                return "Excede o limite de {$limite} dias de {$tipo} em {$ano}. Restam {$restantes}.";
+                return "Excede o limite de {$limite} dias uteis de {$tipo} em {$ano}. Restam {$restantes}.";
             }
         }
 
@@ -135,9 +141,6 @@ class LimitesPedidoService
 
     private function diasNoAno(CarbonInterface $inicio, CarbonInterface $fim, int $ano): int
     {
-        $de = CarbonImmutable::parse($inicio)->startOfDay()->max("{$ano}-01-01");
-        $ate = CarbonImmutable::parse($fim)->startOfDay()->min("{$ano}-12-31");
-
-        return max(0, (int) $de->diffInDays($ate) + 1);
+        return LimiteFerias::diasUteis(CarbonImmutable::parse($inicio), CarbonImmutable::parse($fim), $ano);
     }
 }

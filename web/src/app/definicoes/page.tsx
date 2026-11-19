@@ -425,7 +425,7 @@ function LimitesDias() {
     const e: Record<string, string[]> = {};
     for (const t of TIPOS_LIMITE) {
       const v = valores[t].trim();
-      if (v !== "" && !/^\d+$/.test(v)) e[t] = ["Indique um número inteiro de dias, ou deixe vazio."];
+      if (v !== "" && !/^\d+$/.test(v)) e[t] = ["Indique um número inteiro de dias úteis, ou deixe vazio."];
     }
     return e;
   };
@@ -434,9 +434,9 @@ function LimitesDias() {
     <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-limites" className={`${cartao} md:max-w-xl`}>
       <div>
         <h2 id="def-limites" className="text-lg font-semibold">
-          Limites de dias por ano
+          Limites de dias úteis por ano
         </h2>
-        <p className="text-sm text-texto-suave">Máximo de dias que cada pessoa pode pedir por ano. Vazio = sem limite.</p>
+        <p className="text-sm text-texto-suave">Máximo de dias úteis (seg-sex, sem feriados nacionais) que cada pessoa pode pedir por ano. Vazio = sem limite.</p>
       </div>
       {erroCarga && (
         <p role="alert" className={erroCls}>
