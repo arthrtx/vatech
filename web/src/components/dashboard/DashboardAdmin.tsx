@@ -14,7 +14,7 @@ import CartaoContador from "./CartaoContador";
 import ListaAusencias from "./ListaAusencias";
 
 const MAX = 5;
-const ligacaoCls = "inline-block self-start py-1 text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900";
+const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900";
 
 export default function DashboardAdmin() {
   const [hoje] = useState(() => hojeIso());
