@@ -17,13 +17,13 @@ class PresencaController extends Controller
 
     public function entrada(Request $request): JsonResponse
     {
-        abort_if($this->doDia($request), 422, 'Ja marcou a entrada hoje.');
+        abort_if($this->doDia($request), 422, 'Já marcou a entrada hoje.');
 
         try {
             $presenca = Presenca::create(['user_id' => $request->user()->id, 'data' => $this->diaLocal(), 'entrada' => now()]);
         } catch (UniqueConstraintViolationException) {
             // Duplo clique ou pedidos em simultâneo: a segunda marcação não passa.
-            abort(422, 'Ja marcou a entrada hoje.');
+            abort(422, 'Já marcou a entrada hoje.');
         }
 
         return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()], 201);
@@ -33,7 +33,7 @@ class PresencaController extends Controller
     {
         $presenca = $this->doDia($request);
         abort_if(! $presenca, 422, 'Marque primeiro a entrada.');
-        abort_if($presenca->saida, 422, 'Ja marcou a saida hoje.');
+        abort_if($presenca->saida, 422, 'Já marcou a saída hoje.');
 
         $presenca->update(['saida' => now()]);
 
@@ -51,7 +51,7 @@ class PresencaController extends Controller
                 'atrasada' => true,
             ]);
         } catch (UniqueConstraintViolationException) {
-            abort(422, 'Ja existe presenca nesse dia.');
+            abort(422, 'Já existe presença nesse dia.');
         }
 
         return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()], 201);

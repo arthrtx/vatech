@@ -151,5 +151,5 @@ it('devolve mensagens de validacao em portugues', function () {
     Sanctum::actingAs(User::factory()->create());
 
     $this->getJson('/api/agenda')->assertStatus(422)
-        ->assertJsonPath('errors.de.0', 'A data inicial e obrigatoria.');
+        ->assertJsonPath('errors.de.0', 'A data inicial é obrigatória.');
 });

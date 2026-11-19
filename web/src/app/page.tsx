@@ -15,6 +15,7 @@ function Conteudo() {
   const { user } = useAuth();
   const admin = user?.papel === "admin";
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [editando, setEditando] = useState<Pedido | null>(null);
 
@@ -24,6 +25,8 @@ function Conteudo() {
       setErro(null);
     } catch (e) {
       setErro(mensagemDeErro(e));
+    } finally {
+      setCarregando(false);
     }
   }, []);
 
@@ -57,13 +60,15 @@ function Conteudo() {
   }, [destacado, pedidos]);
 
   async function decidir(fn: () => Promise<unknown>) {
+    let falha: string | null = null;
     try {
       await fn();
     } catch (e) {
-      setErro(mensagemDeErro(e));
-      return;
+      falha = mensagemDeErro(e);
     }
+    // Recarrega sempre (ex.: 409, o pedido já foi decidido); o erro mostra-se depois, para o carregar() não o limpar.
     await carregar();
+    if (falha) setErro(falha);
   }
 
   return (
@@ -78,12 +83,14 @@ function Conteudo() {
       {admin ? (
         <PedidosAdmin
           pedidos={pedidos}
+          carregando={carregando}
           onAprovar={(id) => decidir(() => api.aprovar(id))}
           onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
         />
       ) : (
         <ListaPedidos
           pedidos={pedidos}
+          carregando={carregando}
           formulario={
             editando ? (
               <PedidoForm

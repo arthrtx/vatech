@@ -305,3 +305,29 @@ it('devolve 403 ao admin ao editar ou apagar pedidos', function () {
     $this->putJson("/api/pedidos/{$pedido->id}", novoPedido())->assertStatus(403);
     $this->deleteJson("/api/pedidos/{$pedido->id}")->assertStatus(403);
 });
+
+it('devolve 404 ao aprovar ou recusar pedido de funcionario apagado', function () {
+    $admin = User::factory()->admin()->create();
+    $func = User::factory()->create(['empresa_id' => $admin->empresa_id]);
+    $pedido = Pedido::factory()->create(['empresa_id' => $admin->empresa_id, 'user_id' => $func->id]);
+    Sanctum::actingAs($admin);
+
+    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
+
+    $this->postJson("/api/pedidos/{$pedido->id}/aprovar")->assertStatus(404);
+    $this->postJson("/api/pedidos/{$pedido->id}/recusar", ['motivo_recusa' => 'x'])->assertStatus(404);
+    expect($pedido->refresh()->estado)->toBe('pendente');
+});
+
+it('devolve os erros de validacao em portugues', function () {
+    $this->postJson('/api/login', [])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.email.0', 'O campo email é obrigatório.');
+
+    $admin = User::factory()->admin()->create();
+    Sanctum::actingAs($admin);
+    $this->postJson('/api/funcionarios', ['nome' => 'A', 'email' => $admin->email, 'password' => 'curta'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.email.0', 'Já existe um registo com este email.')
+        ->assertJsonPath('errors.password.0', 'O campo palavra-passe tem de ter pelo menos 8 caracteres.');
+});

@@ -4,7 +4,7 @@ import PontoUrgente from "./PontoUrgente";
 import { useState } from "react";
 import type { Pedido } from "@/lib/api";
 import { filtrar } from "@/lib/busca";
-import { estados, subtipos, tipos } from "@/lib/rotulos";
+import { estados, formatarData, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import Avatar from "./Avatar";
 import AnexosDoPedido from "./AnexosDoPedido";
@@ -16,11 +16,13 @@ interface Props {
   pedidos: Pedido[];
   onAprovar: (id: number) => void | Promise<void>;
   onRecusar: (id: number, motivo: string) => void | Promise<void>;
+  /** Primeiro carregamento em curso: mostra "A carregar" em vez do estado vazio. */
+  carregando?: boolean;
   /** Dashboard: lista resumida, sem barra de pesquisa. */
   semBusca?: boolean;
 }
 
-export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca = false }: Props) {
+export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando = false, semBusca = false }: Props) {
   const [recusando, setRecusando] = useState<number | null>(null);
   const [motivo, setMotivo] = useState("");
   const [busca, setBusca] = useState("");
@@ -54,7 +56,11 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca =
           mostrados={visiveis.length}
         />
       )}
-      {visiveis.length === 0 ? (
+      {carregando && pedidos.length === 0 ? (
+        <p role="status" className="text-texto-suave">
+          A carregar pedidos...
+        </p>
+      ) : visiveis.length === 0 ? (
         <p className="text-texto-suave">
           {pedidos.length === 0
             ? semBusca
@@ -83,7 +89,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca =
                     {p.estado !== "pendente" && ` · ${estados[p.estado]}`}
                   </p>
                   <p className="text-sm text-texto-suave">
-                    {p.data_inicio} a {p.data_fim}
+                    {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
                   </p>
                 </div>
               </div>
@@ -96,6 +102,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, semBusca =
                     id={`motivo-${p.id}`}
                     rows={2}
                     required
+                    autoFocus
                     className={input}
                     value={motivo}
                     onChange={(e) => setMotivo(e.target.value)}
