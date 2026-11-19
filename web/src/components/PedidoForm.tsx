@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { api, mensagemDeErro, type Anexo, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
+import { hojeIso } from "@/lib/agenda";
 import CampoAnexos from "./CampoAnexos";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
@@ -34,6 +35,7 @@ export default function PedidoForm({
   const edicao = !!pedido;
   const { user } = useAuth();
   const semFerias = user?.papel === "estagiario";
+  const hoje = hojeIso();
   const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? (semFerias ? "ausencia" : "ferias"));
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
@@ -123,13 +125,22 @@ export default function PedidoForm({
           <label htmlFor="data_inicio" className={label}>
             Data de início
           </label>
-          <CampoData id="data_inicio" required valor={inicio} onChange={setInicio} />
+          <CampoData
+            id="data_inicio"
+            required
+            min={hoje}
+            valor={inicio}
+            onChange={(v) => {
+              setInicio(v);
+              if (fim && v > fim) setFim("");
+            }}
+          />
         </div>
         <div>
           <label htmlFor="data_fim" className={label}>
             Data de fim
           </label>
-          <CampoData id="data_fim" required min={inicio || undefined} valor={fim} onChange={setFim} />
+          <CampoData id="data_fim" required min={inicio && inicio > hoje ? inicio : hoje} valor={fim} onChange={setFim} />
         </div>
       </div>
       <div>
