@@ -25,7 +25,7 @@ interface Props {
 export default function CartaoContador({ rotulo, valor, aCarregar, ligacao, Icone, cor = "violeta" }: Props) {
   const c = cores[cor];
   return (
-    <li className="flex flex-col gap-3 rounded-cartao bg-painel/80 p-3 shadow-suave ring-1 ring-white/70 backdrop-blur-xl motion-safe:animate-subir dark:ring-white/10 md:p-4">
+    <li className="flex flex-col gap-3 rounded-cartao bg-painel/80 p-3 shadow-suave ring-1 ring-white/70 backdrop-blur-xl motion-safe:animate-subir dark:ring-white/10 md:p-4 lg:gap-2 lg:p-3">
       <div className="flex items-start justify-between gap-2">
         <p className="text-base font-semibold leading-snug text-texto md:text-lg">{rotulo}</p>
         {Icone && (
@@ -39,7 +39,7 @@ export default function CartaoContador({ rotulo, valor, aCarregar, ligacao, Icon
       ) : (
         <p
           key={String(valor)}
-          className={`text-3xl font-bold leading-none tabular-nums motion-safe:animate-subir md:text-5xl ${valor === null ? "text-texto-suave" : ""}`}
+          className={`text-3xl font-bold leading-none tabular-nums motion-safe:animate-subir md:text-5xl lg:text-4xl ${valor === null ? "text-texto-suave" : ""}`}
         >
           {valor === null ? (
             <>
