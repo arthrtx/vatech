@@ -35,10 +35,27 @@ describe("Funcionários: busca", () => {
 });
 
 describe("Funcionários: lista vazia", () => {
-  it("esconde o campo de busca", async () => {
+  it("mostra o campo de busca e a mensagem de vazio", async () => {
     vi.mocked(api.funcionarios).mockResolvedValue([]);
     render(<FuncionariosPage />);
     await screen.findByText("Novo funcionário");
-    expect(screen.queryByLabelText("Pesquisar funcionários")).toBeNull();
+    expect(screen.getByLabelText("Pesquisar funcionários")).toBeTruthy();
+    expect(screen.getByText("Ainda não há funcionários.")).toBeTruthy();
+    expect(screen.queryByText(/Nenhum resultado/)).toBeNull();
+  });
+
+  it("não mostra a mensagem de vazio enquanto a API não respondeu, mas mantém o campo", async () => {
+    vi.mocked(api.funcionarios).mockReturnValue(new Promise(() => {}));
+    render(<FuncionariosPage />);
+    await screen.findByText("Novo funcionário");
+    expect(screen.getByLabelText("Pesquisar funcionários")).toBeTruthy();
+    expect(screen.queryByText("Ainda não há funcionários.")).toBeNull();
+  });
+
+  it("não mostra a mensagem de vazio se a API falhar", async () => {
+    vi.mocked(api.funcionarios).mockRejectedValue(new Error("falhou"));
+    render(<FuncionariosPage />);
+    await screen.findByRole("alert");
+    expect(screen.queryByText("Ainda não há funcionários.")).toBeNull();
   });
 });

@@ -9,7 +9,7 @@ import { filtrar } from "@/lib/busca";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 
 function Conteudo() {
-  const [lista, setLista] = useState<User[]>([]);
+  const [lista, setLista] = useState<User[] | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,16 +43,16 @@ function Conteudo() {
     }
   }
 
-  const visiveis = filtrar(lista, busca, (u) => [u.nome, u.email]);
+  const visiveis = filtrar(lista ?? [], busca, (u) => [u.nome, u.email]);
 
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-2xl font-semibold">Funcionários</h1>
-      {lista.length > 0 && (
-        <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
-      )}
-      {lista.length > 0 && visiveis.length === 0 && (
-        <p className="text-zinc-700">Nenhum resultado para &quot;{busca.trim()}&quot;</p>
+      <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
+      {lista !== null && visiveis.length === 0 && (
+        <p className="text-zinc-700">
+          {lista.length === 0 ? "Ainda não há funcionários." : `Nenhum resultado para "${busca.trim()}"`}
+        </p>
       )}
       <ul className="flex flex-col gap-2">
         {visiveis.map((u) => (
