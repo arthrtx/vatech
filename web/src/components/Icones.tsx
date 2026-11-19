@@ -123,3 +123,30 @@ export function IconeLua(p: Props) {
     </Base>
   );
 }
+
+export function IconeOlho(p: Props) {
+  return (
+    <Base {...p}>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="2.8" />
+    </Base>
+  );
+}
+
+// Sem seta (docs/DESIGN.md): bandeja com um traço a entrar.
+export function IconeDescarregar(p: Props) {
+  return (
+    <Base {...p}>
+      <path d="M12 4v10" />
+      <path d="M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" />
+    </Base>
+  );
+}
+
+export function IconeFechar(p: Props) {
+  return (
+    <Base {...p}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </Base>
+  );
+}
