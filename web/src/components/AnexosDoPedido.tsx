@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { api, mensagemDeErro, type Anexo } from "@/lib/api";
 import { tamanhoLegivel } from "@/lib/anexos";
-import { botao, botaoSec } from "./ui";
+import { IconeDescarregar, IconeFechar, IconeOlho } from "./Icones";
 
 const focoCls = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
-const chipCls = `inline-flex min-h-10 items-center rounded-controlo bg-campo px-3 text-xs font-medium text-texto hover:bg-primaria-suave ${focoCls}`;
+const chipCls = `inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-controlo bg-campo text-texto hover:bg-primaria-suave ${focoCls}`;
 
 type Previa = { anexo: Anexo; url: string };
 
@@ -15,7 +16,7 @@ const ehImagem = (a: Anexo) => a.mime.startsWith("image/");
 // O browser mostra PDF e texto sem programas extra; Word e Excel só se descarregam.
 const ehPdfOuTexto = (a: Anexo) => a.mime === "application/pdf" || a.mime.startsWith("text/") || ["pdf", "txt"].includes(extensao(a.nome));
 
-/** Anexos de um pedido: «Ver» mostra o ficheiro aqui mesmo, «Descarregar» guarda-o para imprimir. */
+/** Anexos de um pedido: o olho mostra o ficheiro aqui mesmo, o ícone de descarga guarda-o para imprimir. */
 export default function AnexosDoPedido({ pedidoId, anexos }: { pedidoId: number; anexos?: Anexo[] }) {
   const [erro, setErro] = useState<string | null>(null);
   const [previa, setPrevia] = useState<Previa | null>(null);
@@ -86,14 +87,14 @@ export default function AnexosDoPedido({ pedidoId, anexos }: { pedidoId: number;
       <ul aria-label="Anexos" className="flex flex-col gap-1.5">
         {anexos.map((a) => (
           <li key={a.id} className="flex flex-wrap items-center gap-1.5">
-            <span className="max-w-56 truncate text-xs font-medium text-texto" title={`${a.nome} (${tamanhoLegivel(a.tamanho)})`}>
+            <span className="min-w-0 max-w-56 flex-1 truncate text-xs font-medium text-texto" title={`${a.nome} (${tamanhoLegivel(a.tamanho)})`}>
               {a.nome}
             </span>
             <button type="button" onClick={() => ver(a)} className={chipCls} aria-label={`Ver ${a.nome}`}>
-              Ver
+              <IconeOlho className="h-5 w-5" />
             </button>
             <button type="button" onClick={() => descarregar(a)} className={chipCls} aria-label={`Descarregar ${a.nome}`}>
-              Descarregar
+              <IconeDescarregar className="h-5 w-5" />
             </button>
           </li>
         ))}
@@ -103,42 +104,45 @@ export default function AnexosDoPedido({ pedidoId, anexos }: { pedidoId: number;
           {erro}
         </p>
       )}
-      {previa && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-barra/50 p-4" onMouseDown={fecharPrevia}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={previa.anexo.nome}
-            onKeyDown={teclas}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="flex max-h-full w-full max-w-4xl flex-col gap-3 rounded-cartao bg-painel p-4 text-texto shadow-suave"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="min-w-0 truncate text-sm font-semibold">{previa.anexo.nome}</p>
-              <div className="flex gap-2">
-                <button type="button" className={`${botaoSec} min-h-10`} onClick={() => descarregar(previa.anexo, previa.url)}>
-                  Descarregar
-                </button>
-                <button ref={fechar} type="button" className={`${botao} min-h-10`} onClick={fecharPrevia}>
-                  Fechar
-                </button>
+      {previa &&
+        createPortal(
+          // Em portal: dentro de um cartão com backdrop-blur o «fixed» ficava preso ao cartão.
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-barra/60 p-4" onMouseDown={fecharPrevia}>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={previa.anexo.nome}
+              onKeyDown={teclas}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="flex h-[90vh] w-full max-w-5xl flex-col gap-3 rounded-cartao bg-painel p-4 text-texto shadow-suave"
+            >
+              <div className="flex shrink-0 items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-sm font-semibold">{previa.anexo.nome}</p>
+                <div className="flex shrink-0 gap-2">
+                  <button type="button" className={chipCls} aria-label="Descarregar" title="Descarregar" onClick={() => descarregar(previa.anexo, previa.url)}>
+                    <IconeDescarregar className="h-5 w-5" />
+                  </button>
+                  <button ref={fechar} type="button" className={chipCls} aria-label="Fechar" title="Fechar" onClick={fecharPrevia}>
+                    <IconeFechar className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-controlo bg-campo">
+                {ehImagem(previa.anexo) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={previa.url} alt={previa.anexo.nome} className="max-h-full max-w-full object-contain" />
+                ) : ehPdfOuTexto(previa.anexo) ? (
+                  <iframe src={previa.url} title={previa.anexo.nome} className="h-full w-full bg-white" />
+                ) : (
+                  <p className="p-6 text-center text-sm text-texto-suave">
+                    Este tipo de ficheiro não tem pré-visualização. Use o botão de descarregar para o abrir.
+                  </p>
+                )}
               </div>
             </div>
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-controlo bg-campo">
-              {ehImagem(previa.anexo) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={previa.url} alt={previa.anexo.nome} className="max-h-[75vh] max-w-full object-contain" />
-              ) : ehPdfOuTexto(previa.anexo) ? (
-                <iframe src={previa.url} title={previa.anexo.nome} className="h-[75vh] w-full bg-white" />
-              ) : (
-                <p className="p-6 text-center text-sm text-texto-suave">
-                  Este tipo de ficheiro não tem pré-visualização. Use «Descarregar» para o abrir.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
