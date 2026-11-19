@@ -93,7 +93,6 @@ it('ignora papel e empresa_id', function () {
     expect($user->fresh())->papel->toBe($papel)->empresa_id->toBe($empresa);
 });
 
-
 it('limita a 5 tentativas por minuto (429 na 6a)', function () {
     Sanctum::actingAs(User::factory()->create(['email' => 'r@x.test']));
 
