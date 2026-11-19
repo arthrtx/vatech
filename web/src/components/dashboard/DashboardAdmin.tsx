@@ -16,7 +16,8 @@ import CartaoContador from "./CartaoContador";
 import ListaAusencias from "./ListaAusencias";
 import WidgetFeriados from "./WidgetFeriados";
 
-const MAX = 5;
+// Poucos itens por bloco para tudo caber no ecrã sem scroll; o resto fica atrás de «Ver ...».
+const MAX = 3;
 const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
 export default function DashboardAdmin() {

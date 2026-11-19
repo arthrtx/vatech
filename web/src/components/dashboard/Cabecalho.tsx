@@ -27,7 +27,7 @@ export default function Cabecalho({
 
   return (
     <section
-      className={`${vidro} efeito-metal relative isolate flex flex-col gap-5 p-5 motion-safe:animate-subir md:flex-row md:items-center md:justify-between md:px-7 md:py-6`}
+      className={`${vidro} efeito-metal relative isolate flex flex-col gap-5 p-5 motion-safe:animate-subir md:flex-row md:items-center md:justify-between md:px-7 md:py-6 lg:gap-3 lg:py-4`}
     >
       <div aria-hidden="true" className="efeito-linha pointer-events-none absolute inset-x-8 bottom-0 h-0.5 rounded-full" />
       <div className="flex min-w-0 flex-col gap-1.5">
