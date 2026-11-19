@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PedidoForm from "./PedidoForm";
 import PedidosAdmin from "./PedidosAdmin";
+import ListaPedidos from "./ListaPedidos";
+import { formatarData } from "@/lib/rotulos";
 import { diasUteis } from "@/lib/diasUteis";
 import { somaDias } from "@/lib/agenda";
 import { ApiError, api, type Papel, type Pedido } from "@/lib/api";
@@ -140,5 +142,35 @@ describe("PedidosAdmin", () => {
     fireEvent.change(screen.getByLabelText(/Motivo da recusa/), { target: { value: "Sem cobertura" } });
     fireEvent.click(confirmar);
     expect(recusar).toHaveBeenCalledWith(7, "Sem cobertura");
+  });
+
+  it("mostra data dd/mm/aaaa e foca o motivo ao recusar", () => {
+    render(<PedidosAdmin pedidos={[pedido]} onAprovar={vi.fn()} onRecusar={vi.fn()} />);
+    expect(screen.getByText("01/12/2026 a 05/12/2026")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Recusar" }));
+    expect(document.activeElement).toBe(screen.getByLabelText(/Motivo da recusa/));
+  });
+
+  it("mostra carregamento em vez do estado vazio", () => {
+    render(<PedidosAdmin pedidos={[]} carregando onAprovar={vi.fn()} onRecusar={vi.fn()} />);
+    expect(screen.getByRole("status").textContent).toContain("A carregar");
+    expect(screen.queryByText(/Sem pedidos/)).toBeNull();
+    cleanup();
+    render(<PedidosAdmin pedidos={[]} onAprovar={vi.fn()} onRecusar={vi.fn()} />);
+    expect(screen.getByText("Sem pedidos.")).toBeTruthy();
+  });
+});
+
+describe("ListaPedidos", () => {
+  it("mostra carregamento e datas dd/mm/aaaa", () => {
+    render(<ListaPedidos pedidos={[]} carregando />);
+    expect(screen.getByRole("status").textContent).toContain("A carregar");
+    cleanup();
+    render(<ListaPedidos pedidos={[pedido]} />);
+    expect(screen.getByText("01/12/2026 a 05/12/2026")).toBeTruthy();
+  });
+
+  it("formatarData converte ISO", () => {
+    expect(formatarData("2026-01-09")).toBe("09/01/2026");
   });
 });
