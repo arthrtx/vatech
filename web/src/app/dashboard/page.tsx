@@ -14,8 +14,10 @@ function Conteudo() {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  // O admin tem listas longas (ausentes, pendentes): a página cresce e faz scroll em vez de espremer os blocos.
   return (
-    <AppShell ecraInteiro>
+    <AppShell ecraInteiro={user?.papel !== "admin"}>
       <Conteudo />
     </AppShell>
   );
