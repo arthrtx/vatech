@@ -2,17 +2,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { api, mensagemDeErro, type User } from "@/lib/api";
+import { api, mensagemDeErro, type Papel, type User } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { papeis } from "@/lib/rotulos";
+import Seletor from "@/components/Seletor";
 import CampoBusca from "@/components/CampoBusca";
 import FuncionarioLinha from "@/components/FuncionarioLinha";
 import { filtrar } from "@/lib/busca";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 
+const opcoesPapel = (Object.keys(papeis) as Papel[]).map((valor) => ({ valor, rotulo: papeis[valor] }));
+
 function Conteudo() {
+  const { user: eu } = useAuth();
   const [lista, setLista] = useState<User[] | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [papel, setPapel] = useState<Papel>("funcionario");
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
 
@@ -33,10 +40,11 @@ function Conteudo() {
     e.preventDefault();
     setErro(null);
     try {
-      await api.criarFuncionario({ nome, email, password });
+      await api.criarFuncionario({ nome, email, password, papel });
       setNome("");
       setEmail("");
       setPassword("");
+      setPapel("funcionario");
       await carregar();
     } catch (err) {
       setErro(mensagemDeErro(err));
@@ -47,11 +55,11 @@ function Conteudo() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-semibold">Funcionários</h1>
-      <CampoBusca id="busca-funcionarios" rotulo="Pesquisar funcionários" valor={busca} onChange={setBusca} />
+      <h1 className="text-2xl font-semibold">Pessoas</h1>
+      <CampoBusca id="busca-funcionarios" rotulo="Pesquisar pessoas" valor={busca} onChange={setBusca} />
       {lista !== null && visiveis.length === 0 && (
         <p className="text-texto-suave">
-          {lista.length === 0 ? "Ainda não há funcionários." : `Nenhum resultado para "${busca.trim()}"`}
+          {lista.length === 0 ? "Ainda não há utilizadores." : `Nenhum resultado para "${busca.trim()}"`}
         </p>
       )}
       <ul className="flex flex-col gap-2">
@@ -59,6 +67,7 @@ function Conteudo() {
           <FuncionarioLinha
             key={u.id}
             user={u}
+            proprio={u.id === eu?.id}
             onGuardar={async (dados) => {
               await api.editarFuncionario(u.id, dados);
               await carregar();
@@ -72,7 +81,7 @@ function Conteudo() {
       </ul>
       <form onSubmit={criar} className="flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10" aria-labelledby="novo-func">
         <h2 id="novo-func" className="text-lg font-semibold">
-          Novo funcionário
+          Novo utilizador
         </h2>
         <div>
           <label htmlFor="f-nome" className={label}>
@@ -107,6 +116,12 @@ function Conteudo() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+        <div>
+          <label htmlFor="f-papel" className={label}>
+            Tipo
+          </label>
+          <Seletor id="f-papel" valor={papel} opcoes={opcoesPapel} onChange={(v) => setPapel(v as Papel)} />
+        </div>
         {erro && (
           <p role="alert" className={erroCls}>
             {erro}
@@ -114,7 +129,7 @@ function Conteudo() {
         )}
         <div>
           <button type="submit" className={botao}>
-            Criar funcionário
+            Criar utilizador
           </button>
         </div>
       </form>

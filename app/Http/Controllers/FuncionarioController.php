@@ -12,8 +12,7 @@ class FuncionarioController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $users = User::where('empresa_id', $request->user()->empresa_id)
-            ->where('papel', 'funcionario')->orderBy('nome')->get();
+        $users = User::where('empresa_id', $request->user()->empresa_id)->orderBy('nome')->get();
 
         return response()->json(['data' => $users->map->toContrato()]);
     }
@@ -21,8 +20,7 @@ class FuncionarioController extends Controller
     public function store(StoreFuncionarioRequest $request): JsonResponse
     {
         $user = User::create([
-            ...$request->safe()->only(['nome', 'email', 'password']),
-            'papel' => 'funcionario',
+            ...$request->safe()->only(['nome', 'email', 'password', 'papel']),
             'empresa_id' => $request->user()->empresa_id,
         ]);
 
@@ -32,6 +30,11 @@ class FuncionarioController extends Controller
     public function update(UpdateFuncionarioRequest $request, int $id): JsonResponse
     {
         $user = $this->funcionarioDaEmpresa($request, $id);
+
+        if ($user->is($request->user()) && $request->has('papel') && $request->input('papel') !== $user->papel) {
+            return response()->json(['message' => 'Não pode alterar o seu próprio tipo de utilizador.'], 422);
+        }
+
         $user->update($request->validated());
 
         return response()->json(['data' => $user->toContrato()]);
@@ -40,16 +43,20 @@ class FuncionarioController extends Controller
     public function destroy(Request $request, int $id): JsonResponse
     {
         $user = $this->funcionarioDaEmpresa($request, $id);
+
+        if ($user->is($request->user())) {
+            return response()->json(['message' => 'Não pode apagar o seu próprio utilizador.'], 422);
+        }
+
         $user->tokens()->delete();
         $user->delete();
 
         return response()->json(null, 204);
     }
 
-    // 404 para outra empresa, nao-funcionario ou inexistente (nao revela existencia).
+    // 404 para outra empresa ou inexistente (nao revela existencia).
     private function funcionarioDaEmpresa(Request $request, int $id): User
     {
-        return User::where('empresa_id', $request->user()->empresa_id)
-            ->where('papel', 'funcionario')->findOrFail($id);
+        return User::where('empresa_id', $request->user()->empresa_id)->findOrFail($id);
     }
 }

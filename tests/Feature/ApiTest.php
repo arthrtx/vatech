@@ -66,12 +66,12 @@ it('admin cria e lista funcionarios da sua empresa', function () {
     User::factory()->create(); // outra empresa
     Sanctum::actingAs($admin);
 
-    $this->postJson('/api/funcionarios', ['nome' => 'Ana', 'email' => 'ana@x.test', 'password' => 'segredo123'])
+    $this->postJson('/api/funcionarios', ['nome' => 'Ana', 'email' => 'ana@x.test', 'password' => 'segredo123', 'papel' => 'funcionario'])
         ->assertStatus(201)
         ->assertJsonPath('data.papel', 'funcionario')
         ->assertJsonPath('data.empresa_id', $admin->empresa_id);
 
-    $this->getJson('/api/funcionarios')->assertOk()->assertJsonCount(2, 'data');
+    $this->getJson('/api/funcionarios')->assertOk()->assertJsonCount(3, 'data');
     $this->postJson('/api/funcionarios', ['nome' => 'Ana'])->assertStatus(422);
 });
 
@@ -177,11 +177,10 @@ it('admin edita funcionario, com password opcional e email unico', function () {
 it('devolve 404 ao editar ou apagar de outra empresa, inexistente ou nao funcionario', function () {
     $admin = User::factory()->admin()->create();
     $alheio = User::factory()->create();
-    $outroAdmin = User::factory()->admin()->create(['empresa_id' => $admin->empresa_id]);
     Sanctum::actingAs($admin);
     $dados = ['nome' => 'X', 'email' => 'x@x.test'];
 
-    foreach ([$alheio->id, $outroAdmin->id, 99999] as $id) {
+    foreach ([$alheio->id, 99999] as $id) {
         $this->putJson("/api/funcionarios/{$id}", $dados)->assertStatus(404);
         $this->deleteJson("/api/funcionarios/{$id}")->assertStatus(404);
     }
@@ -204,7 +203,7 @@ it('apaga funcionario (soft delete): sai da lista, perde tokens e nao faz login'
 
     $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
 
-    $this->getJson('/api/funcionarios')->assertOk()->assertJsonCount(0, 'data');
+    $this->getJson('/api/funcionarios')->assertOk()->assertJsonCount(1, 'data');
     expect(User::withTrashed()->find($func->id)->trashed())->toBeTrue()
         ->and($func->tokens()->count())->toBe(0);
     $this->postJson('/api/login', ['email' => 'f@x.test', 'password' => 'password'])->assertStatus(422);

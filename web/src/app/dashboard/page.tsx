@@ -2,13 +2,15 @@
 
 import AppShell from "@/components/AppShell";
 import DashboardAdmin from "@/components/dashboard/DashboardAdmin";
+import DashboardEstagiario from "@/components/dashboard/DashboardEstagiario";
 import DashboardFuncionario from "@/components/dashboard/DashboardFuncionario";
 import { useAuth } from "@/lib/auth";
 
 function Conteudo() {
   const { user } = useAuth();
   if (!user) return null;
-  return user.papel === "admin" ? <DashboardAdmin /> : <DashboardFuncionario user={user} />;
+  if (user.papel === "admin") return <DashboardAdmin />;
+  return user.papel === "estagiario" ? <DashboardEstagiario user={user} /> : <DashboardFuncionario user={user} />;
 }
 
 export default function DashboardPage() {

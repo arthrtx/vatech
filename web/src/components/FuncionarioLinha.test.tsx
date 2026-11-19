@@ -60,4 +60,21 @@ describe("FuncionarioLinha", () => {
     expect(p.onApagar).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Apagar Rui" }));
   });
+
+  it("muda o tipo ao guardar e mostra o tipo atual", async () => {
+    const p = montar();
+    expect(screen.getByText("Funcionário")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Editar Rui" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
+    fireEvent.click(screen.getByRole("option", { name: "Estagiário" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    await waitFor(() => expect(p.onGuardar).toHaveBeenCalledWith({ nome: "Rui", email: "rui@x.pt", papel: "estagiario" }));
+  });
+
+  it("no próprio utilizador esconde Apagar e desabilita o tipo", () => {
+    montar({ proprio: true });
+    expect(screen.queryByRole("button", { name: "Apagar Rui" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Editar Rui" }));
+    expect((screen.getByLabelText("Tipo") as HTMLInputElement).disabled).toBe(true);
+  });
 });
