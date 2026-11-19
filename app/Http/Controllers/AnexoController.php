@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Anexo;
 use App\Models\Pedido;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
