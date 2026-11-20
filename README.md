@@ -16,6 +16,7 @@ Duplo clique em `iniciar-local.bat` na raiz (o `iniciar.bat` só abre o site onl
 |---|---|---|
 | Admin (dono) | `admin@vatech.test` | `password` |
 | Funcionário | `funcionario@vatech.test` | `password` |
+| Estágiario | `estágiario@vatech.test` | `password` |
 
 Criadas pelo seeder (`database/seeders/DatabaseSeeder.php`) quando a API arranca.
 
