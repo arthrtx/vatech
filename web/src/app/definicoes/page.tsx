@@ -294,7 +294,7 @@ function FotoPerfil({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
   }
 
   return (
-    <section aria-labelledby="foto-perfil" className={`${cartao} md:max-w-xl`}>
+    <section aria-labelledby="foto-perfil" className={cartao}>
       <h2 id="foto-perfil" className="text-lg font-semibold">
         Foto de perfil
       </h2>
@@ -345,7 +345,7 @@ function DatasEstagio({ user, atualizarUser }: { user: User; atualizarUser: (u: 
     inicio && fim && fim < inicio ? { estagio_fim: ["A data de fim não pode ser anterior à de início."] } : {};
 
   return (
-    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-estagio" className={`${cartao} relative z-10 md:max-w-xl`}>
+    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-estagio" className={`${cartao} relative z-10`}>
       <h2 id="def-estagio" className="text-lg font-semibold">
         Datas do estágio
       </h2>
@@ -431,7 +431,7 @@ function LimitesDias() {
   };
 
   return (
-    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-limites" className={`${cartao} md:max-w-xl`}>
+    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-limites" className={cartao}>
       <div>
         <h2 id="def-limites" className="text-lg font-semibold">
           Limites de dias úteis por ano
@@ -476,36 +476,39 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Definições</h1>
-      <FotoPerfil user={user} atualizarUser={atualizarUser} />
-      {user.papel === "estagiario" && <DatasEstagio user={user} atualizarUser={atualizarUser} />}
-      {user.papel === "admin" && <LimitesDias />}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
-        <DadosConta user={user} atualizarUser={atualizarUser} />
-        <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
-      <section aria-labelledby="def-aparencia" className={cartao}>
-        <div>
-          <h2 id="def-aparencia" className="text-lg font-semibold">
-            Aparência
-          </h2>
-          <p className="text-sm text-texto-suave">
-            Claro, escuro ou igual ao sistema. Também podes trocar no botão da lua, ao lado da pesquisa.
-          </p>
+      {/* Duas colunas que se enchem de forma independente, para não ficarem buracos entre cartões. */}
+      <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-6">
+          <FotoPerfil user={user} atualizarUser={atualizarUser} />
+          <DadosConta user={user} atualizarUser={atualizarUser} />
         </div>
-        <EscolhaTema />
-      </section>
-      <section aria-labelledby="def-localidade" className={cartao}>
-        <div>
-          <h2 id="def-localidade" className="text-lg font-semibold">
-            Localidade
-          </h2>
-          <p className="text-sm text-texto-suave">
-            Escolhe o concelho para a Agenda mostrar o feriado municipal. Fica guardado neste navegador.
-          </p>
+        <div className="flex min-w-0 flex-col gap-6">
+          <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />
+          <section aria-labelledby="def-aparencia" className={cartao}>
+            <div>
+              <h2 id="def-aparencia" className="text-lg font-semibold">
+                Aparência
+              </h2>
+              <p className="text-sm text-texto-suave">
+                Claro, escuro ou igual ao sistema. Também podes trocar no botão da lua, ao lado da pesquisa.
+              </p>
+            </div>
+            <EscolhaTema />
+          </section>
+          <section aria-labelledby="def-localidade" className={cartao}>
+            <div>
+              <h2 id="def-localidade" className="text-lg font-semibold">
+                Localidade
+              </h2>
+              <p className="text-sm text-texto-suave">
+                Escolhe o concelho para a Agenda mostrar o feriado municipal. Fica guardado neste navegador.
+              </p>
+            </div>
+            <EscolhaLocalidade />
+          </section>
+          {user.papel === "estagiario" && <DatasEstagio user={user} atualizarUser={atualizarUser} />}
+          {user.papel === "admin" && <LimitesDias />}
         </div>
-        <EscolhaLocalidade />
-      </section>
       </div>
     </div>
   );
