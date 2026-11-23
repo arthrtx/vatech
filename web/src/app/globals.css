@@ -258,3 +258,15 @@ body {
     scrollbar-color: var(--scroll-polegar) transparent;
   }
 }
+/*
+ * Cada cartão de vidro (backdrop-blur) é uma camada própria, por isso uma lista ou um calendário
+ * aberto dentro dele ficava por baixo do cartão seguinte. Enquanto estiver aberto, o cartão sobe
+ * acima dos vizinhos (z-20, abaixo do topo e do menu, que estão em z-30). Fica em components para
+ * que fixed, absolute e sticky dos utilitários continuem a mandar na posição.
+ */
+@layer components {
+  :where(.rounded-cartao, [class*="backdrop-blur"]):has([role="combobox"][aria-expanded="true"], [role="dialog"]) {
+    position: relative;
+    z-index: 20;
+  }
+}
