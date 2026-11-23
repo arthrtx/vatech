@@ -26,13 +26,26 @@ export default function Seletor({ id, valor, opcoes, onChange, className = "" }:
   const botao = useRef<HTMLButtonElement>(null);
   const atual = opcoes.find((o) => o.valor === valor) ?? opcoes[0];
 
-  /** Abre a lista; se não couber por baixo (fim do ecrã/painel), abre para cima. */
+  /**
+   * Abre a lista; se não couber por baixo, abre para cima. O limite é o fim do ecrã ou, se o seletor
+   * estiver dentro de uma lista com scroll, o fim dessa lista (senão a lista abria cortada).
+   */
   function abrir() {
     const r = botao.current?.getBoundingClientRect();
     if (r) {
       const altura = Math.min(opcoes.length * 36 + 12, 256) + 8; // linhas + padding, limitado por max-h-64, + margem
-      const folgaPainel = 56; // padding do painel (md:p-6 + p-5) que corta o que sobra
-      setAcima(window.innerHeight - r.bottom < altura + folgaPainel && r.top > altura);
+      let topo = 0;
+      let fundo = window.innerHeight - 56; // padding do painel (md:p-6 + p-5) que corta o que sobra
+      for (let el = raiz.current?.parentElement; el; el = el.parentElement) {
+        const o = getComputedStyle(el).overflowY;
+        if (o === "auto" || o === "scroll" || o === "hidden") {
+          const c = el.getBoundingClientRect();
+          topo = Math.max(topo, c.top);
+          fundo = Math.min(fundo, c.bottom);
+          break;
+        }
+      }
+      setAcima(fundo - r.bottom < altura && r.top - topo > altura);
     }
     setAberto(true);
   }
