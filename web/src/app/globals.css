@@ -258,6 +258,7 @@ body {
     scrollbar-color: var(--scroll-polegar) transparent;
   }
 }
+
 /*
  * Cada cartão de vidro (backdrop-blur) é uma camada própria, por isso uma lista ou um calendário
  * aberto dentro dele ficava por baixo do cartão seguinte. Enquanto estiver aberto, o cartão sobe
