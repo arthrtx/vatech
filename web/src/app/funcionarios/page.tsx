@@ -8,6 +8,7 @@ import { papeis } from "@/lib/rotulos";
 import Seletor from "@/components/Seletor";
 import CampoBusca from "@/components/CampoBusca";
 import FuncionarioLinha from "@/components/FuncionarioLinha";
+import VistaFuncionario from "@/components/VistaFuncionario";
 import { filtrar } from "@/lib/busca";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 
@@ -23,6 +24,8 @@ function Conteudo() {
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [ferias, setFerias] = useState<Map<number, FeriasResumo>>(new Map());
+  const [aVer, setAVer] = useState<User | null>(null);
+  const fecharVista = useCallback(() => setAVer(null), []);
 
   const carregar = useCallback(async () => {
     try {
@@ -139,6 +142,7 @@ function Conteudo() {
               user={u}
               proprio={u.id === eu?.id}
               ferias={ferias.get(u.id)}
+              onVer={() => setAVer(u)}
               onGuardar={async (dados) => {
                 await api.editarFuncionario(u.id, dados);
                 await carregar();
@@ -152,6 +156,7 @@ function Conteudo() {
         </ul>
         </div>
       </div>
+      {aVer && <VistaFuncionario user={aVer} ferias={ferias.get(aVer.id)} onFechar={fecharVista} />}
     </div>
   );
 }
