@@ -135,7 +135,7 @@ function Conteudo() {
             {lista.length === 0 ? "Ainda não há utilizadores." : `Nenhum resultado para "${busca.trim()}"`}
           </p>
         )}
-        <ul className="scroll-fino grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] content-start gap-2 lg:min-h-0 lg:overflow-y-auto">
+        <ul className="scroll-fino grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] content-start items-start gap-2 lg:min-h-0 lg:overflow-y-auto">
           {visiveis.map((u) => (
             <FuncionarioLinha
               key={u.id}
