@@ -15,13 +15,15 @@ interface Props {
   proprio?: boolean;
   /** Cúmulo de férias (só admin); sem limite anual não mostra nada. */
   ferias?: FeriasResumo;
+  /** Abre a vista geral da pessoa. */
+  onVer?: () => void;
 }
 
 const opcoesPapel = (Object.keys(papeis) as Papel[]).map((valor) => ({ valor, rotulo: papeis[valor] }));
 
 type Modo = "ver" | "editar" | "apagar";
 
-export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = false, ferias }: Props) {
+export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = false, ferias, onVer }: Props) {
   const [modo, setModo] = useState<Modo>("ver");
   const [nome, setNome] = useState(user.nome);
   const [email, setEmail] = useState(user.email);
@@ -150,7 +152,13 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = 
         </form>
       ) : (
         <>
-          <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onVer}
+            disabled={!onVer}
+            aria-label={`Ver ${user.nome}`}
+            className="-m-1 flex w-[calc(100%+0.5rem)] items-center gap-3 rounded-controlo p-1 text-left enabled:hover:bg-primaria-suave/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
+          >
             <Avatar nome={user.nome} id={user.id} foto={user.avatar_url} className="h-8 w-8 text-xs" />
             <div className="min-w-0">
               <p className="font-medium">{user.nome}</p>
@@ -163,7 +171,7 @@ export default function FuncionarioLinha({ user, onGuardar, onApagar, proprio = 
                 </p>
               )}
             </div>
-          </div>
+          </button>
           {modo === "apagar" ? (
             <div role="alertdialog" aria-label={`Apagar ${user.nome}`} className="mt-3 flex flex-col gap-2">
               <p className="text-sm text-texto">Apagar {user.nome}? Os pedidos deixam de aparecer.</p>
