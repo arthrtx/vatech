@@ -38,6 +38,20 @@ export interface Presenca {
   almoco_min?: number;
 }
 
+export type TipoOcorrencia = "falta" | "atraso";
+export type MotivoOcorrencia = "imprevisto" | "doenca" | "transportes" | "outro";
+
+/** Falta ou atraso comunicado pelo estagiário. */
+export interface Ocorrencia {
+  id: number;
+  user_id: number;
+  user?: { id: number; nome: string } | null;
+  data: string;
+  tipo: TipoOcorrencia;
+  motivo: MotivoOcorrencia;
+  descricao: string;
+}
+
 export interface Anexo {
   id: number;
   nome: string;
@@ -246,6 +260,10 @@ export const api = {
     (await request<{ data: Presenca }>("POST", "/presencas/atrasada", corpo)).data,
   presencas: async (de: string, ate: string, userId?: number) =>
     (await request<{ data: Presenca[] }>("GET", `/presencas?de=${de}&ate=${ate}${userId ? `&user_id=${userId}` : ""}`)).data,
+  ocorrencias: async (de: string, ate: string, userId?: number) =>
+    (await request<{ data: Ocorrencia[] }>("GET", `/ocorrencias?de=${de}&ate=${ate}${userId ? `&user_id=${userId}` : ""}`)).data,
+  registarOcorrencia: async (corpo: { data: string; tipo: TipoOcorrencia; motivo: MotivoOcorrencia; descricao: string }) =>
+    (await request<{ data: Ocorrencia }>("POST", "/ocorrencias", corpo)).data,
   pedidos: async (estado?: EstadoPedido) =>
     (await request<{ data: Pedido[] }>("GET", `/pedidos${estado ? `?estado=${estado}` : ""}`)).data,
   agenda: async (de: string, ate: string) =>

@@ -10,6 +10,8 @@ vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: Re
 
 const atrasada = vi.fn();
 const presencas = vi.fn();
+const ocorrencias = vi.fn();
+const registar = vi.fn();
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
   api: {
@@ -17,6 +19,8 @@ vi.mock("@/lib/api", async (orig) => ({
     funcionarios: vi.fn().mockResolvedValue([]),
     marcarPresencaAtrasada: (...a: unknown[]) => atrasada(...a),
     definirAlmoco: vi.fn(),
+    ocorrencias: (...a: unknown[]) => ocorrencias(...a),
+    registarOcorrencia: (...a: unknown[]) => registar(...a),
   },
 }));
 
@@ -25,6 +29,8 @@ import PresencasPage from "./page";
 beforeEach(() => {
   papel = "estagiario";
   presencas.mockReset().mockResolvedValue([]);
+  ocorrencias.mockReset().mockResolvedValue([]);
+  registar.mockReset();
   atrasada.mockReset();
 });
 afterEach(cleanup);
@@ -94,5 +100,30 @@ describe("Estágio: esqueci de marcar", () => {
     fireEvent.keyDown(screen.getByLabelText("Dia"), { key: "Escape" });
     expect(screen.queryByLabelText("Dia")).toBeNull();
     expect(atrasada).not.toHaveBeenCalled();
+  });
+});
+
+describe("Estágio: faltas e atrasos", () => {
+  it("o estagiário comunica um atraso por imprevisto", async () => {
+    registar.mockResolvedValue({});
+    render(<PresencasPage />);
+    fireEvent.click(screen.getByRole("button", { name: "Falta ou atraso" }));
+    fireEvent.change(screen.getByLabelText("Dia"), { target: { value: "2026-11-24" } });
+    fireEvent.change(screen.getByLabelText("Descrição"), { target: { value: "O comboio atrasou." } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() =>
+      expect(registar).toHaveBeenCalledWith({ data: "2026-11-24", tipo: "atraso", motivo: "imprevisto", descricao: "O comboio atrasou." }),
+    );
+    await waitFor(() => expect(screen.queryByLabelText("Descrição")).toBeNull());
+  });
+
+  it("mostra as faltas e atrasos do intervalo com o motivo", async () => {
+    ocorrencias.mockResolvedValue([
+      { id: 1, user_id: 2, data: "2026-11-24", tipo: "falta", motivo: "imprevisto", descricao: "Carro avariado." },
+    ]);
+    render(<PresencasPage />);
+    expect(await screen.findByText("Carro avariado.")).toBeTruthy();
+    expect(screen.getByText("Motivo: Imprevisto")).toBeTruthy();
   });
 });

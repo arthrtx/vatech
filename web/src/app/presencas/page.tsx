@@ -6,10 +6,12 @@ import AppShell from "@/components/AppShell";
 import CampoData from "@/components/CampoData";
 import HorarioAlmoco from "@/components/HorarioAlmoco";
 import PresencaAtrasada from "@/components/PresencaAtrasada";
+import RegistarOcorrencia from "@/components/RegistarOcorrencia";
 import Seletor from "@/components/Seletor";
 import { botao, botaoSec, erro as erroCls, label, vidro } from "@/components/ui";
-import { api, mensagemDeErro, type Presenca, type User } from "@/lib/api";
+import { api, mensagemDeErro, type Ocorrencia, type Presenca, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
+import { rotuloMotivo, rotuloTipo } from "@/lib/ocorrencias";
 import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
 
 type Res = { chave: string; linhas: Presenca[]; erro: string | null };
@@ -27,6 +29,8 @@ function Conteudo() {
   const [res, setRes] = useState<Res | null>(null);
   const [volta, setVolta] = useState(0);
   const [esqueci, setEsqueci] = useState(false);
+  const [comunicar, setComunicar] = useState(false);
+  const [ocorr, setOcorr] = useState<{ chave: string; lista: Ocorrencia[] } | null>(null);
   const valido = !!de && !!ate && ate >= de;
   const chave = `${de}|${ate}|${userId}|${volta}`;
 
@@ -54,6 +58,19 @@ function Conteudo() {
     };
   }, [de, ate, userId, valido, chave, admin]);
 
+  useEffect(() => {
+    if (!valido) return;
+    let vivo = true;
+    api
+      .ocorrencias(de, ate, admin && userId ? Number(userId) : undefined)
+      .then((lista) => vivo && setOcorr({ chave, lista }))
+      .catch(() => vivo && setOcorr({ chave, lista: [] })); // sem esta lista as horas aparecem à mesma
+    return () => {
+      vivo = false;
+    };
+  }, [de, ate, userId, valido, chave, admin]);
+
+  const ocorrencias = ocorr?.chave === chave ? ocorr.lista : [];
   const atual = res?.chave === chave ? res : null;
   const aCarregar = valido && !atual;
   const erro = atual?.erro ?? null;
@@ -65,16 +82,34 @@ function Conteudo() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Estágio</h1>
-        {!admin && !esqueci && (
-          <button type="button" className={`${botao} min-h-10`} onClick={() => setEsqueci(true)}>
-            Esqueci de marcar presença
-          </button>
+        {!admin && (
+          <div className="flex flex-wrap gap-2">
+            {!comunicar && (
+              <button type="button" className={`${botaoSec} min-h-10`} onClick={() => setComunicar(true)}>
+                Falta ou atraso
+              </button>
+            )}
+            {!esqueci && (
+              <button type="button" className={`${botao} min-h-10`} onClick={() => setEsqueci(true)}>
+                Esqueci de marcar presença
+              </button>
+            )}
+          </div>
         )}
       </div>
       {!admin && (
         <section aria-label="Horário de almoço" className={`${vidro} p-4`}>
           <HorarioAlmoco onGuardado={() => setVolta((v) => v + 1)} />
         </section>
+      )}
+      {!admin && comunicar && (
+        <RegistarOcorrencia
+          onCancelar={() => setComunicar(false)}
+          onRegistado={() => {
+            setComunicar(false);
+            setVolta((v) => v + 1);
+          }}
+        />
       )}
       {!admin && esqueci && (
         <PresencaAtrasada
@@ -181,6 +216,26 @@ function Conteudo() {
             </tbody>
           </table>
         </div>
+      )}
+      {ocorrencias.length > 0 && (
+        <section aria-labelledby="ocor_lista" className={`${vidro} p-4`}>
+          <h2 id="ocor_lista" className="mb-3 text-lg font-semibold">
+            Faltas e atrasos
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {ocorrencias.map((o) => (
+              <li key={o.id} className="border-t border-linha pt-3 first:border-t-0 first:pt-0">
+                <p className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="tabular-nums">{dataPt(o.data)}</span>
+                  {admin && <span className="font-medium">{o.user?.nome ?? `#${o.user_id}`}</span>}
+                  <span className="rounded-controlo border border-linha-forte px-2 py-0.5 text-xs">{rotuloTipo(o.tipo)}</span>
+                  <span className="text-texto-suave">Motivo: {rotuloMotivo(o.motivo)}</span>
+                </p>
+                <p className="mt-1 whitespace-pre-line text-sm">{o.descricao}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

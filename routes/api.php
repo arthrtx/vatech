@@ -5,6 +5,7 @@ use App\Http\Controllers\AnexoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FuncionarioController;
 use App\Http\Controllers\LimiteController;
+use App\Http\Controllers\OcorrenciaController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PonteController;
 use App\Http\Controllers\PresencaController;
@@ -43,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('papel:admin,estagiario')->get('/presencas', [PresencaController::class, 'index']);
+    Route::middleware('papel:admin,estagiario')->get('/ocorrencias', [OcorrenciaController::class, 'index']);
 
     Route::middleware('papel:estagiario')->group(function () {
         Route::get('/presencas/hoje', [PresencaController::class, 'hoje']);
@@ -50,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/presencas/saida', [PresencaController::class, 'saida']);
         Route::post('/presencas/atrasada', [PresencaController::class, 'atrasada']);
         Route::put('/me/almoco', [PresencaController::class, 'almoco']);
+        Route::post('/ocorrencias', [OcorrenciaController::class, 'store']);
     });
 
     Route::middleware('papel:funcionario,estagiario')->group(function () {

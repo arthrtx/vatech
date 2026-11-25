@@ -177,3 +177,28 @@ it('desconta o almoco que cai entre a entrada e a saida', function () {
         ->and($parte->fresh()->toContrato()['almoco_min'])->toBe(30)
         ->and($manha->fresh()->toContrato()['almoco_min'])->toBe(0);
 });
+
+it('estagiario comunica uma falta com motivo e descricao, e o admin ve-a', function () {
+    $e = estagiario();
+    Sanctum::actingAs($e);
+
+    $this->postJson('/api/ocorrencias', ['data' => '2026-11-24', 'tipo' => 'falta', 'motivo' => 'imprevisto', 'descricao' => 'O carro avariou.'])
+        ->assertCreated()
+        ->assertJsonPath('data.tipo', 'falta')
+        ->assertJsonPath('data.motivo', 'imprevisto');
+
+    $this->postJson('/api/ocorrencias', ['data' => '2026-11-24', 'tipo' => 'atraso', 'motivo' => 'xpto'])
+        ->assertStatus(422)->assertJsonValidationErrors(['motivo', 'descricao']);
+
+    Sanctum::actingAs(User::factory()->create(['papel' => 'admin', 'empresa_id' => $e->empresa_id]));
+    $this->getJson("/api/ocorrencias?user_id={$e->id}")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.descricao', 'O carro avariou.');
+});
+
+it('funcionario nao comunica faltas de estagio', function () {
+    Sanctum::actingAs(User::factory()->create());
+    $this->postJson('/api/ocorrencias', ['data' => '2026-11-24', 'tipo' => 'falta', 'motivo' => 'imprevisto', 'descricao' => 'x'])
+        ->assertForbidden();
+});
