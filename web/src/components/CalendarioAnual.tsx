@@ -1,0 +1,233 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import type { Aniversario, PedidoAgenda, Ponte, TipoPedido } from "@/lib/api";
+import { celulasDoMes, hojeIso, mesesPt, nomeDoDia, quemE } from "@/lib/agenda";
+import { marcasDoAno } from "@/lib/calendario";
+import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
+import { useLocalidade } from "@/lib/localidade";
+import { tipos } from "@/lib/rotulos";
+import EscolhaLocalidade from "./EscolhaLocalidade";
+import { botaoSec } from "./ui";
+
+const diasSemana = ["S", "T", "Q", "Q", "S", "S", "D"];
+const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
+const botaoAno = `${botaoSec} min-h-9 px-3 py-1`;
+
+const rotulosData: Record<TipoData, string> = {
+  feriado: "Feriado nacional",
+  municipal: "Feriado municipal",
+  comemorativa: "Data comemorativa",
+  ponte: "Ponte",
+};
+// Ponto por tipo de pedido; pendente fica vazado (como na Agenda).
+const pontoTipo: Record<TipoPedido, string> = { ferias: "bg-positivo", ausencia: "bg-violeta", licenca: "bg-primaria" };
+const bordaTipo: Record<TipoPedido, string> = { ferias: "border-positivo", ausencia: "border-violeta", licenca: "border-primaria" };
+
+const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+
+interface Props {
+  ano: number;
+  aoMudarAno: (ano: number) => void;
+  aCarregar?: boolean;
+  pedidos: PedidoAgenda[];
+  aniversarios: Aniversario[];
+  pontes: Ponte[];
+}
+
+function Ponto({ tipo, pendente }: { tipo: TipoPedido; pendente: boolean }) {
+  return <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full border ${bordaTipo[tipo]} ${pendente ? "bg-painel" : pontoTipo[tipo]}`} />;
+}
+
+/** Calendário do ano inteiro: feriados, pontes, aniversários e ausências da equipa. */
+export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes }: Props) {
+  const [localidade] = useLocalidade();
+  const hoje = hojeIso();
+  const anoHoje = Number(hoje.slice(0, 4));
+  const [aberto, setAberto] = useState<string | null>(null);
+
+  const marcas = useMemo(
+    () => marcasDoAno(ano, [...datasDoAno(ano, localidade), ...datasDasPontes(pontes)], aniversarios, pedidos),
+    [ano, localidade, pontes, aniversarios, pedidos],
+  );
+  const abertoMarcas = aberto ? marcas.get(aberto) : undefined;
+  const listaDatas = useMemo(
+    () => [...marcas.values()].flatMap((m) => m.datas).sort((a, b) => a.iso.localeCompare(b.iso) || a.nome.localeCompare(b.nome, "pt")),
+    [marcas],
+  );
+  const vazio = !abertoMarcas || abertoMarcas.datas.length + abertoMarcas.aniversarios.length + abertoMarcas.pedidos.length === 0;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2" role="group" aria-label="Escolher ano">
+          <button type="button" className={botaoAno} onClick={() => aoMudarAno(ano - 1)}>
+            Ano anterior
+          </button>
+          <p className="min-w-16 text-center text-lg font-semibold tabular-nums" aria-live="polite">
+            {ano}
+          </p>
+          <button type="button" className={botaoAno} onClick={() => aoMudarAno(ano + 1)}>
+            Ano seguinte
+          </button>
+        </div>
+        {ano !== anoHoje && (
+          <button type="button" className={botaoAno} onClick={() => aoMudarAno(anoHoje)}>
+            Hoje
+          </button>
+        )}
+        <div className="ml-auto">
+          <EscolhaLocalidade id="cal-localidade" compacta />
+        </div>
+      </div>
+
+      <ul aria-label="Legenda" className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-texto-suave">
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-rosa-suave" />
+          Feriado
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-primaria-suave ring-1 ring-inset ring-primaria" />
+          Ponte
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="text-texto underline decoration-dotted underline-offset-2">
+            12
+          </span>
+          Data comemorativa
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-rosa" />
+          Aniversário
+        </li>
+        {(Object.keys(tipos) as TipoPedido[]).map((t) => (
+          <li key={t} className="flex items-center gap-1.5">
+            <Ponto tipo={t} pendente={false} />
+            {tipos[t]}
+          </li>
+        ))}
+        <li className="flex items-center gap-1.5">
+          <Ponto tipo="ferias" pendente />
+          Pendente
+        </li>
+      </ul>
+
+      <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${aCarregar ? "opacity-60" : ""}`} aria-busy={aCarregar}>
+        {mesesPt.map((nome, i) => (
+          <section
+            key={nome}
+            aria-label={`${nome} ${ano}`}
+            className="rounded-cartao bg-painel/55 p-3 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
+          >
+            <h2 className="mb-2 text-sm font-semibold">{nome}</h2>
+            <div role="grid" aria-label={`${nome} ${ano}`} className="grid grid-cols-7 gap-y-1">
+              {diasSemana.map((d, k) => (
+                <div key={k} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
+                  {d}
+                </div>
+              ))}
+              {celulasDoMes({ ano, mes: i + 1 }).map((c) => {
+                if (!c.doMes) return <div key={c.iso} role="gridcell" aria-hidden="true" />;
+                const m = marcas.get(c.iso);
+                const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
+                const ponte = !!m?.datas.some((d) => d.tipo === "ponte");
+                const comemorativa = !!m?.datas.some((d) => d.tipo === "comemorativa");
+                const escolhido = aberto === c.iso;
+                // Um ponto por pessoa, tipo e estado; no máximo 3 para a célula não rebentar.
+                const pontos = [...new Map((m?.pedidos ?? []).map((p) => [`${quemE(p)}|${p.tipo}|${p.estado}`, p])).entries()].slice(0, 3);
+                const descricao = [
+                  nomeDoDia(c.iso),
+                  ...(m?.datas.map((d) => `${rotulosData[d.tipo]}: ${d.nome}`) ?? []),
+                  ...(m?.aniversarios.map((n) => `Aniversário de ${n}`) ?? []),
+                  ...(m?.pedidos.map((p) => `${p.user?.nome ?? "Alguém"}: ${tipos[p.tipo].toLowerCase()}${p.estado === "pendente" ? " (pendente)" : ""}`) ?? []),
+                ].join(". ");
+                return (
+                  <button
+                    key={c.iso}
+                    type="button"
+                    role="gridcell"
+                    aria-label={descricao}
+                    aria-selected={escolhido}
+                    aria-current={c.iso === hoje ? "date" : undefined}
+                    title={descricao}
+                    onClick={() => setAberto(escolhido ? null : c.iso)}
+                    className={`mx-auto flex h-9 w-9 flex-col items-center justify-center rounded-full text-xs tabular-nums ${foco} ${
+                      c.iso === hoje
+                        ? "bg-primaria font-semibold text-white"
+                        : feriado
+                          ? "bg-rosa-suave font-semibold text-texto"
+                          : ponte
+                            ? "bg-primaria-suave text-texto ring-1 ring-inset ring-primaria"
+                            : "text-texto hover:bg-primaria-suave"
+                    } ${comemorativa && !feriado ? "underline decoration-dotted underline-offset-2" : ""} ${escolhido ? "ring-2 ring-primaria" : ""}`}
+                  >
+                    {c.dia}
+                    <span aria-hidden="true" className="flex h-1.5 items-center gap-0.5">
+                      {m?.aniversarios.length ? <span className="h-1.5 w-1.5 rounded-full bg-rosa" /> : null}
+                      {pontos.map(([chave, p]) => (
+                        <Ponto key={chave} tipo={p.tipo} pendente={p.estado === "pendente"} />
+                      ))}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {aberto && (
+        <section
+          aria-labelledby="cal-dia"
+          className="flex flex-col gap-2 rounded-cartao bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
+        >
+          <h2 id="cal-dia" className="text-lg font-semibold">
+            {nomeDoDia(aberto)}
+          </h2>
+          {vazio ? (
+            <p className="text-texto-suave">Sem marcações neste dia.</p>
+          ) : (
+            <ul className="flex flex-col gap-1 text-sm">
+              {abertoMarcas?.datas.map((d) => (
+                <li key={`${d.tipo}${d.nome}`}>
+                  <span className="font-medium">{d.nome}</span> · {rotulosData[d.tipo]}
+                </li>
+              ))}
+              {abertoMarcas?.aniversarios.map((n) => (
+                <li key={n} className="font-medium">
+                  Aniversário de {n}
+                </li>
+              ))}
+              {abertoMarcas?.pedidos.map((p) => (
+                <li key={p.id}>
+                  <span className="font-medium">{p.user?.nome ?? "Alguém"}</span> · {tipos[p.tipo]}
+                  {p.estado === "pendente" ? " (pendente)" : ""} · {dataCurta(p.data_inicio)} a {dataCurta(p.data_fim)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      <section aria-labelledby="cal-lista" className="flex flex-col gap-2">
+        <h2 id="cal-lista" className="text-lg font-semibold">
+          Feriados e datas de {ano}
+        </h2>
+        {listaDatas.length === 0 ? (
+          <p className="text-texto-suave">Sem feriados nem datas em {ano}.</p>
+        ) : (
+          <ul className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            {listaDatas.map((d) => (
+              <li key={`${d.iso}${d.nome}`} className="flex gap-2">
+                <span className="w-12 shrink-0 tabular-nums text-texto-suave">{dataCurta(d.iso).slice(0, 5)}</span>
+                <span>
+                  {d.nome} <span className="text-texto-suave">· {rotulosData[d.tipo]}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
