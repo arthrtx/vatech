@@ -30,13 +30,13 @@ it('sem horas o pedido fica como antes', function () {
         ->assertJsonPath('data.hora_inicio', null);
 });
 
-it('recusa horas em ferias e licencas', function () {
+it('ferias e licencas tambem aceitam horas', function () {
     Sanctum::actingAs(User::factory()->create());
 
-    $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => diaFuturo(), 'data_fim' => diaFuturo(), 'hora_inicio' => '10:00', 'hora_fim' => '11:00'])
-        ->assertStatus(422)->assertJsonValidationErrors(['hora_inicio', 'hora_fim']);
+    $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => diaFuturo(), 'data_fim' => diaFuturo(), 'hora_inicio' => '14:00', 'hora_fim' => '18:00'])
+        ->assertCreated()->assertJsonPath('data.hora_inicio', '14:00');
     $this->postJson('/api/pedidos', ['tipo' => 'licenca', 'data_inicio' => diaFuturo(), 'data_fim' => diaFuturo(), 'hora_inicio' => '10:00', 'hora_fim' => '11:00'])
-        ->assertStatus(422)->assertJsonValidationErrors(['hora_inicio', 'hora_fim']);
+        ->assertCreated()->assertJsonPath('data.hora_fim', '11:00');
 });
 
 it('valida a ordem das horas e o fim obrigatorio', function () {

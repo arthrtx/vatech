@@ -21,14 +21,12 @@ const escolherTipo = (rotulo: string) => {
 };
 
 describe("PedidoForm: horas", () => {
-  it("só a ausência tem campos de hora", () => {
+  it("todos os tipos têm campos de hora", () => {
     render(<PedidoForm dataInicial="2099-01-05" />);
-    expect(screen.queryByLabelText("Das (opcional)")).toBeNull();
-    escolherTipo("Ausência");
     expect(screen.getByLabelText("Das (opcional)")).toBeTruthy();
     expect(screen.getByLabelText("Até às")).toBeTruthy();
     escolherTipo("Licença");
-    expect(screen.queryByLabelText("Das (opcional)")).toBeNull();
+    expect(screen.getByLabelText("Das (opcional)")).toBeTruthy();
   });
 
   it("envia as horas da ausência", async () => {
