@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { input } from "./ui";
 
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
@@ -16,10 +16,12 @@ interface Props {
   opcoes: OpcaoSeletor[];
   onChange: (valor: string) => void;
   className?: string;
+  /** Ícone opcional à esquerda do valor escolhido. */
+  icone?: ReactNode;
 }
 
 /** Lista de escolha no estilo da plataforma (substitui o `<select>` nativo, cuja lista o CSS não alcança). */
-export default function Seletor({ id, valor, opcoes, onChange, className = "" }: Props) {
+export default function Seletor({ id, valor, opcoes, onChange, className = "", icone }: Props) {
   const [aberto, setAberto] = useState(false);
   const [acima, setAcima] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
@@ -94,7 +96,8 @@ export default function Seletor({ id, valor, opcoes, onChange, className = "" }:
         onClick={() => (aberto ? setAberto(false) : abrir())}
         className={`${input} flex items-center justify-between gap-2 text-left ${className}`}
       >
-        <span className="truncate">{atual?.rotulo}</span>
+        {icone}
+        <span className="min-w-0 flex-1 truncate">{atual?.rotulo}</span>
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5 shrink-0 text-texto-suave">
           <circle cx="10" cy="10" r="1.5" />
           <circle cx="4" cy="10" r="1.5" />
