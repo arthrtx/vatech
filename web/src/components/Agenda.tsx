@@ -35,6 +35,7 @@ import GrupoChips from "./GrupoChips";
 import CompromissoForm, { tiposCompromisso } from "./CompromissoForm";
 import { IconeSeta } from "./Icones";
 import JanelaFormulario from "./JanelaFormulario";
+import NovaMarcacao from "./NovaMarcacao";
 import PainelFiltros from "./PainelFiltros";
 import PedidoForm from "./PedidoForm";
 import Seletor from "./Seletor";
@@ -494,10 +495,17 @@ export default function Agenda({
                   )}
                 </div>
                 <div className="flex gap-2">
-                  {podeCriar && !pedidoSel && (
-                    <button type="button" className={botaoSec} onClick={() => setNovo({ data: sel.iso })}>
-                      Pedir a partir deste dia
-                    </button>
+                  {!pedidoSel && (
+                    <NovaMarcacao
+                      opcoes={[
+                        ...(podeCriar
+                          ? [{ rotulo: "Pedido de férias ou ausência", ajuda: "Férias, ausência ou licença", aoEscolher: () => setNovo({ data: sel.iso }) }]
+                          : []),
+                        ...(sel.iso >= hoje
+                          ? [{ rotulo: "Compromisso na agenda", ajuda: "Reunião, chamada, lembrete...", aoEscolher: () => setNovoComp({ data: sel.iso }) }]
+                          : []),
+                      ]}
+                    />
                   )}
                   <button type="button" className={botaoSec} onClick={fechar}>
                     Fechar
@@ -547,11 +555,6 @@ export default function Agenda({
                       <h4 id="ag-compromissos" className="text-base font-semibold">
                         Agenda do dia
                       </h4>
-                      {sel.iso >= hoje && (
-                        <button type="button" className={botaoSec} onClick={() => setNovoComp({ data: sel.iso })}>
-                          Marcar na agenda
-                        </button>
-                      )}
                     </div>
                     {erroComp && (
                       <p role="alert" className="rounded-controlo border border-rosa bg-rosa-suave px-3 py-2 text-sm text-texto">
