@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\UpdatePerfilRequest;
+use App\Models\Empresa;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -24,10 +26,71 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => ['Credenciais inválidas.']]);
         }
 
+        if (! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages(['email' => ['Confirme o seu email para entrar. Enviámos-lhe um link; se não o encontra, peça um novo.']]);
+        }
+
         return response()->json([
             'token' => $user->createToken('api')->plainTextToken,
             'user' => $user->toContrato(),
         ]);
+    }
+
+    public function registo(Request $request): JsonResponse
+    {
+        $dados = $request->validate([
+            'nome' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'aceita_termos' => ['required', 'accepted'],
+        ]);
+
+        $empresa = Empresa::orderBy('id')->first();
+
+        if (! $empresa) {
+            return response()->json(['message' => 'O registo não está disponível de momento.'], 503);
+        }
+
+        $user = User::create([
+            'nome' => $dados['nome'],
+            'email' => $dados['email'],
+            'password' => $dados['password'],
+            'empresa_id' => $empresa->id,
+            'papel' => 'funcionario',
+            'termos_aceites_em' => now(),
+        ]);
+        $user->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Conta criada. Enviámos-lhe um email para confirmar o endereço.'], 201);
+    }
+
+    /** Reenvia o link de verificacao. Resposta sempre igual, exista ou nao a conta. */
+    public function reenviarVerificacao(Request $request): JsonResponse
+    {
+        $dados = $request->validate(['email' => ['required', 'email', 'max:255']]);
+
+        $user = User::where('email', $dados['email'])->first();
+
+        if ($user && ! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        return response()->json(['message' => 'Se a conta existir e estiver por confirmar, enviámos um novo link.']);
+    }
+
+    /** Abre-se a partir do email: verifica e devolve o utilizador ao site. */
+    public function verificarEmail(Request $request, int $id, string $hash): RedirectResponse
+    {
+        $login = rtrim((string) config('app.frontend_url'), '/').'/login?verificado=';
+        $user = User::find($id);
+
+        if (! $user || ! $request->hasValidSignature() || ! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            return redirect($login.'0');
+        }
+
+        $user->markEmailAsVerified();
+
+        return redirect($login.'1');
     }
 
     /** Pede o email de recuperacao. Resposta sempre igual, exista ou nao a conta (nao revela contas). */

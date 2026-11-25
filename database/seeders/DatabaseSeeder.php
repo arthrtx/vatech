@@ -15,11 +15,11 @@ class DatabaseSeeder extends Seeder
 
         User::firstOrCreate(
             ['email' => 'admin@vatech.test'],
-            ['empresa_id' => $empresa->id, 'nome' => 'Admin Demo', 'papel' => 'admin', 'password' => 'password'],
+            ['empresa_id' => $empresa->id, 'nome' => 'Admin Demo', 'papel' => 'admin', 'email_verified_at' => now(), 'password' => 'password'],
         );
         User::firstOrCreate(
             ['email' => 'funcionario@vatech.test'],
-            ['empresa_id' => $empresa->id, 'nome' => 'Funcionario Demo', 'papel' => 'funcionario', 'password' => 'password'],
+            ['empresa_id' => $empresa->id, 'nome' => 'Funcionario Demo', 'papel' => 'funcionario', 'email_verified_at' => now(), 'password' => 'password'],
         );
     }
 }

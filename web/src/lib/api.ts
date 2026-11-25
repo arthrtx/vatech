@@ -219,6 +219,10 @@ export const api = {
     setToken(r.token);
     return r.user;
   },
+  registo: async (b: { nome: string; email: string; password: string; password_confirmation: string; aceita_termos: boolean }) =>
+    (await request<{ message: string }>("POST", "/registo", b)).message,
+  reenviarConfirmacao: async (email: string) =>
+    (await request<{ message: string }>("POST", "/email/reenviar", { email })).message,
   esqueciPassword: async (email: string) =>
     (await request<{ message: string }>("POST", "/esqueci-password", { email })).message,
   redefinirPassword: async (b: { token: string; email: string; password: string; password_confirmation: string }) =>
@@ -250,11 +254,6 @@ export const api = {
     (await request<{ user: User }>("PUT", "/me/almoco", b)).user,
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   funcionarios: async () => (await request<{ data: User[] }>("GET", "/funcionarios")).data,
-  criarFuncionario: async (b: { nome: string; email: string; password: string; papel: Papel }) =>
-    (await request<{ data: User }>("POST", "/funcionarios", b)).data,
-  editarFuncionario: async (id: number, b: { nome: string; email: string; password?: string; papel?: Papel }) =>
-    (await request<{ data: User }>("PUT", `/funcionarios/${id}`, b)).data,
-  apagarFuncionario: (id: number) => request<void>("DELETE", `/funcionarios/${id}`),
   presencaHoje: async () => (await request<{ data: Presenca | null }>("GET", "/presencas/hoje")).data,
   marcarEntrada: async () => (await request<{ data: Presenca }>("POST", "/presencas/entrada")).data,
   marcarSaida: async () => (await request<{ data: Presenca }>("POST", "/presencas/saida")).data,

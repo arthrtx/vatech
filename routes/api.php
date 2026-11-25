@@ -13,6 +13,9 @@ use App\Http\Controllers\TextoController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/registo', [AuthController::class, 'registo'])->middleware('throttle:5,1');
+Route::post('/email/reenviar', [AuthController::class, 'reenviarVerificacao'])->middleware('throttle:5,1');
+Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEmail'])->name('verification.verify');
 Route::post('/esqueci-password', [AuthController::class, 'esqueciPassword'])->middleware('throttle:5,1');
 Route::post('/redefinir-password', [AuthController::class, 'redefinirPassword'])->middleware('throttle:10,1');
 
@@ -36,9 +39,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/pontes', [PonteController::class, 'store']);
         Route::delete('/pontes/{id}', [PonteController::class, 'destroy']);
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
-        Route::post('/funcionarios', [FuncionarioController::class, 'store']);
-        Route::put('/funcionarios/{id}', [FuncionarioController::class, 'update']);
-        Route::delete('/funcionarios/{id}', [FuncionarioController::class, 'destroy']);
         Route::post('/pedidos/{id}/aprovar', [PedidoController::class, 'aprovar']);
         Route::post('/pedidos/{id}/visto', [PedidoController::class, 'visto']);
         Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
