@@ -37,7 +37,7 @@ describe("cliente da API", () => {
     setToken("abc");
     const h = vi.fn();
     setUnauthorizedHandler(h);
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(resposta(401, { message: "Unauthenticated." })));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(resposta(401, { message: "Não autenticado." })));
     await expect(api.me()).rejects.toBeInstanceOf(ApiError);
     expect(h).toHaveBeenCalledOnce();
     expect(getToken()).toBeNull();
