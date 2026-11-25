@@ -49,13 +49,6 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
   ]);
   return (
     <div className="flex flex-col gap-3">
-      {formulario && (
-        <div>
-          <button type="button" className={botao} onClick={aoAbrirForm}>
-            Novo pedido
-          </button>
-        </div>
-      )}
       {formulario && formAberto && (
         <JanelaFormulario titulo="Formulário de pedido" aoFechar={() => aoFecharForm?.()}>
           {formulario}
@@ -63,7 +56,16 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
       )}
       <div className="contents">
         <div className="flex min-w-0 flex-col gap-3">
-          <CampoBusca id="busca-meus-pedidos" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 max-w-md flex-1">
+              <CampoBusca id="busca-meus-pedidos" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
+            </div>
+            {formulario && (
+              <button type="button" className={`${botao} shrink-0`} onClick={aoAbrirForm}>
+                Novo pedido
+              </button>
+            )}
+          </div>
           {pedidos.length > 0 && (
             <FiltrosPedidosCampos
               filtros={filtros}
