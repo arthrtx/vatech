@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { api, mensagemDeErro, type Anexo, type Limite, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
+import CampoHora from "./CampoHora";
 import { tipos } from "@/lib/rotulos";
 import CampoAnexos from "./CampoAnexos";
 import { diasUteis } from "@/lib/diasUteis";
@@ -43,6 +44,10 @@ export default function PedidoForm({
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
+  // Horas: só nas ausências (ex.: uma consulta das 10:00 às 12:00).
+  const comHoras = tipo === "ausencia";
+  const [horaInicio, setHoraInicio] = useState(pedido?.hora_inicio ?? "");
+  const [horaFim, setHoraFim] = useState(pedido?.hora_fim ?? "");
   const [obs, setObs] = useState(pedido?.observacao ?? "");
   const [urgente, setUrgente] = useState(pedido?.urgente ?? false);
   const [aMelhorar, setAMelhorar] = useState(false);
@@ -96,6 +101,14 @@ export default function PedidoForm({
     e.preventDefault();
     setErro(null);
     setAvisos([]);
+    if (comHoras && horaInicio && !horaFim) {
+      setErro("Indique também a hora de fim.");
+      return;
+    }
+    if (comHoras && horaInicio && horaFim <= horaInicio) {
+      setErro("A hora de fim tem de ser depois da hora de início.");
+      return;
+    }
     setEnviando(true);
     try {
       const corpo = {
@@ -103,6 +116,7 @@ export default function PedidoForm({
         ...(tipo === "ausencia" && subtipo ? { subtipo } : {}),
         data_inicio: inicio,
         data_fim: fim,
+        ...(comHoras && horaInicio ? { hora_inicio: horaInicio, hora_fim: horaFim } : {}),
         ...(obs ? { observacao: obs } : {}),
         urgente,
       };
@@ -121,6 +135,8 @@ export default function PedidoForm({
       if (!pedido) {
         setInicio("");
         setFim("");
+        setHoraInicio("");
+        setHoraFim("");
         setObs("");
         setUrgente(false);
         setGuardados([]);
@@ -221,6 +237,22 @@ export default function PedidoForm({
           <CampoData id="data_fim" required min={inicio && inicio > hoje ? inicio : hoje} valor={fim} onChange={setFim} />
         </div>
       </div>
+      {comHoras && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="hora_inicio" className={label}>
+              Das (opcional)
+            </label>
+            <CampoHora id="hora_inicio" valor={horaInicio} onChange={setHoraInicio} />
+          </div>
+          <div>
+            <label htmlFor="hora_fim" className={label}>
+              Até às
+            </label>
+            <CampoHora id="hora_fim" required={!!horaInicio} valor={horaFim} onChange={setHoraFim} />
+          </div>
+        </div>
+      )}
       {excede && (
         <p role="alert" className={erroCls}>
           Este pedido tem {diasPedidos} dias úteis e só restam {restam} de {tipos[tipo].toLowerCase()} em {ano}.

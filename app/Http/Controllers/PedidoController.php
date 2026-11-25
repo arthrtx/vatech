@@ -77,7 +77,7 @@ class PedidoController extends Controller
             ->exists();
 
         // Campos opcionais em falta limpam-se (ex.: mudar de ausencia para ferias remove o subtipo).
-        $pedido->update([...$dados, 'subtipo' => $dados['subtipo'] ?? null, 'observacao' => $dados['observacao'] ?? null, 'urgente' => $dados['urgente'] ?? false]);
+        $pedido->update([...$dados, 'subtipo' => $dados['subtipo'] ?? null, 'hora_inicio' => $dados['hora_inicio'] ?? null, 'hora_fim' => $dados['hora_fim'] ?? null, 'observacao' => $dados['observacao'] ?? null, 'urgente' => $dados['urgente'] ?? false]);
 
         $resposta = ['data' => $pedido->refresh()->load('anexos')];
         if ($sobrepoe) {
