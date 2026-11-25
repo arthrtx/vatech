@@ -5,7 +5,6 @@ use App\Models\Pedido;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
@@ -41,7 +40,6 @@ it('devolve 403 ao funcionario nas rotas de admin', function () {
     Sanctum::actingAs(User::factory()->create());
 
     $this->getJson('/api/funcionarios')->assertStatus(403);
-    $this->postJson('/api/funcionarios', [])->assertStatus(403);
     $this->postJson('/api/pedidos/1/aprovar')->assertStatus(403);
 });
 
@@ -60,19 +58,13 @@ it('faz logout e devolve /me', function () {
     expect($user->tokens()->count())->toBe(0);
 });
 
-it('admin cria e lista funcionarios da sua empresa', function () {
+it('admin lista os funcionarios da sua empresa', function () {
     $admin = User::factory()->admin()->create();
     User::factory()->create(['empresa_id' => $admin->empresa_id]);
     User::factory()->create(); // outra empresa
     Sanctum::actingAs($admin);
 
-    $this->postJson('/api/funcionarios', ['nome' => 'Ana', 'email' => 'ana@x.test', 'password' => 'segredo123', 'papel' => 'funcionario'])
-        ->assertStatus(201)
-        ->assertJsonPath('data.papel', 'funcionario')
-        ->assertJsonPath('data.empresa_id', $admin->empresa_id);
-
-    $this->getJson('/api/funcionarios')->assertOk()->assertJsonCount(3, 'data');
-    $this->postJson('/api/funcionarios', ['nome' => 'Ana'])->assertStatus(422);
+    $this->getJson('/api/funcionarios')->assertOk()->assertJsonCount(2, 'data');
 });
 
 it('funcionario cria pedido pendente e ve so os seus', function () {
@@ -156,61 +148,6 @@ it('permite CORS a partir de localhost:3000', function () {
     ])->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
 });
 
-it('admin edita funcionario, com password opcional e email unico', function () {
-    $admin = User::factory()->admin()->create();
-    $func = User::factory()->create(['empresa_id' => $admin->empresa_id, 'email' => 'f@x.test']);
-    $outro = User::factory()->create(['empresa_id' => $admin->empresa_id, 'email' => 'o@x.test']);
-    Sanctum::actingAs($admin);
-
-    $this->putJson("/api/funcionarios/{$func->id}", ['nome' => 'Novo', 'email' => 'f@x.test'])
-        ->assertOk()->assertJsonPath('data.nome', 'Novo')->assertJsonPath('data.email', 'f@x.test');
-    expect(Hash::check('password', $func->refresh()->password))->toBeTrue();
-
-    $this->putJson("/api/funcionarios/{$func->id}", ['nome' => 'Novo', 'email' => 'novo@x.test', 'password' => 'outrasenha1'])
-        ->assertOk();
-    expect(Hash::check('outrasenha1', $func->refresh()->password))->toBeTrue();
-
-    $this->putJson("/api/funcionarios/{$func->id}", ['nome' => 'Novo', 'email' => $outro->email])->assertStatus(422);
-    $this->putJson("/api/funcionarios/{$func->id}", ['nome' => 'Novo'])->assertStatus(422);
-});
-
-it('devolve 404 ao editar ou apagar de outra empresa, inexistente ou nao funcionario', function () {
-    $admin = User::factory()->admin()->create();
-    $alheio = User::factory()->create();
-    Sanctum::actingAs($admin);
-    $dados = ['nome' => 'X', 'email' => 'x@x.test'];
-
-    foreach ([$alheio->id, 99999] as $id) {
-        $this->putJson("/api/funcionarios/{$id}", $dados)->assertStatus(404);
-        $this->deleteJson("/api/funcionarios/{$id}")->assertStatus(404);
-    }
-    expect(User::find($alheio->id))->not->toBeNull();
-});
-
-it('devolve 403 ao funcionario a editar ou apagar funcionarios', function () {
-    $func = User::factory()->create();
-    Sanctum::actingAs($func);
-
-    $this->putJson("/api/funcionarios/{$func->id}", [])->assertStatus(403);
-    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(403);
-});
-
-it('apaga funcionario (soft delete): sai da lista, perde tokens e nao faz login', function () {
-    $admin = User::factory()->admin()->create();
-    $func = User::factory()->create(['empresa_id' => $admin->empresa_id, 'email' => 'f@x.test']);
-    $token = $func->createToken('t')->plainTextToken;
-    Sanctum::actingAs($admin);
-
-    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
-
-    $this->getJson('/api/funcionarios')->assertOk()->assertJsonCount(1, 'data');
-    expect(User::withTrashed()->find($func->id)->trashed())->toBeTrue()
-        ->and($func->tokens()->count())->toBe(0);
-    $this->postJson('/api/login', ['email' => 'f@x.test', 'password' => 'password'])->assertStatus(422);
-    $this->app['auth']->forgetGuards();
-    $this->withToken($token)->getJson('/api/me')->assertStatus(401);
-});
-
 it('oculta os pedidos de funcionarios apagados ao admin', function () {
     $admin = User::factory()->admin()->create();
     $func = User::factory()->create(['empresa_id' => $admin->empresa_id]);
@@ -220,27 +157,8 @@ it('oculta os pedidos de funcionarios apagados ao admin', function () {
     Sanctum::actingAs($admin);
 
     $this->getJson('/api/pedidos')->assertOk()->assertJsonCount(2, 'data');
-    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
+    $func->delete();
     $this->getJson('/api/pedidos')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.user_id', $ativo->id);
-});
-
-it('nao deixa criar funcionario com o email de um apagado', function () {
-    $admin = User::factory()->admin()->create();
-    $func = User::factory()->create(['empresa_id' => $admin->empresa_id, 'email' => 'f@x.test']);
-    Sanctum::actingAs($admin);
-    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
-
-    $this->postJson('/api/funcionarios', ['nome' => 'Outro', 'email' => 'f@x.test', 'password' => 'segredo123'])
-        ->assertStatus(422)->assertJsonValidationErrors('email');
-});
-
-it('devolve 404 antes de validar o body no PUT de funcionario alheio ou inexistente', function () {
-    $admin = User::factory()->admin()->create();
-    $alheio = User::factory()->create();
-    Sanctum::actingAs($admin);
-
-    $this->putJson("/api/funcionarios/{$alheio->id}", [])->assertStatus(404);
-    $this->putJson('/api/funcionarios/99999', ['email' => 'invalido'])->assertStatus(404);
 });
 
 it('permite ao funcionario editar um pedido seu pendente', function () {
@@ -313,7 +231,7 @@ it('devolve 404 ao aprovar ou recusar pedido de funcionario apagado', function (
     $pedido = Pedido::factory()->create(['empresa_id' => $admin->empresa_id, 'user_id' => $func->id]);
     Sanctum::actingAs($admin);
 
-    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(204);
+    $func->delete();
 
     $this->postJson("/api/pedidos/{$pedido->id}/aprovar")->assertStatus(404);
     $this->postJson("/api/pedidos/{$pedido->id}/recusar", ['motivo_recusa' => 'x'])->assertStatus(404);
@@ -326,8 +244,7 @@ it('devolve os erros de validacao em portugues', function () {
         ->assertJsonPath('errors.email.0', 'O campo email é obrigatório.');
 
     $admin = User::factory()->admin()->create();
-    Sanctum::actingAs($admin);
-    $this->postJson('/api/funcionarios', ['nome' => 'A', 'email' => $admin->email, 'password' => 'curta'])
+    $this->postJson('/api/registo', ['nome' => 'A', 'email' => $admin->email, 'password' => 'curta'])
         ->assertStatus(422)
         ->assertJsonPath('errors.email.0', 'Já existe um registo com este email.')
         ->assertJsonPath('errors.password.0', 'O campo palavra-passe tem de ter pelo menos 8 caracteres.');
