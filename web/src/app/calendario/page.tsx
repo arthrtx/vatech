@@ -5,6 +5,7 @@ import AppShell from "@/components/AppShell";
 import CalendarioAnual from "@/components/CalendarioAnual";
 import { api, mensagemDeErro, type Aniversario, type PedidoAgenda, type Ponte } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
+import { useAuth } from "@/lib/auth";
 import { erro as erroCls } from "@/components/ui";
 
 interface Dados {
@@ -16,8 +17,10 @@ interface Dados {
 }
 
 function Conteudo() {
+  const { user } = useAuth();
   const [ano, setAno] = useState(() => Number(hojeIso().slice(0, 4)));
   const [dados, setDados] = useState<Dados | null>(null);
+  const [recarga, setRecarga] = useState(0);
 
   useEffect(() => {
     let vivo = true;
@@ -30,7 +33,7 @@ function Conteudo() {
     return () => {
       vivo = false;
     };
-  }, [ano]);
+  }, [ano, recarga]);
 
   const pronto = dados?.ano === ano ? dados : null;
   return (
@@ -48,6 +51,8 @@ function Conteudo() {
         pedidos={pronto?.pedidos ?? []}
         aniversarios={pronto?.aniversarios ?? []}
         pontes={pronto?.pontes ?? []}
+        podeCriar={!!user && user.papel !== "admin"}
+        aoCriar={() => setRecarga((r) => r + 1)}
       />
     </div>
   );

@@ -8,8 +8,11 @@ import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
+import { filtrar } from "@/lib/busca";
+import CampoBusca from "./CampoBusca";
 import { IconeSeta } from "./Icones";
-import { botaoSec } from "./ui";
+import PedidoForm from "./PedidoForm";
+import { botao, botaoSec } from "./ui";
 
 const diasSemana = ["S", "T", "Q", "Q", "S", "S", "D"];
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
@@ -36,6 +39,9 @@ interface Props {
   pedidos: PedidoAgenda[];
   aniversarios: Aniversario[];
   pontes: Ponte[];
+  /** Mostra o botão "Novo pedido" (como na Agenda). */
+  podeCriar?: boolean;
+  aoCriar?: () => void;
 }
 
 function Ponto({ tipo, pendente }: { tipo: TipoPedido; pendente: boolean }) {
@@ -43,16 +49,22 @@ function Ponto({ tipo, pendente }: { tipo: TipoPedido; pendente: boolean }) {
 }
 
 /** Calendário do ano inteiro: feriados, pontes, aniversários e ausências da equipa. */
-export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes }: Props) {
+export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, podeCriar = false, aoCriar }: Props) {
   const [localidade] = useLocalidade();
   const hoje = hojeIso();
   const anoHoje = Number(hoje.slice(0, 4));
   const [aberto, setAberto] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
+  const [novo, setNovo] = useState(false);
+  const [enviado, setEnviado] = useState(false);
 
-  const marcas = useMemo(
-    () => marcasDoAno(ano, [...datasDoAno(ano, localidade), ...datasDasPontes(pontes)], aniversarios, pedidos),
-    [ano, localidade, pontes, aniversarios, pedidos],
-  );
+  // A pesquisa filtra datas, aniversários e pedidos; vazia, mostra tudo.
+  const marcas = useMemo(() => {
+    const datas = filtrar([...datasDoAno(ano, localidade), ...datasDasPontes(pontes)], busca, (d) => [d.nome, rotulosData[d.tipo]]);
+    const anivs = filtrar(aniversarios, busca, (a) => [a.user.nome, "aniversario"]);
+    const peds = filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]);
+    return marcasDoAno(ano, datas, anivs, peds);
+  }, [ano, localidade, pontes, aniversarios, pedidos, busca]);
   const abertoMarcas = aberto ? marcas.get(aberto) : undefined;
   const listaDatas = useMemo(
     () => [...marcas.values()].flatMap((m) => m.datas).sort((a, b) => a.iso.localeCompare(b.iso) || a.nome.localeCompare(b.nome, "pt")),
@@ -62,6 +74,22 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-col items-start gap-3">
+        {podeCriar && (
+          <button type="button" className={botao} onClick={() => setNovo(true)}>
+            Novo pedido
+          </button>
+        )}
+        <div className="w-full max-w-md">
+          <CampoBusca id="busca-calendario" rotulo="Pesquisar no calendário" valor={busca} onChange={setBusca} />
+        </div>
+      </div>
+      {enviado && (
+        <p role="status" className="rounded-controlo bg-primaria-suave px-3 py-2 text-sm text-texto">
+          Pedido enviado. Fica pendente até ser aprovado.
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2" role="group" aria-label="Escolher ano">
           <button type="button" className={botaoSeta} aria-label="Ano anterior" title="Ano anterior" onClick={() => aoMudarAno(ano - 1)}>
@@ -231,6 +259,34 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
           </ul>
         )}
       </section>
+
+      {novo && (
+        <div className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto scroll-fino bg-barra/50 p-4 pt-16" onClick={() => setNovo(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="novo-pedido"
+            className="relative w-full max-w-lg rounded-cartao bg-painel p-6 shadow-suave"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.key === "Escape" && setNovo(false)}
+          >
+            <button type="button" className={`${botaoSec} absolute right-4 top-4`} onClick={() => setNovo(false)}>
+              Fechar
+            </button>
+            <PedidoForm
+              dataInicial={aberto ?? ""}
+              className="flex flex-col gap-4"
+              onCriado={(avisos) => {
+                aoCriar?.();
+                if (avisos.length === 0) {
+                  setNovo(false);
+                  setEnviado(true);
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
