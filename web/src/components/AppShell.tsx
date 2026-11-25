@@ -9,6 +9,7 @@ import type { Papel } from "@/lib/api";
 import { primeiroNome } from "@/lib/saudacao";
 import {
   IconeAgenda,
+  IconeCalendario,
   IconeDashboard,
   IconeDefinicoes,
   IconeFuncionarios,
@@ -103,6 +104,7 @@ export default function AppShell({
     { href: "/dashboard", texto: "Dashboard", Icone: IconeDashboard },
     { href: "/", texto: user.papel === "admin" ? "Pedidos" : "Os meus pedidos", Icone: IconePedidos },
     { href: "/agenda", texto: "Agenda", Icone: IconeAgenda },
+    { href: "/calendario", texto: "Calendário", Icone: IconeCalendario },
   ];
   if (user.papel === "admin") {
     links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
