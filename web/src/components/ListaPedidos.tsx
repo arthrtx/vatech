@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import type { Pedido } from "@/lib/api";
+import { horasDoPedido } from "@/lib/agenda";
 import { filtrar } from "@/lib/busca";
 import { estados, formatarData, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
@@ -108,6 +109,7 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
               </p>
               <p className="text-sm text-texto-suave">
                 {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
+                {horasDoPedido(p) && ` · ${horasDoPedido(p)}`}
               </p>
               {p.observacao && <p className="mt-1 break-words text-sm">{p.observacao}</p>}
               <AnexosDoPedido pedidoId={p.id} anexos={p.anexos} />

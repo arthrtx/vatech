@@ -9,6 +9,7 @@ import {
   estagioCobre,
   haSobreposicao,
   hojeIso,
+  horasDoPedido,
   inicioSemana,
   isoDe,
   mesAnterior,
@@ -529,6 +530,12 @@ export default function Agenda({
                     <dd>
                       {pedidoSel.data_inicio} a {pedidoSel.data_fim}
                     </dd>
+                    {horasDoPedido(pedidoSel) && (
+                      <>
+                        <dt className="font-medium">Horas</dt>
+                        <dd>{horasDoPedido(pedidoSel)}</dd>
+                      </>
+                    )}
                     <dt className="font-medium">Dias</dt>
                     <dd>{diasDoPedido(pedidoSel)}</dd>
                     <dt className="font-medium">Estado</dt>

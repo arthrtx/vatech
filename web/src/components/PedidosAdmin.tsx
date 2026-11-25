@@ -1,5 +1,6 @@
 "use client";
 
+import { horasDoPedido } from "@/lib/agenda";
 import PontoUrgente from "./PontoUrgente";
 import { useState } from "react";
 import type { Pedido } from "@/lib/api";
@@ -90,6 +91,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando
                   </p>
                   <p className="text-sm text-texto-suave">
                     {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
+                    {horasDoPedido(p) && ` · ${horasDoPedido(p)}`}
                   </p>
                 </div>
               </div>

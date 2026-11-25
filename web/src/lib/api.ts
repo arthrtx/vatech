@@ -88,6 +88,9 @@ export interface Pedido {
   subtipo: SubtipoPedido | null;
   data_inicio: string;
   data_fim: string;
+  /** Só ausências: horas (HH:MM) em que a pessoa está fora. */
+  hora_inicio?: string | null;
+  hora_fim?: string | null;
   observacao: string | null;
   urgente?: boolean;
   estado: EstadoPedido;
@@ -116,6 +119,8 @@ export interface PedidoAgenda {
   empresa_id?: number;
   user_id?: number;
   subtipo?: SubtipoPedido | null;
+  hora_inicio?: string | null;
+  hora_fim?: string | null;
   observacao?: string | null;
   urgente?: boolean;
   decidido_por?: number | null;
@@ -128,6 +133,8 @@ export interface NovoPedido {
   subtipo?: SubtipoPedido;
   data_inicio: string;
   data_fim: string;
+  hora_inicio?: string;
+  hora_fim?: string;
   observacao?: string;
   urgente?: boolean;
 }

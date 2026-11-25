@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { api, type User } from "@/lib/api";
-import { diasDoPedido, hojeIso } from "@/lib/agenda";
+import { diasDoPedido, hojeIso, horasDoPedido } from "@/lib/agenda";
 import { contarPorEstado } from "@/lib/dashboard";
 import { estados, tipos } from "@/lib/rotulos";
 import { useFonte } from "@/lib/useFonte";
@@ -92,7 +92,7 @@ export default function DashboardFuncionario({ user }: { user: User }) {
                       {tipos[p.tipo]} · {estados[p.estado]}
                     </p>
                     <p className="text-sm text-texto-suave">
-                      {p.data_inicio === p.data_fim ? p.data_inicio : `${p.data_inicio} a ${p.data_fim}`} · {nDias(diasDoPedido(p))}
+                      {p.data_inicio === p.data_fim ? p.data_inicio : `${p.data_inicio} a ${p.data_fim}`} · {horasDoPedido(p) ? horasDoPedido(p) : nDias(diasDoPedido(p))}
                     </p>
                   </div>
                 </li>

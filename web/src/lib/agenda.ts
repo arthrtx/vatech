@@ -73,6 +73,10 @@ export function intervaloDoMes(m: Mes): { de: string; ate: string } {
   return { de: c[0].iso, ate: c[c.length - 1].iso };
 }
 
+/** "10:00 às 12:00" quando o pedido (ausência) tem horas; senão vazio. */
+export const horasDoPedido = (p: { hora_inicio?: string | null; hora_fim?: string | null }) =>
+  p.hora_inicio && p.hora_fim ? `${p.hora_inicio} às ${p.hora_fim}` : "";
+
 /** Recusados nunca aparecem na agenda. */
 export const visiveis = (pedidos: Pedido[]) => pedidos.filter((p) => p.estado !== "recusado" && p.estado !== "cancelado");
 
