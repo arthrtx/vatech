@@ -22,7 +22,12 @@ const rotulosData: Record<TipoData, string> = {
   ponte: "Ponte",
 };
 const MAX_FAIXAS = 3;
-const cheio: Record<TipoPedido, string> = { ferias: "bg-positivo text-texto", ausencia: "bg-violeta text-texto", licenca: "bg-primaria text-white" };
+// Tons suaves com contorno (a cor viva fica só no contorno), para a faixa ler-se sem gritar.
+const cheio: Record<TipoPedido, string> = {
+  ferias: "bg-positivo/30 text-texto ring-1 ring-inset ring-positivo",
+  ausencia: "bg-violeta/40 text-texto ring-1 ring-inset ring-violeta",
+  licenca: "bg-primaria/15 text-texto ring-1 ring-inset ring-primaria/50",
+};
 const vazado: Record<TipoPedido, string> = { ferias: "border-positivo", ausencia: "border-violeta", licenca: "border-primaria" };
 /** Pedido aprovado: faixa cheia; pendente: faixa vazada (como os traços da Agenda); ponte: contorno primário suave. */
 const estiloBarra = (tipo: "ponte" | TipoPedido, pendente: boolean) =>
@@ -76,7 +81,7 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
 
       {agenda.erro && <p className="text-sm text-texto-suave">Não foi possível carregar as ausências.</p>}
 
-      <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="flex flex-col gap-1">
+      <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="flex flex-col gap-2">
         <div role="row" className="grid grid-cols-7">
           {diasSemana.map((d, k) => (
             <div key={k} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
@@ -93,7 +98,7 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
           const visiveisB = barras.filter((b) => b.faixa < MAX_FAIXAS);
           const escondidas = barras.length - visiveisB.length;
           return (
-            <div key={semana[0].iso} role="presentation" className="flex flex-col gap-0.5">
+            <div key={semana[0].iso} role="presentation" className="flex flex-col gap-1 border-b border-linha/50 pb-2 last:border-b-0 last:pb-0">
               <div role="row" className="grid grid-cols-7">
                 {semana.map((c) => {
                   if (!c.doMes) return <div key={c.iso} role="gridcell" aria-hidden="true" />;
@@ -126,15 +131,15 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
                 })}
               </div>
               {barras.length > 0 && (
-                <div aria-hidden="true" className="grid auto-rows-[1rem] grid-cols-7 gap-y-0.5">
+                <div aria-hidden="true" className="grid auto-rows-[1.25rem] grid-cols-7 gap-y-1">
                   {visiveisB.map((b) => (
                     <span
                       key={b.chave}
                       title={`${b.texto} · ${b.tipo === "ponte" ? "Ponte" : tipos[b.tipo]}${b.pendente ? " (pendente)" : ""}`}
                       style={{ gridColumn: `${b.de + 1} / ${b.ate + 2}`, gridRow: b.faixa + 1 }}
-                      className={`mx-0.5 truncate px-1.5 text-[0.625rem] font-medium leading-4 ${estiloBarra(b.tipo, b.pendente)} ${
-                        b.abreAqui ? "rounded-l-full" : "-ml-0.5 rounded-l-none"
-                      } ${b.fechaAqui ? "rounded-r-full" : "-mr-0.5 rounded-r-none"}`}
+                      className={`truncate px-2 text-[0.6875rem] font-medium leading-5 ${estiloBarra(b.tipo, b.pendente)} ${
+                        b.abreAqui ? "ml-1 rounded-l-full" : "rounded-l-none"
+                      } ${b.fechaAqui ? "mr-1 rounded-r-full" : "rounded-r-none"} ${b.abreAqui ? "" : "opacity-80"}`}
                     >
                       {b.abreAqui || b.de === 0 ? b.texto.split(" ")[0] : ""}
                     </span>
