@@ -59,6 +59,19 @@ export interface Anexo {
   tamanho: number;
 }
 
+export type TipoCompromisso = "reuniao" | "chamada" | "lembrete" | "outro";
+
+/** Compromisso da agenda pessoal (só quem o marcou o vê). Horas em HH:MM. */
+export interface Compromisso {
+  id: number;
+  data: string;
+  hora_inicio: string | null;
+  hora_fim: string | null;
+  titulo: string;
+  tipo: TipoCompromisso;
+  descricao: string | null;
+}
+
 export interface Ponte {
   id: number;
   nome: string;
@@ -274,6 +287,17 @@ export const api = {
   criarPonte: async (b: { nome: string; data_inicio: string; data_fim: string }) =>
     (await request<{ data: Ponte }>("POST", "/pontes", b)).data,
   apagarPonte: (id: number) => request<void>("DELETE", `/pontes/${id}`),
+  compromissos: async (de: string, ate: string) =>
+    (await request<{ data: Compromisso[] }>("GET", `/compromissos?de=${de}&ate=${ate}`)).data,
+  criarCompromisso: async (b: {
+    data: string;
+    titulo: string;
+    tipo: TipoCompromisso;
+    hora_inicio?: string;
+    hora_fim?: string;
+    descricao?: string;
+  }) => (await request<{ data: Compromisso }>("POST", "/compromissos", b)).data,
+  apagarCompromisso: (id: number) => request<void>("DELETE", `/compromissos/${id}`),
   aniversarios: async (de: string, ate: string) =>
     (await request<{ data: Aniversario[] }>("GET", `/aniversarios?de=${de}&ate=${ate}`)).data,
   criarPedido: (b: NovoPedido) =>

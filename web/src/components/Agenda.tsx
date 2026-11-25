@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { Aniversario, PedidoAgenda as Pedido, Presenca, TipoPedido } from "@/lib/api";
+import { api, mensagemDeErro, type Aniversario, type Compromisso, type PedidoAgenda as Pedido, type Presenca, type TipoPedido } from "@/lib/api";
 import { aplicarFiltrosAgenda, contarAtivos, type FiltrosAgenda } from "@/lib/filtros";
 import {
   cobreDia,
@@ -32,7 +32,9 @@ import { subtipos, tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
 import { botao, botaoSec, label } from "./ui";
 import GrupoChips from "./GrupoChips";
+import CompromissoForm, { tiposCompromisso } from "./CompromissoForm";
 import { IconeSeta } from "./Icones";
+import JanelaFormulario from "./JanelaFormulario";
 import PainelFiltros from "./PainelFiltros";
 import PedidoForm from "./PedidoForm";
 import Seletor from "./Seletor";
@@ -95,6 +97,8 @@ export default function Agenda({
   estagios = [],
   aniversarios = [],
   pontes = [],
+  compromissos = [],
+  aoMudarCompromissos,
 }: {
   pedidos: Pedido[];
   admin: boolean;
@@ -114,10 +118,16 @@ export default function Agenda({
   aniversarios?: Aniversario[];
   /** Pontes da empresa (registadas pelo admin) a mostrar como dias de descanso. */
   pontes?: PonteDia[];
+  /** Compromissos da agenda pessoal no intervalo visível. */
+  compromissos?: Compromisso[];
+  /** Chamado depois de marcar ou apagar um compromisso, para recarregar a lista. */
+  aoMudarCompromissos?: () => void;
 }) {
   const [localidade] = useLocalidade();
   const [novo, setNovo] = useState<{ data: string } | null>(null);
   const [enviado, setEnviado] = useState(false);
+  const [novoComp, setNovoComp] = useState<{ data: string } | null>(null);
+  const [erroComp, setErroComp] = useState<string | null>(null);
   const [mes, setMes] = useState(() => mesDe(hoje));
   useEffect(() => {
     aoMudarMes?.(mes);
@@ -206,6 +216,17 @@ export default function Agenda({
   const presencasSel = sel ? presencasDoDia(presencas, sel.iso) : [];
   const estagiosSel = sel ? estagios.filter((e) => estagioCobre(e, sel.iso)) : [];
   const doDiaSel = sel ? filtrados.filter((p) => cobreDia(p, sel.iso)) : [];
+  const compromissosDoDia = (iso: string) => compromissos.filter((c) => c.data === iso);
+  const compSel = sel ? compromissosDoDia(sel.iso) : [];
+  async function apagarCompromisso(c: Compromisso) {
+    setErroComp(null);
+    try {
+      await api.apagarCompromisso(c.id);
+      aoMudarCompromissos?.();
+    } catch (e) {
+      setErroComp(mensagemDeErro(e));
+    }
+  }
   const sobreposicaoSel = sel ? haSobreposicao(visiveis(pedidos).filter((p) => cobreDia(p, sel.iso))) : false;
 
   const grupos = useMemo(() => {
@@ -423,6 +444,11 @@ export default function Agenda({
                   {Number(iso.slice(8, 10))}
                 </span>
                 <span className="text-xs text-texto-suave">{n === 0 ? "livre" : `${n} fora`}</span>
+                {compromissosDoDia(iso).length > 0 && (
+                  <span className="rounded-full bg-primaria-suave px-2 text-[0.6875rem] font-medium leading-5 text-texto">
+                    {compromissosDoDia(iso).length} na agenda
+                  </span>
+                )}
                 {aniversariosDoDia(iso).length > 0 && (
                   <span
                     aria-hidden="true"
@@ -516,6 +542,50 @@ export default function Agenda({
                 </div>
               ) : (
                 <>
+                  <section aria-labelledby="ag-compromissos" className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 id="ag-compromissos" className="text-base font-semibold">
+                        Agenda do dia
+                      </h4>
+                      {sel.iso >= hoje && (
+                        <button type="button" className={botaoSec} onClick={() => setNovoComp({ data: sel.iso })}>
+                          Marcar na agenda
+                        </button>
+                      )}
+                    </div>
+                    {erroComp && (
+                      <p role="alert" className="rounded-controlo border border-rosa bg-rosa-suave px-3 py-2 text-sm text-texto">
+                        {erroComp}
+                      </p>
+                    )}
+                    {compSel.length === 0 ? (
+                      <p className="text-sm text-texto-suave">
+                        {sel.iso < hoje ? "Nada na agenda neste dia." : "Nada marcado na agenda para este dia."}
+                      </p>
+                    ) : (
+                      <ul className="flex flex-col gap-1.5">
+                        {compSel.map((c) => (
+                          <li key={c.id} className="flex flex-wrap items-start justify-between gap-2 rounded-controlo bg-campo px-3 py-2 text-sm">
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-medium [overflow-wrap:anywhere]">{c.titulo}</span>
+                              <span className="block text-texto-suave">
+                                {tiposCompromisso[c.tipo]} · {c.hora_inicio ? `${c.hora_inicio} às ${c.hora_fim}` : "o dia todo"}
+                              </span>
+                              {c.descricao && <span className="mt-1 block break-words">{c.descricao}</span>}
+                            </span>
+                            <button
+                              type="button"
+                              className={`${botaoSec} min-h-9 px-3 py-1`}
+                              aria-label={`Apagar ${c.titulo}`}
+                              onClick={() => apagarCompromisso(c)}
+                            >
+                              Apagar
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
                   {especiaisDe(sel.iso).map((d) => (
                     <p key={d.nome} className={`self-start rounded-controlo px-3 py-2 text-sm ${pilulaData[d.tipo]}`}>
                       <span className="font-semibold">{rotuloData(d)}</span> · {d.nome}
@@ -652,6 +722,19 @@ export default function Agenda({
             />
           </div>
         </div>
+      )}
+      {novoComp && (
+        <JanelaFormulario titulo="Marcar na agenda" aoFechar={() => setNovoComp(null)}>
+          <CompromissoForm
+            dataInicial={novoComp.data}
+            aoCancelar={() => setNovoComp(null)}
+            aoCriar={(c) => {
+              setNovoComp(null);
+              aoMudarCompromissos?.();
+              irPara({ iso: c.data });
+            }}
+          />
+        </JanelaFormulario>
       )}
     </div>
   );
