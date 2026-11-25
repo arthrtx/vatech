@@ -331,3 +331,23 @@ it('devolve os erros de validacao em portugues', function () {
         ->assertJsonPath('errors.email.0', 'Já existe um registo com este email.')
         ->assertJsonPath('errors.password.0', 'O campo palavra-passe tem de ter pelo menos 8 caracteres.');
 });
+
+it('devolve as mensagens de erro do framework em portugues', function () {
+    $this->getJson('/api/me')->assertStatus(401)->assertExactJson(['message' => 'Não autenticado.']);
+
+    $this->getJson('/api/rota-inexistente')->assertStatus(404)->assertExactJson(['message' => 'Recurso não encontrado.']);
+
+    Sanctum::actingAs(User::factory()->create());
+    $this->getJson('/api/funcionarios')->assertStatus(403)->assertExactJson(['message' => 'Não tem permissão para esta ação.']);
+    $this->deleteJson('/api/login')->assertStatus(405)->assertExactJson(['message' => 'Método não permitido para este recurso.']);
+});
+
+it('devolve 429 em portugues quando excede o limite', function () {
+    Sanctum::actingAs(User::factory()->create());
+
+    foreach (range(1, 5) as $_) {
+        $this->putJson('/api/me', [])->assertStatus(422);
+    }
+
+    $this->putJson('/api/me', [])->assertStatus(429)->assertExactJson(['message' => 'Demasiados pedidos. Tente de novo dentro de instantes.']);
+});
