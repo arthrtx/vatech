@@ -80,6 +80,8 @@ export interface Pedido {
   estado: EstadoPedido;
   decidido_por: number | null;
   decidido_em: string | null;
+  /** Só licenças: quando o admin viu o aviso. */
+  visto_em?: string | null;
   motivo_recusa: string | null;
   user?: { id: number; nome: string };
 }
@@ -306,6 +308,9 @@ export const api = {
     if (!res.ok) throw new ApiError(res.status, "Não foi possível abrir o ficheiro.");
     return URL.createObjectURL(await res.blob());
   },
+  licencasPorVer: async () => (await request<{ data: Pedido[] }>("GET", "/pedidos?licencas_por_ver=1")).data,
+  marcarLicencaVista: async (id: number) =>
+    (await request<{ data: Pedido }>("POST", `/pedidos/${id}/visto`)).data,
   aprovar: async (id: number) =>
     (await request<{ data: Pedido }>("POST", `/pedidos/${id}/aprovar`)).data,
   recusar: async (id: number, motivo_recusa: string) =>

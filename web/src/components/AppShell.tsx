@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import AvisoLicencas from "./AvisoLicencas";
 import type { Papel } from "@/lib/api";
 import { primeiroNome } from "@/lib/saudacao";
 import {
@@ -235,7 +236,10 @@ export default function AppShell({
               </Link>
             </div>
           </header>
-          <main className={`min-w-0 flex-1 md:pr-2 ${ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : ""}`}>{children}</main>
+          <main className={`min-w-0 flex-1 md:pr-2 ${ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : ""}`}>
+            {user.papel === "admin" && <AvisoLicencas />}
+            {children}
+          </main>
         </div>
       </div>
       {aSair && (
