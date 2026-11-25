@@ -1,5 +1,5 @@
 // Ícones de linha no estilo da referência (traço fino, pontas arredondadas, monocromático).
-// SVG inline para não acrescentar dependências. Sem setas nem chevrons (docs/DESIGN.md).
+// SVG inline para não acrescentar dependências. Sem setas nem chevrons (docs/DESIGN.md), exceto IconeSeta.
 
 type Props = { className?: string };
 
@@ -166,6 +166,15 @@ export function IconeFechar(p: Props) {
   return (
     <Base {...p}>
       <path d="M6 6l12 12M18 6 6 18" />
+    </Base>
+  );
+}
+
+/** Seta de navegação (anterior/seguinte); exceção pedida para o seletor de ano do Calendário. */
+export function IconeSeta({ direcao, ...p }: Props & { direcao: "esquerda" | "direita" }) {
+  return (
+    <Base {...p}>
+      <path d={direcao === "esquerda" ? "M19 12H5M11 6l-6 6 6 6" : "M5 12h14M13 6l6 6-6 6"} />
     </Base>
   );
 }

@@ -8,11 +8,14 @@ import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
+import { IconeSeta } from "./Icones";
 import { botaoSec } from "./ui";
 
 const diasSemana = ["S", "T", "Q", "Q", "S", "S", "D"];
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
 const botaoAno = `${botaoSec} min-h-9 px-3 py-1`;
+const botaoSeta =
+  "flex h-10 w-10 items-center justify-center rounded-full bg-painel/70 text-texto shadow-suave ring-1 ring-white/70 transition hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-offset-2 dark:ring-white/10";
 
 const rotulosData: Record<TipoData, string> = {
   feriado: "Feriado nacional",
@@ -61,14 +64,14 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2" role="group" aria-label="Escolher ano">
-          <button type="button" className={botaoAno} onClick={() => aoMudarAno(ano - 1)}>
-            Ano anterior
+          <button type="button" className={botaoSeta} aria-label="Ano anterior" title="Ano anterior" onClick={() => aoMudarAno(ano - 1)}>
+            <IconeSeta direcao="esquerda" className="h-5 w-5" />
           </button>
-          <p className="min-w-16 text-center text-lg font-semibold tabular-nums" aria-live="polite">
+          <p className="min-w-24 rounded-full bg-painel/70 px-5 py-2 text-center text-lg font-semibold tabular-nums shadow-suave ring-1 ring-white/70 dark:ring-white/10" aria-live="polite">
             {ano}
           </p>
-          <button type="button" className={botaoAno} onClick={() => aoMudarAno(ano + 1)}>
-            Ano seguinte
+          <button type="button" className={botaoSeta} aria-label="Ano seguinte" title="Ano seguinte" onClick={() => aoMudarAno(ano + 1)}>
+            <IconeSeta direcao="direita" className="h-5 w-5" />
           </button>
         </div>
         {ano !== anoHoje && (
