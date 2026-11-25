@@ -1,10 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, type ReactNode } from "react";
 import type { Pedido } from "@/lib/api";
 import { filtrar } from "@/lib/busca";
 import { estados, formatarData, subtipos, tipos } from "@/lib/rotulos";
-import { hojeIso } from "@/lib/agenda";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import AnexosDoPedido from "./AnexosDoPedido";
 import PontoUrgente from "./PontoUrgente";
@@ -21,7 +20,7 @@ interface Props {
   /** Se existirem, os pedidos pendentes mostram "Editar" e "Apagar". */
   onEditar?: (p: Pedido) => void;
   onApagar?: (p: Pedido) => Promise<void> | void;
-  /** Férias aprovadas que ainda não terminaram mostram "Cancelar férias". */
+  /** Só as férias aprovadas mostram "Apagar" (marca o pedido como cancelado). */
   onCancelar?: (p: Pedido) => Promise<void> | void;
   /** Admin na sua própria lista: pode apagar o que marcou, mesmo já aprovado. */
   apagarAprovados?: boolean;
@@ -31,9 +30,6 @@ const botaoAcao = `${botaoSec} min-h-9 px-3 py-1`;
 const botaoApagar = `${botaoPerigo} min-h-9 px-3 py-1`;
 
 /** `formulario` (opcional) fica à esquerda; pesquisa e filtros ao lado, a lista por baixo. */
-/** Licença comunicada que ainda não começou: o próprio pode cancelá-la. */
-const licencaPorComecar = (p: Pedido) => p.tipo === "licenca" && p.estado === "aprovado" && p.data_inicio.slice(0, 10) >= hojeIso();
-
 export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar, onCancelar, apagarAprovados = false }: Props) {
   const [aCancelar, setACancelar] = useState<number | null>(null);
   const [aApagar, setAApagar] = useState<number | null>(null);
@@ -103,11 +99,11 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
                 <p className="mt-1 break-words text-sm">Motivo da recusa: {p.motivo_recusa}</p>
               )}
               </div>
-              {onCancelar && p.tipo === "ferias" && p.estado === "aprovado" && p.data_fim.slice(0, 10) >= hojeIso() && (
+              {onCancelar && p.tipo === "ferias" && p.estado === "aprovado" && (
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   {aCancelar === p.id ? (
                     <>
-                      <span className="text-sm font-medium">Cancelar estas férias?</span>
+                      <span className="text-sm font-medium">Apagar estas férias?</span>
                       <button
                         type="button"
                         className={`${botaoApagar} font-semibold`}
@@ -116,7 +112,7 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
                           setACancelar(null);
                         }}
                       >
-                        Sim, cancelar
+                        Sim, apagar
                       </button>
                       <button type="button" className={botaoAcao} onClick={() => setACancelar(null)}>
                         Voltar
@@ -124,12 +120,12 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
                     </>
                   ) : (
                     <button type="button" className={botaoApagar} onClick={() => setACancelar(p.id)}>
-                      Cancelar férias
+                      Apagar
                     </button>
                   )}
                 </div>
               )}
-              {(p.estado === "pendente" ? onEditar || onApagar : (apagarAprovados || licencaPorComecar(p)) && onApagar) && (
+              {(p.estado === "pendente" ? onEditar || onApagar : apagarAprovados && onApagar) && (
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   {aApagar === p.id ? (
                     <>
