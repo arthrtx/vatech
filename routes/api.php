@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AnexoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompromissoController;
 use App\Http\Controllers\FuncionarioController;
 use App\Http\Controllers\LimiteController;
 use App\Http\Controllers\OcorrenciaController;
@@ -31,6 +32,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/agenda', [AgendaController::class, 'index']);
     Route::get('/aniversarios', [AgendaController::class, 'aniversarios']);
     Route::get('/pontes', [PonteController::class, 'index']);
+    Route::get('/compromissos', [CompromissoController::class, 'index']);
+    Route::post('/compromissos', [CompromissoController::class, 'store'])->middleware('throttle:60,1');
+    Route::delete('/compromissos/{id}', [CompromissoController::class, 'destroy']);
     Route::get('/pedidos/{id}/anexos/{anexo}', [AnexoController::class, 'download']);
 
     Route::middleware('papel:admin')->group(function () {

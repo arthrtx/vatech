@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Agenda from "@/components/Agenda";
 import PontesAdmin from "@/components/PontesAdmin";
-import { api, mensagemDeErro, type Ponte, type Aniversario, type PedidoAgenda, type Presenca } from "@/lib/api";
+import { api, mensagemDeErro, type Ponte, type Aniversario, type Compromisso, type PedidoAgenda, type Presenca } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { estagiosDe, hojeIso, intervaloDoMes, mesDe, type Estagio, type Mes } from "@/lib/agenda";
 import { erro as erroCls } from "@/components/ui";
@@ -61,6 +61,20 @@ function Conteudo() {
     };
   }, [de, ate, chave, versao]);
   const pontes = pont?.chave === chave ? pont.lista : [];
+
+  // Compromissos da agenda pessoal; se falhar, a agenda mostra-se sem eles.
+  const [comp, setComp] = useState<{ chave: string; lista: Compromisso[] } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    Promise.resolve()
+      .then(() => api.compromissos(de, ate))
+      .then((lista) => vivo && setComp({ chave, lista: lista ?? [] }))
+      .catch(() => vivo && setComp({ chave, lista: [] }));
+    return () => {
+      vivo = false;
+    };
+  }, [de, ate, chave, versao]);
+  const compromissos = comp?.chave === chave ? comp.lista : [];
 
   // Presenças do intervalo (a API devolve só as próprias a quem não é admin).
   const [pres, setPres] = useState<{ chave: string; lista: Presenca[]; erro: boolean } | null>(null);
@@ -121,6 +135,8 @@ function Conteudo() {
         estagios={estagios}
         aniversarios={aniversarios}
         pontes={pontes}
+        compromissos={compromissos}
+        aoMudarCompromissos={recarregar}
         pedidos={pedidos}
         admin={admin}
         nomeProprio={user?.nome}

@@ -234,4 +234,37 @@ describe("Agenda", () => {
     escolher("Funcionário", "Rui");
     expect(screen.getByRole("status").textContent).toBe("1 de 2 pedidos neste mês");
   });
+
+  describe("agenda do dia (compromissos)", () => {
+    const comp = [
+      { id: 1, data: "2026-12-01", hora_inicio: "10:00", hora_fim: "11:00", titulo: "Reunião com o cliente", tipo: "reuniao" as const, descricao: "Sala 2" },
+      { id: 2, data: "2026-12-03", hora_inicio: null, hora_fim: null, titulo: "Entregar relatório", tipo: "lembrete" as const, descricao: null },
+    ];
+
+    it("mostra os compromissos do dia aberto e a contagem na semana", () => {
+      render(<Agenda pedidos={[]} admin={false} hoje="2026-12-01" compromissos={comp} />);
+      const painel = screen.getByRole("region", { name: "Pedidos de 2026-12-01" });
+      expect(painel.textContent).toContain("Reunião com o cliente");
+      expect(painel.textContent).toContain("Reunião · 10:00 às 11:00");
+      expect(painel.textContent).toContain("Sala 2");
+      expect(painel.textContent).not.toContain("Entregar relatório");
+      expect(screen.getAllByText("1 na agenda").length).toBe(2);
+    });
+
+    it("dia sem hora conta como o dia todo", () => {
+      render(<Agenda pedidos={[]} admin={false} hoje="2026-12-03" compromissos={comp} />);
+      expect(screen.getByText("Lembrete · o dia todo")).toBeTruthy();
+    });
+
+    it("só deixa marcar a partir de hoje", () => {
+      render(<Agenda pedidos={[]} admin={false} hoje="2026-12-01" compromissos={comp} />);
+      expect(screen.getByRole("button", { name: "Marcar na agenda" })).toBeTruthy();
+      fireEvent.click(screen.getByLabelText("Semana anterior")); // 24 de novembro, já passou
+      expect(screen.queryByRole("button", { name: "Marcar na agenda" })).toBeNull();
+      expect(screen.getByText("Nada na agenda neste dia.")).toBeTruthy();
+      fireEvent.click(screen.getByLabelText("Semana seguinte"));
+      fireEvent.click(screen.getByRole("button", { name: "Marcar na agenda" }));
+      expect(screen.getByRole("dialog", { name: "Marcar na agenda" })).toBeTruthy();
+    });
+  });
 });
