@@ -48,6 +48,10 @@ class PedidoController extends Controller
 
         // A licença é um direito do trabalhador: não fica à espera de aprovação, o admin só é avisado.
         $licenca = $dados['tipo'] === 'licenca' ? ['estado' => 'aprovado', 'decidido_em' => now()] : [];
+        // O admin não pede a ninguém: o que marca para si fica aprovado e sem aviso.
+        if ($user->isAdmin()) {
+            $licenca = ['estado' => 'aprovado', 'decidido_por' => $user->id, 'decidido_em' => now(), 'visto_em' => now()];
+        }
         $pedido = Pedido::create([...$dados, ...$licenca, 'user_id' => $user->id, 'empresa_id' => $user->empresa_id]);
 
         $resposta = ['data' => $pedido->refresh()->load('anexos')];
@@ -121,8 +125,8 @@ class PedidoController extends Controller
         // 404 para pedidos de outros utilizadores ou empresas (nao revela existencia).
         $pedido = Pedido::where('empresa_id', $user->empresa_id)->where('user_id', $user->id)->findOrFail($id);
 
-        $cancelavel = $licencaPorComecar && $pedido->tipo === 'licenca'
-            && $pedido->data_inicio->format('Y-m-d') >= now('Europe/Lisbon')->toDateString();
+        $cancelavel = $licencaPorComecar && ($user->isAdmin() || ($pedido->tipo === 'licenca'
+            && $pedido->data_inicio->format('Y-m-d') >= now('Europe/Lisbon')->toDateString()));
         abort_if($pedido->estado !== 'pendente' && ! $cancelavel, 409, 'Só é possível alterar pedidos pendentes.');
 
         return $pedido;

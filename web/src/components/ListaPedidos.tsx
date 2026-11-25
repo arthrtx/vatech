@@ -23,6 +23,8 @@ interface Props {
   onApagar?: (p: Pedido) => Promise<void> | void;
   /** Férias aprovadas que ainda não terminaram mostram "Cancelar férias". */
   onCancelar?: (p: Pedido) => Promise<void> | void;
+  /** Admin na sua própria lista: pode apagar o que marcou, mesmo já aprovado. */
+  apagarAprovados?: boolean;
 }
 
 const botaoAcao = `${botaoSec} min-h-9 px-3 py-1`;
@@ -32,7 +34,7 @@ const botaoApagar = `${botaoPerigo} min-h-9 px-3 py-1`;
 /** Licença comunicada que ainda não começou: o próprio pode cancelá-la. */
 const licencaPorComecar = (p: Pedido) => p.tipo === "licenca" && p.estado === "aprovado" && p.data_inicio.slice(0, 10) >= hojeIso();
 
-export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar, onCancelar }: Props) {
+export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar, onCancelar, apagarAprovados = false }: Props) {
   const [aCancelar, setACancelar] = useState<number | null>(null);
   const [aApagar, setAApagar] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
@@ -127,7 +129,7 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
                   )}
                 </div>
               )}
-              {(p.estado === "pendente" ? onEditar || onApagar : licencaPorComecar(p) && onApagar) && (
+              {(p.estado === "pendente" ? onEditar || onApagar : (apagarAprovados || licencaPorComecar(p)) && onApagar) && (
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   {aApagar === p.id ? (
                     <>

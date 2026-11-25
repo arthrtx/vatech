@@ -45,10 +45,10 @@ it('devolve 403 ao funcionario nas rotas de admin', function () {
     $this->postJson('/api/pedidos/1/aprovar')->assertStatus(403);
 });
 
-it('devolve 403 ao admin ao criar pedido', function () {
+it('o pedido que o admin cria para si fica aprovado logo', function () {
     Sanctum::actingAs(User::factory()->admin()->create());
 
-    $this->postJson('/api/pedidos', novoPedido())->assertStatus(403);
+    $this->postJson('/api/pedidos', novoPedido())->assertCreated()->assertJsonPath('data.estado', 'aprovado');
 });
 
 it('faz logout e devolve /me', function () {
@@ -297,13 +297,14 @@ it('devolve 404 ao editar ou apagar pedidos de outro utilizador', function () {
     expect(Pedido::find($alheio->id))->not->toBeNull();
 });
 
-it('devolve 403 ao admin ao editar ou apagar pedidos', function () {
+it('o admin nao edita nem apaga pedidos de outros', function () {
     $func = User::factory()->create();
     $pedido = Pedido::factory()->create(['user_id' => $func->id, 'empresa_id' => $func->empresa_id, 'estado' => 'pendente']);
     Sanctum::actingAs(User::factory()->admin()->create(['empresa_id' => $func->empresa_id]));
 
-    $this->putJson("/api/pedidos/{$pedido->id}", novoPedido())->assertStatus(403);
-    $this->deleteJson("/api/pedidos/{$pedido->id}")->assertStatus(403);
+    $this->putJson("/api/pedidos/{$pedido->id}", novoPedido())->assertStatus(404);
+    $this->deleteJson("/api/pedidos/{$pedido->id}")->assertStatus(404);
+    expect(Pedido::find($pedido->id))->not->toBeNull();
 });
 
 it('devolve 404 ao aprovar ou recusar pedido de funcionario apagado', function () {
