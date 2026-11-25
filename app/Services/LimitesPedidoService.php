@@ -64,14 +64,14 @@ class LimitesPedidoService
         return $total;
     }
 
-    /** Utilizadores nao-admin da empresa do admin, com o cumulo e as ferias por marcar. */
+    /** Funcionarios da empresa do admin, com o cumulo e as ferias por marcar. Estagiarios nao tiram ferias. */
     public function feriasResumo(User $admin): array
     {
         $ano = now()->year;
         $limite = $this->limiteDias($admin, 'ferias');
 
         return User::where('empresa_id', $admin->empresa_id)
-            ->where('papel', '!=', 'admin')
+            ->where('papel', 'funcionario')
             ->orderBy('nome')
             ->get()
             ->map(function (User $u) use ($limite, $ano) {

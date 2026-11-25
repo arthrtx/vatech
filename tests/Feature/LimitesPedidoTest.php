@@ -250,6 +250,17 @@ describe('cumulo de ferias', function () {
         ], 'prazo_ferias' => '2028-04-30']);
     });
 
+    it('ferias-resumo nao inclui estagiarios, que nao tiram ferias', function () {
+        $admin = User::factory()->admin()->create();
+        $f = User::factory()->create(['empresa_id' => $admin->empresa_id, 'nome' => 'Ana']);
+        User::factory()->create(['empresa_id' => $admin->empresa_id, 'nome' => 'Estagiario', 'papel' => 'estagiario']);
+        Sanctum::actingAs($admin);
+
+        $this->getJson('/api/ferias-resumo')->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.user_id', $f->id);
+    });
+
     it('ferias-resumo sem limite devolve por_marcar 0', function () {
         $admin = User::factory()->admin()->create();
         definirLimite($admin, 'ferias', null);
