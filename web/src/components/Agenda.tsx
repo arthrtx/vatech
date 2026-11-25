@@ -273,14 +273,8 @@ export default function Agenda({
           </div>
         </div>
 
-        {!aCarregar && !comErro && (totalMes > 0 || ativos > 0) && (
+        {!aCarregar && !comErro && admin && (totalMes > 0 || ativos > 0) && (
           <PainelFiltros ativos={ativos} total={totalMes} mostrados={doMes.length} rotuloItens="pedidos neste mês" onLimpar={limpar}>
-            <GrupoChips
-              legenda="Tipo"
-              opcoes={(Object.keys(tipos) as TipoPedido[]).map((valor) => ({ valor, rotulo: tipos[valor] }))}
-              selecionados={filtros.tipos}
-              onChange={(t) => setFiltros((f) => ({ ...f, tipos: t }))}
-            />
             {admin && (
               <GrupoChips
                 legenda="Estado"
