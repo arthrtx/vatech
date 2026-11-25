@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Agenda from "./Agenda";
 import type { Pedido, PedidoAgenda } from "@/lib/api";
+
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: "funcionario", empresa_id: 1 } }) }));
 
 afterEach(cleanup);
 
@@ -258,13 +260,34 @@ describe("Agenda", () => {
 
     it("só deixa marcar a partir de hoje", () => {
       render(<Agenda pedidos={[]} admin={false} hoje="2026-12-01" compromissos={comp} />);
-      expect(screen.getByRole("button", { name: "Marcar na agenda" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Nova marcação" })).toBeTruthy();
       fireEvent.click(screen.getByLabelText("Semana anterior")); // 24 de novembro, já passou
-      expect(screen.queryByRole("button", { name: "Marcar na agenda" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Nova marcação" })).toBeNull();
       expect(screen.getByText("Nada na agenda neste dia.")).toBeTruthy();
       fireEvent.click(screen.getByLabelText("Semana seguinte"));
-      fireEvent.click(screen.getByRole("button", { name: "Marcar na agenda" }));
+      fireEvent.click(screen.getByRole("button", { name: "Nova marcação" }));
       expect(screen.getByRole("dialog", { name: "Marcar na agenda" })).toBeTruthy();
+    });
+
+    it("com pedidos possíveis, o botão Nova marcação deixa escolher entre pedido e compromisso", () => {
+      render(<Agenda pedidos={[]} admin={false} podeCriar hoje="2026-12-01" compromissos={comp} />);
+      expect(screen.queryByRole("button", { name: "Pedir a partir deste dia" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Nova marcação" }));
+      expect(screen.getAllByRole("menuitem").map((m) => m.querySelector("span")?.textContent)).toEqual([
+        "Pedido de férias ou ausência",
+        "Compromisso na agenda",
+      ]);
+      fireEvent.click(screen.getByRole("menuitem", { name: /Compromisso na agenda/ }));
+      expect(screen.getByRole("dialog", { name: "Marcar na agenda" })).toBeTruthy();
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+
+    it("num dia passado só resta o pedido, sem menu", () => {
+      render(<Agenda pedidos={[]} admin={false} podeCriar hoje="2026-12-01" compromissos={comp} />);
+      fireEvent.click(screen.getByLabelText("Semana anterior"));
+      fireEvent.click(screen.getByRole("button", { name: "Nova marcação" }));
+      expect(screen.queryByRole("menu")).toBeNull();
+      expect(screen.getByRole("dialog")).toBeTruthy();
     });
   });
 });
