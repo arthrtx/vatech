@@ -19,6 +19,9 @@ export interface User {
   /** Só estagiários: datas do estágio (Y-m-d). */
   estagio_inicio?: string | null;
   estagio_fim?: string | null;
+  /** Só estagiários: horário de almoço (HH:MM, hora de Lisboa). */
+  almoco_inicio?: string | null;
+  almoco_fim?: string | null;
 }
 
 /** Marcação de presença do dia; entrada/saida em ISO8601, hora do servidor. */
@@ -31,6 +34,8 @@ export interface Presenca {
   saida: string | null;
   /** true quando registada pelo botão «Esqueci de marcar presença». */
   atrasada: boolean;
+  /** Minutos do almoço que caem entre a entrada e a saída; já descontados no total. */
+  almoco_min?: number;
 }
 
 export interface Anexo {
@@ -225,6 +230,8 @@ export const api = {
     f.append("avatar", ficheiro);
     return (await request<{ user: User }>("POST", "/me/avatar", f)).user;
   },
+  definirAlmoco: async (b: { almoco_inicio: string | null; almoco_fim: string | null }) =>
+    (await request<{ user: User }>("PUT", "/me/almoco", b)).user,
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   funcionarios: async () => (await request<{ data: User[] }>("GET", "/funcionarios")).data,
   criarFuncionario: async (b: { nome: string; email: string; password: string; papel: Papel }) =>

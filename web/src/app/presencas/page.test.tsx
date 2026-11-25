@@ -16,6 +16,7 @@ vi.mock("@/lib/api", async (orig) => ({
     presencas: (...a: unknown[]) => presencas(...a),
     funcionarios: vi.fn().mockResolvedValue([]),
     marcarPresencaAtrasada: (...a: unknown[]) => atrasada(...a),
+    definirAlmoco: vi.fn(),
   },
 }));
 
@@ -35,7 +36,7 @@ function preencher(d = "2026-02-03", e = "09:00", s = "17:00") {
   fireEvent.change(screen.getByLabelText("Saída"), { target: { value: s } });
 }
 
-describe("Presenças: esqueci de marcar", () => {
+describe("Estágio: esqueci de marcar", () => {
   it("o botão só aparece ao estagiário", () => {
     papel = "admin";
     render(<PresencasPage />);

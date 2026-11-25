@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim'])]
+#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim', 'almoco_inicio', 'almoco_fim'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -38,7 +38,7 @@ class User extends Authenticatable
         ];
     }
 
-    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null} */
+    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,almoco_inicio:string|null,almoco_fim:string|null} */
     public function toContrato(): array
     {
         return $this->only(['id', 'nome', 'email', 'papel', 'empresa_id']) + [
@@ -46,6 +46,8 @@ class User extends Authenticatable
             'data_nascimento' => $this->data_nascimento?->format('Y-m-d'),
             'estagio_inicio' => $this->estagio_inicio?->format('Y-m-d'),
             'estagio_fim' => $this->estagio_fim?->format('Y-m-d'),
+            'almoco_inicio' => $this->almoco_inicio ? substr($this->almoco_inicio, 0, 5) : null,
+            'almoco_fim' => $this->almoco_fim ? substr($this->almoco_fim, 0, 5) : null,
         ];
     }
 }
