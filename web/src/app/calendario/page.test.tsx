@@ -5,6 +5,7 @@ const agenda = vi.fn();
 const aniversarios = vi.fn();
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/components/EscolhaLocalidade", () => ({ default: () => null }));
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: "funcionario", empresa_id: 1 } }) }));
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
   api: { agenda: (...a: unknown[]) => agenda(...a), aniversarios: (...a: unknown[]) => aniversarios(...a), pontes: async () => [] },
@@ -29,7 +30,10 @@ describe("pagina do calendario", () => {
     expect(await screen.findByLabelText(/Aniversário de Eva/)).toBeTruthy();
     expect(screen.getByLabelText(/Feriado nacional: Natal/)).toBeTruthy();
     expect(screen.getAllByLabelText(/Rui: férias/)).toHaveLength(3);
-    expect(screen.getAllByRole("grid")).toHaveLength(12);
+    expect(screen.getAllByRole("table", { name: /2026$/ })).toHaveLength(12);
+    // legenda: a cor e os dias úteis de férias de cada pessoa (3 a 5 de agosto, seg a qua)
+    const linha = screen.getByRole("rowheader", { name: "Rui" }).closest("tr") as HTMLElement;
+    expect(linha.textContent).toContain("3");
 
     fireEvent.click(screen.getByLabelText(/Aniversário de Eva/));
     expect(screen.getByRole("heading", { name: /10 de março/ })).toBeTruthy();
