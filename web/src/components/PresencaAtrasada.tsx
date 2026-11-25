@@ -1,5 +1,6 @@
 "use client";
 
+import CampoHora from "./CampoHora";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, mensagemDeErro } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
@@ -72,27 +73,13 @@ export default function PresencaAtrasada({ min, onRegistado, onCancelar }: Props
         <label htmlFor="pres_atr_entrada" className={label}>
           Entrada
         </label>
-        <input
-          id="pres_atr_entrada"
-          type="time"
-          required
-          value={entrada}
-          onChange={(e) => setEntrada(e.target.value)}
-          className={`${input} min-h-10`}
-        />
+        <CampoHora id="pres_atr_entrada" required className="min-h-10" valor={entrada} onChange={setEntrada} />
       </div>
       <div>
         <label htmlFor="pres_atr_saida" className={label}>
           Saída
         </label>
-        <input
-          id="pres_atr_saida"
-          type="time"
-          required
-          value={saida}
-          onChange={(e) => setSaida(e.target.value)}
-          className={`${input} min-h-10`}
-        />
+        <CampoHora id="pres_atr_saida" required className="min-h-10" valor={saida} onChange={setSaida} />
       </div>
       {msg && (
         <p role="alert" className={`${erroCls} sm:col-span-3`}>
