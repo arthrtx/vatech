@@ -224,7 +224,7 @@ describe("Dashboard funcionário", () => {
     expect(screen.getByText("Férias transitadas: 3 dias úteis")).toBeTruthy();
   });
 
-  it("saudação, contadores por estado e só os meus pedidos", async () => {
+  it("saudação, resumo e só os meus pedidos", async () => {
     vi.mocked(api.pedidos).mockResolvedValue([
       ped(1, { estado: "pendente" }),
       ped(2, { estado: "aprovado", data_inicio: "2026-12-22", data_fim: "2027-01-02" }),
@@ -236,11 +236,9 @@ describe("Dashboard funcionário", () => {
     await screen.findByText("Os meus pedidos");
 
     expect(screen.getByRole("heading", { level: 1, name: "Boa tarde, Marta" })).toBeTruthy();
-    expect(within(cartao("Pendentes")).getByText("1")).toBeTruthy();
-    expect(within(cartao("Aprovados")).getByText("2")).toBeTruthy();
-    expect(within(cartao("Recusados")).getByText("2")).toBeTruthy();
-    expect(within(cartao("Pendentes")).getByRole("link", { name: "Ver pedidos" })).toBeTruthy();
-    expect(within(cartao("Aprovados")).queryByRole("link")).toBeNull();
+    expect(screen.getByText(/à espera de resposta/)).toBeTruthy();
+    // os três cartões de contagem saíram do dashboard
+    for (const r of ["Pendentes", "Aprovados", "Recusados"]) expect(screen.queryByText(r, { selector: "p" })).toBeNull();
     // todos os pedidos feitos, de qualquer estado, com o estado visível
     expect(screen.getByRole("heading", { name: "Os meus pedidos" })).toBeTruthy();
     expect(screen.getAllByText(/· Pendente$/).length).toBe(1);
@@ -249,40 +247,35 @@ describe("Dashboard funcionário", () => {
     expect(api.pedidos).toHaveBeenCalledWith(); // todos, sem filtro de estado
   });
 
-  it("não mostra nem pede nada da equipa", async () => {
+  it("mostra o calendário do mês com as marcações do mês atual", async () => {
     vi.mocked(api.pedidos).mockResolvedValue([]);
     render(<DashboardPage />);
     await screen.findByText("Ainda não fez pedidos");
-    expect(api.agenda).not.toHaveBeenCalled();
-    expect(screen.queryByText(/equipa/i)).toBeNull();
+    expect(screen.getByRole("heading", { name: "Novembro 2026" })).toBeTruthy();
+    await waitFor(() => expect(api.agenda).toHaveBeenCalledWith("2026-10-26", "2026-12-06"));
+    fireEvent.click(screen.getByLabelText("Mês seguinte"));
+    expect(screen.getByRole("heading", { name: "Dezembro 2026" })).toBeTruthy();
   });
 
-  it("vazio: contadores a 0 e ação 'Fazer um pedido'", async () => {
+  it("vazio: ação 'Fazer um pedido'", async () => {
     vi.mocked(api.pedidos).mockResolvedValue([]);
     render(<DashboardPage />);
     await screen.findByText("Ainda não fez pedidos");
     expect(screen.getByRole("link", { name: "Fazer um pedido" })).toBeTruthy();
-    for (const r of ["Pendentes", "Aprovados", "Recusados"]) {
-      expect(within(cartao(r)).getByText("0")).toBeTruthy();
-    }
   });
 
   it("não mostra vazio nem 0 enquanto carrega", () => {
     vi.mocked(api.pedidos).mockReturnValue(new Promise(() => {}));
     const { container } = render(<DashboardPage />);
-    expect(container.querySelectorAll("[data-skeleton]").length).toBe(3 + 2);
+    expect(container.querySelectorAll("[data-skeleton]").length).toBe(2);
     expect(screen.queryByText("Ainda não fez pedidos")).toBeNull();
     expect(screen.queryByText("0")).toBeNull();
   });
 
-  it("erro em /pedidos: contadores '-' e alerta", async () => {
+  it("erro em /pedidos: alerta", async () => {
     vi.mocked(api.pedidos).mockRejectedValue(falha());
     render(<DashboardPage />);
     const alerta = await screen.findByRole("alert");
     expect(alerta.textContent).toContain("Não foi possível carregar os seus pedidos.");
-    for (const r of ["Pendentes", "Aprovados", "Recusados"]) {
-      expect(cartao(r).textContent).toContain("-");
-      expect(within(cartao(r)).queryByText("0")).toBeNull();
-    }
   });
 });
