@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { api, type Aniversario, type PedidoAgenda, type Ponte, type TipoPedido } from "@/lib/api";
-import { celulasDoMes, intervaloDoMes, mesAnterior, mesDe, mesSeguinte, mesesPt, nomeDoDia, quemE } from "@/lib/agenda";
-import { marcasDoAno } from "@/lib/calendario";
+import { celulasDoMes, intervaloDoMes, mesAnterior, mesDe, mesSeguinte, mesesPt, nomeDoDia } from "@/lib/agenda";
+import { barrasDaSemana, marcasDoAno } from "@/lib/calendario";
 import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { tipos } from "@/lib/rotulos";
@@ -21,8 +21,16 @@ const rotulosData: Record<TipoData, string> = {
   comemorativa: "Data comemorativa",
   ponte: "Ponte",
 };
-const pontoTipo: Record<TipoPedido, string> = { ferias: "bg-positivo", ausencia: "bg-violeta", licenca: "bg-primaria" };
-const bordaTipo: Record<TipoPedido, string> = { ferias: "border-positivo", ausencia: "border-violeta", licenca: "border-primaria" };
+const MAX_FAIXAS = 3;
+const cheio: Record<TipoPedido, string> = { ferias: "bg-positivo text-texto", ausencia: "bg-violeta text-texto", licenca: "bg-primaria text-white" };
+const vazado: Record<TipoPedido, string> = { ferias: "border-positivo", ausencia: "border-violeta", licenca: "border-primaria" };
+/** Pedido aprovado: faixa cheia; pendente: faixa vazada (como os traços da Agenda); ponte: contorno primário suave. */
+const estiloBarra = (tipo: "ponte" | TipoPedido, pendente: boolean) =>
+  tipo === "ponte"
+    ? "bg-primaria-suave text-texto ring-1 ring-inset ring-primaria"
+    : pendente
+      ? `border border-dashed bg-painel/70 text-texto ${vazado[tipo]}`
+      : cheio[tipo];
 const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 
 /** Calendário do mês no dashboard: feriados, pontes, aniversários e ausências da equipa. */
@@ -43,6 +51,10 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
     () => marcasDoAno(mes.ano, [...datasDoAno(mes.ano, localidade), ...datasDasPontes(pont.dados ?? [])], anivs.dados ?? [], pedidos),
     [mes.ano, localidade, pont.dados, anivs.dados, pedidos],
   );
+  const semanas = useMemo(() => {
+    const c = celulasDoMes(mes);
+    return Array.from({ length: c.length / 7 }, (_, i) => c.slice(i * 7, i * 7 + 7));
+  }, [mes]);
   const dia = aberto ? marcas.get(aberto) : undefined;
   const vazio = !dia || dia.datas.length + dia.aniversarios.length + dia.pedidos.length === 0;
 
@@ -64,49 +76,77 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
 
       {agenda.erro && <p className="text-sm text-texto-suave">Não foi possível carregar as ausências.</p>}
 
-      <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="grid grid-cols-7 gap-y-2">
-        {diasSemana.map((d, k) => (
-          <div key={k} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
-            {d}
-          </div>
-        ))}
-        {celulasDoMes(mes).map((c) => {
-          if (!c.doMes) return <div key={c.iso} role="gridcell" aria-hidden="true" />;
-          const m = marcas.get(c.iso);
-          const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
-          const ponte = !!m?.datas.some((d) => d.tipo === "ponte");
-          const escolhido = aberto === c.iso;
-          const pontos = [...new Map((m?.pedidos ?? []).map((p) => [`${quemE(p)}|${p.tipo}|${p.estado}`, p])).entries()].slice(0, 3);
+      <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="flex flex-col gap-1">
+        <div role="row" className="grid grid-cols-7">
+          {diasSemana.map((d, k) => (
+            <div key={k} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
+              {d}
+            </div>
+          ))}
+        </div>
+        {semanas.map((semana) => {
+          const barras = barrasDaSemana(
+            semana.map((c) => c.iso),
+            pedidos,
+            pont.dados ?? [],
+          );
+          const visiveisB = barras.filter((b) => b.faixa < MAX_FAIXAS);
+          const escondidas = barras.length - visiveisB.length;
           return (
-            <button
-              key={c.iso}
-              type="button"
-              role="gridcell"
-              aria-label={nomeDoDia(c.iso)}
-              aria-selected={escolhido}
-              aria-current={c.iso === hoje ? "date" : undefined}
-              onClick={() => setAberto(escolhido ? null : c.iso)}
-              className={`mx-auto flex h-12 w-12 flex-col items-center justify-center rounded-full text-base tabular-nums ${foco} ${
-                c.iso === hoje
-                  ? "bg-primaria font-semibold text-white"
-                  : feriado
-                    ? "bg-rosa-suave font-semibold text-texto"
-                    : ponte
-                      ? "bg-primaria-suave text-texto ring-1 ring-inset ring-primaria"
-                      : "text-texto hover:bg-primaria-suave"
-              } ${escolhido ? "ring-2 ring-primaria" : ""}`}
-            >
-              {c.dia}
-              <span aria-hidden="true" className="flex h-1.5 items-center gap-0.5">
-                {m?.aniversarios.length ? <span className="h-1.5 w-1.5 rounded-full bg-rosa" /> : null}
-                {pontos.map(([chave, p]) => (
-                  <span
-                    key={chave}
-                    className={`h-1.5 w-1.5 rounded-full border ${bordaTipo[p.tipo]} ${p.estado === "pendente" ? "bg-painel" : pontoTipo[p.tipo]}`}
-                  />
-                ))}
-              </span>
-            </button>
+            <div key={semana[0].iso} role="presentation" className="flex flex-col gap-0.5">
+              <div role="row" className="grid grid-cols-7">
+                {semana.map((c) => {
+                  if (!c.doMes) return <div key={c.iso} role="gridcell" aria-hidden="true" />;
+                  const m = marcas.get(c.iso);
+                  const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
+                  const escolhido = aberto === c.iso;
+                  return (
+                    <button
+                      key={c.iso}
+                      type="button"
+                      role="gridcell"
+                      aria-label={nomeDoDia(c.iso)}
+                      aria-selected={escolhido}
+                      aria-current={c.iso === hoje ? "date" : undefined}
+                      onClick={() => setAberto(escolhido ? null : c.iso)}
+                      className={`mx-auto flex h-10 w-10 flex-col items-center justify-center rounded-full text-base tabular-nums ${foco} ${
+                        c.iso === hoje
+                          ? "bg-primaria font-semibold text-white"
+                          : feriado
+                            ? "bg-rosa-suave font-semibold text-texto"
+                            : "text-texto hover:bg-primaria-suave"
+                      } ${escolhido ? "ring-2 ring-primaria" : ""}`}
+                    >
+                      {c.dia}
+                      <span aria-hidden="true" className="flex h-1.5 items-center">
+                        {m?.aniversarios.length ? <span className="h-1.5 w-1.5 rounded-full bg-rosa" /> : null}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {barras.length > 0 && (
+                <div aria-hidden="true" className="grid auto-rows-[1rem] grid-cols-7 gap-y-0.5">
+                  {visiveisB.map((b) => (
+                    <span
+                      key={b.chave}
+                      title={`${b.texto} · ${b.tipo === "ponte" ? "Ponte" : tipos[b.tipo]}${b.pendente ? " (pendente)" : ""}`}
+                      style={{ gridColumn: `${b.de + 1} / ${b.ate + 2}`, gridRow: b.faixa + 1 }}
+                      className={`mx-0.5 truncate px-1.5 text-[0.625rem] font-medium leading-4 ${estiloBarra(b.tipo, b.pendente)} ${
+                        b.abreAqui ? "rounded-l-full" : "-ml-0.5 rounded-l-none"
+                      } ${b.fechaAqui ? "rounded-r-full" : "-mr-0.5 rounded-r-none"}`}
+                    >
+                      {b.abreAqui || b.de === 0 ? b.texto.split(" ")[0] : ""}
+                    </span>
+                  ))}
+                  {escondidas > 0 && (
+                    <span style={{ gridColumn: "1 / 8", gridRow: MAX_FAIXAS + 1 }} className="px-1.5 text-[0.625rem] leading-4 text-texto-suave">
+                      +{escondidas} {escondidas === 1 ? "marcação" : "marcações"}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
