@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
+import CampoHora from "./CampoHora";
+import { botao, botaoSec, erro as erroCls, label } from "./ui";
 import { api, mensagemDeErro } from "@/lib/api";
 
 /** O estagiário define o horário de almoço; o tempo que cai dentro dele sai do total de cada dia. */
@@ -42,13 +43,13 @@ export default function HorarioAlmoco({ onGuardado }: { onGuardado?: () => void 
         <label htmlFor="almoco-inicio" className={label}>
           Almoço das
         </label>
-        <input id="almoco-inicio" type="time" className={input} value={inicio} onChange={(e) => setInicio(e.target.value)} />
+        <CampoHora id="almoco-inicio" className="w-36" valor={inicio} onChange={setInicio} />
       </div>
       <div>
         <label htmlFor="almoco-fim" className={label}>
           até às
         </label>
-        <input id="almoco-fim" type="time" className={input} value={fim} onChange={(e) => setFim(e.target.value)} />
+        <CampoHora id="almoco-fim" className="w-36" valor={fim} onChange={setFim} />
       </div>
       <button type="submit" className={`${botao} min-h-10`} disabled={aGuardar || !inicio || !fim}>
         Guardar almoço

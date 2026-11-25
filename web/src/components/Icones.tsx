@@ -187,3 +187,12 @@ export function IconeLocal(p: Props) {
     </Base>
   );
 }
+
+export function IconeRelogio(p: Props) {
+  return (
+    <Base {...p}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </Base>
+  );
+}
