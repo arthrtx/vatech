@@ -30,7 +30,9 @@ describe("pagina do calendario", () => {
     expect(await screen.findByLabelText(/Aniversário de Eva/)).toBeTruthy();
     expect(screen.getByLabelText(/Feriado nacional: Natal/)).toBeTruthy();
     expect(screen.getAllByLabelText(/Rui: férias/)).toHaveLength(3);
-    expect(screen.getAllByRole("table", { name: /2026$/ })).toHaveLength(12);
+    // um só quadro contínuo, sem faixas nem cartões por mês: o mês é a primeira coluna de cada bloco
+    expect(screen.getAllByRole("table", { name: "Calendário 2026" })).toHaveLength(1);
+    expect(screen.getAllByRole("rowheader", { name: /^(Janeiro|Fevereiro|Dezembro)$/ })).toHaveLength(3);
     // legenda: a cor e os dias úteis de férias de cada pessoa (3 a 5 de agosto, seg a qua)
     const legenda = screen.getByRole("complementary", { name: "Legenda" });
     const linha = within(legenda).getByRole("rowheader", { name: "Rui" }).closest("tr") as HTMLElement;
@@ -48,5 +50,20 @@ describe("pagina do calendario", () => {
     aniversarios.mockResolvedValue([]);
     render(<CalendarioPage />);
     expect(await screen.findByRole("alert")).toBeTruthy();
+  });
+
+  it("o botão Descarregar PDF abre a impressão com o ano no nome do ficheiro", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-25T12:00:00") });
+    agenda.mockResolvedValue([]);
+    aniversarios.mockResolvedValue([]);
+    const imprimir = vi.fn(() => {
+      expect(document.title).toBe("Calendario-2026");
+    });
+    window.print = imprimir;
+    const antes = document.title;
+    render(<CalendarioPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Descarregar PDF" }));
+    expect(imprimir).toHaveBeenCalledTimes(1);
+    expect(document.title).toBe(antes);
   });
 });

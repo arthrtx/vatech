@@ -11,7 +11,7 @@ import { tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
 import { filtrar } from "@/lib/busca";
 import CampoBusca from "./CampoBusca";
-import { IconeSeta } from "./Icones";
+import { IconeDescarregar, IconeSeta } from "./Icones";
 import PedidoForm from "./PedidoForm";
 import { botao, botaoSec } from "./ui";
 
@@ -43,7 +43,19 @@ const fimDeSemana = (iso: string) => {
   const d = new Date(`${iso}T00:00:00Z`).getUTCDay();
   return d === 0 || d === 6;
 };
+const letraDoDia = (iso: string) => ["D", "S", "T", "Q", "Q", "S", "S"][new Date(`${iso}T00:00:00Z`).getUTCDay()];
 const inicial = (nome: string | undefined) => (nome ?? "?").trim().charAt(0).toUpperCase();
+
+// Ao imprimir, só o mapa do ano aparece (o resto da página fica escondido), em A4 deitado e com as cores.
+const IMPRESSAO = `@media print {
+  @page { size: A4 landscape; margin: 8mm; }
+  body * { visibility: hidden; }
+  #calendario-imprimir, #calendario-imprimir * { visibility: visible; }
+  #calendario-imprimir { position: absolute; left: 0; top: 0; width: 100%; }
+  #calendario-imprimir * { -webkit-print-color-adjust: exact; print-color-adjust: exact; backdrop-filter: none !important; }
+  #calendario-imprimir table { min-width: 0 !important; font-size: 8px; }
+  #calendario-imprimir tbody { break-inside: avoid; }
+}`;
 
 interface Props {
   ano: number;
@@ -111,6 +123,14 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
     return m;
   }, [pedidos, ano]);
 
+  /** Abre a impressão só com o mapa do ano (A4 deitado): em "Destino", escolher "Guardar como PDF". */
+  function descarregarPdf() {
+    const titulo = document.title;
+    document.title = `Calendario-${ano}`; // nome sugerido para o ficheiro
+    window.print();
+    document.title = titulo;
+  }
+
   const totalFeriados = listaDatas.filter((d) => d.tipo === "feriado" || d.tipo === "municipal").length;
   const totalPontes = listaDatas.filter((d) => d.tipo === "ponte").length;
 
@@ -149,139 +169,168 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
             Hoje
           </button>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap items-end gap-3">
           <EscolhaLocalidade id="cal-localidade" compacta />
+          <button type="button" className={`${botaoSec} inline-flex items-center gap-2`} onClick={descarregarPdf}>
+            <IconeDescarregar className="h-4 w-4" />
+            Descarregar PDF
+          </button>
         </div>
       </div>
 
+      <style>{IMPRESSAO}</style>
+      <div id="calendario-imprimir" className="flex flex-col gap-2">
+        <h2 className="hidden text-lg font-semibold print:block">Mapa de férias {ano}</h2>
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className={`flex min-w-0 flex-col gap-4 ${aCarregar ? "opacity-60" : ""}`} aria-busy={aCarregar}>
-          {mesesPt.map((nome, i) => {
-            const mes = i + 1;
-            const dias = Array.from({ length: diasDoMes(ano, mes) }, (_, k) => `${ano}-${dois(mes)}-${dois(k + 1)}`);
-            const aniversariosDoMes = dias.filter((iso) => marcas.get(iso)?.aniversarios.length);
-            const celulaDia = (iso: string) => {
-              const m = marcas.get(iso);
-              const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
-              const ponte = !!m?.datas.some((d) => d.tipo === "ponte");
-              return {
-                m,
-                fundo: feriado ? "bg-rosa-suave" : ponte ? "bg-primaria-suave" : fimDeSemana(iso) ? "bg-trilho" : "",
-                comemorativa: !!m?.datas.some((d) => d.tipo === "comemorativa") && !feriado,
-              };
-            };
-            return (
-              <section
-                key={nome}
-                aria-label={`${nome} ${ano}`}
-                className="overflow-hidden rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
-              >
-                <h2 className="bg-primaria-suave py-1.5 text-center text-sm font-semibold uppercase tracking-wide">{nome}</h2>
-                <div className="overflow-x-auto scroll-fino">
-                  <table aria-label={`${nome} ${ano}`} className="w-full min-w-[50rem] table-fixed border-collapse text-xs">
-                    <colgroup>
-                      <col className="w-28" />
-                      {dias.map((iso) => (
-                        <col key={iso} />
-                      ))}
-                    </colgroup>
-                    <thead>
+        <div
+          className={`min-w-0 overflow-hidden rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 ${aCarregar ? "opacity-60" : ""}`}
+          aria-busy={aCarregar}
+        >
+          <div className="overflow-x-auto scroll-fino print:overflow-visible">
+            <table aria-label={`Calendário ${ano}`} className="w-full min-w-[60rem] table-fixed border-collapse text-xs">
+              <colgroup>
+                <col className="w-20" />
+                <col className="w-28" />
+                {Array.from({ length: 31 }, (_, k) => (
+                  <col key={k} />
+                ))}
+              </colgroup>
+              <thead>
+                <tr className="bg-primaria-suave">
+                  <th scope="col" className="border border-linha/60 px-2 py-1 text-left font-semibold">
+                    Mês
+                  </th>
+                  <th scope="col" className="border border-linha/60 px-2 py-1 text-left font-semibold">
+                    Pessoa
+                  </th>
+                  {Array.from({ length: 31 }, (_, k) => (
+                    <th key={k} scope="col" className="border border-linha/60 py-1 text-center font-medium tabular-nums">
+                      {k + 1}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              {mesesPt.map((nome, i) => {
+                const mes = i + 1;
+                const total = diasDoMes(ano, mes);
+                // 31 posições; as que passam do fim do mês ficam vazias.
+                const dias = Array.from({ length: 31 }, (_, k) => (k < total ? `${ano}-${dois(mes)}-${dois(k + 1)}` : null));
+                const aniversariosDoMes = dias.filter((iso) => iso && marcas.get(iso)?.aniversarios.length);
+                const celulaDia = (iso: string) => {
+                  const m = marcas.get(iso);
+                  const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
+                  const ponte = !!m?.datas.some((d) => d.tipo === "ponte");
+                  return {
+                    m,
+                    fundo: feriado ? "bg-rosa-suave" : ponte ? "bg-primaria-suave" : fimDeSemana(iso) ? "bg-trilho" : "",
+                    comemorativa: !!m?.datas.some((d) => d.tipo === "comemorativa") && !feriado,
+                  };
+                };
+                const foraDoMes = (k: number) => <td key={`f${k}`} aria-hidden="true" className="h-7 border border-linha/60 bg-campo" />;
+                const nLinhas = 1 + Math.max(linhas.length, 1) + (aniversariosDoMes.length > 0 ? 1 : 0);
+                return (
+                  <tbody key={nome} className="border-t-2 border-linha-forte/50 [break-inside:avoid]">
+                    <tr>
+                      <th
+                        scope="rowgroup"
+                        rowSpan={nLinhas}
+                        className="border border-linha/60 bg-primaria-suave px-2 pt-2 text-left align-top text-sm font-semibold uppercase tracking-wide"
+                      >
+                        {nome}
+                      </th>
+                      <th scope="row" className="border border-linha/60 px-2 py-1 text-left text-[0.6875rem] font-normal text-texto-suave">
+                        Dia da semana
+                      </th>
+                      {dias.map((iso, k) => {
+                        if (!iso) return foraDoMes(k);
+                        const { m, fundo, comemorativa } = celulaDia(iso);
+                        const descricao = [
+                          nomeDoDia(iso),
+                          ...(m?.datas.map((d) => `${rotulosData[d.tipo]}: ${d.nome}`) ?? []),
+                          ...(m?.aniversarios.map((n) => `Aniversário de ${n}`) ?? []),
+                        ].join(". ");
+                        return (
+                          <td key={iso} className={`border border-linha/60 p-0 ${fundo}`}>
+                            <button
+                              type="button"
+                              aria-label={descricao}
+                              aria-pressed={aberto === iso}
+                              aria-current={iso === hoje ? "date" : undefined}
+                              title={descricao}
+                              onClick={() => setAberto(aberto === iso ? null : iso)}
+                              className={`h-7 w-full text-[0.6875rem] ${foco} ${
+                                iso === hoje ? "bg-primaria font-semibold text-white" : "text-texto-suave hover:bg-primaria-suave"
+                              } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso ? "ring-2 ring-inset ring-primaria" : ""}`}
+                            >
+                              {letraDoDia(iso)}
+                            </button>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    {linhas.length === 0 && (
                       <tr>
-                        <th scope="col" className="border border-linha/60 px-2 py-1 text-left font-medium text-texto-suave">
-                          <span className="sr-only">Pessoa</span>
+                        <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-normal text-texto-suave">
+                          Ninguém fora
                         </th>
-                        {dias.map((iso) => {
-                          const { m, fundo, comemorativa } = celulaDia(iso);
-                          const descricao = [
-                            nomeDoDia(iso),
-                            ...(m?.datas.map((d) => `${rotulosData[d.tipo]}: ${d.nome}`) ?? []),
-                            ...(m?.aniversarios.map((n) => `Aniversário de ${n}`) ?? []),
-                          ].join(". ");
+                        {dias.map((iso, k) => (iso ? <td key={iso} className={`h-7 border border-linha/60 ${celulaDia(iso).fundo}`} /> : foraDoMes(k)))}
+                      </tr>
+                    )}
+                    {linhas.map((pessoa) => (
+                      <tr key={pessoa.id}>
+                        <th scope="row" className="truncate border border-linha/60 px-2 py-1 text-left font-medium" title={pessoa.nome}>
+                          {pessoa.nome}
+                        </th>
+                        {dias.map((iso, k) => {
+                          if (!iso) return foraDoMes(k);
+                          const { m, fundo } = celulaDia(iso);
+                          const p = m?.pedidos.find((x) => quemE(x) === pessoa.id);
+                          if (!p) return <td key={iso} className={`h-7 border border-linha/60 ${fundo}`} />;
+                          const pendente = p.estado === "pendente";
+                          const rotulo = `${pessoa.nome}: ${tipos[p.tipo].toLowerCase()}${pendente ? " (pendente)" : ""}, ${nomeDoDia(iso)}`;
                           return (
-                            <th key={iso} scope="col" className={`border border-linha/60 p-0 font-medium ${fundo}`}>
+                            <td key={iso} className={`h-7 border border-linha/60 p-0 ${fundo}`}>
                               <button
                                 type="button"
-                                aria-label={descricao}
-                                aria-pressed={aberto === iso}
-                                aria-current={iso === hoje ? "date" : undefined}
-                                title={descricao}
-                                onClick={() => setAberto(aberto === iso ? null : iso)}
-                                className={`h-7 w-full tabular-nums ${foco} ${
-                                  iso === hoje ? "bg-primaria font-semibold text-white" : "hover:bg-primaria-suave"
-                                } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso ? "ring-2 ring-inset ring-primaria" : ""}`}
+                                aria-label={rotulo}
+                                title={rotulo}
+                                onClick={() => setAberto(iso)}
+                                className={`flex h-full min-h-7 w-full items-center justify-center text-[0.625rem] font-semibold ${foco} ${
+                                  pendente
+                                    ? `border-2 border-dashed bg-painel/60 ${pessoa.cor.anel} text-texto`
+                                    : `${p.tipo === "ferias" ? pessoa.cor.cheia : pessoa.cor.suave} ${p.tipo === "ferias" ? pessoa.cor.texto : "text-texto"}`
+                                }`}
                               >
-                                {Number(iso.slice(8, 10))}
+                                {inicial(pessoa.nome)}
                               </button>
-                            </th>
+                            </td>
                           );
                         })}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {linhas.length === 0 && (
-                        <tr>
-                          <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-normal text-texto-suave">
-                            Ninguém fora
-                          </th>
-                          {dias.map((iso) => (
-                            <td key={iso} className={`h-7 border border-linha/60 ${celulaDia(iso).fundo}`} />
-                          ))}
-                        </tr>
-                      )}
-                      {linhas.map((pessoa) => (
-                        <tr key={pessoa.id}>
-                          <th scope="row" className="truncate border border-linha/60 px-2 py-1 text-left font-medium" title={pessoa.nome}>
-                            {pessoa.nome}
-                          </th>
-                          {dias.map((iso) => {
-                            const { m, fundo } = celulaDia(iso);
-                            const p = m?.pedidos.find((x) => quemE(x) === pessoa.id);
-                            if (!p) return <td key={iso} className={`h-7 border border-linha/60 ${fundo}`} />;
-                            const pendente = p.estado === "pendente";
-                            const rotulo = `${pessoa.nome}: ${tipos[p.tipo].toLowerCase()}${pendente ? " (pendente)" : ""}, ${nomeDoDia(iso)}`;
-                            return (
-                              <td key={iso} className={`h-7 border border-linha/60 p-0 ${fundo}`}>
-                                <button
-                                  type="button"
-                                  aria-label={rotulo}
-                                  title={rotulo}
-                                  onClick={() => setAberto(iso)}
-                                  className={`flex h-full min-h-7 w-full items-center justify-center text-[0.625rem] font-semibold ${foco} ${
-                                    pendente
-                                      ? `border-2 border-dashed bg-painel/60 ${pessoa.cor.anel} text-texto`
-                                      : `${p.tipo === "ferias" ? pessoa.cor.cheia : pessoa.cor.suave} ${p.tipo === "ferias" ? pessoa.cor.texto : "text-texto"}`
-                                  }`}
-                                >
-                                  {inicial(pessoa.nome)}
-                                </button>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                      {aniversariosDoMes.length > 0 && (
-                        <tr>
-                          <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-medium text-texto-suave">
-                            Aniversários
-                          </th>
-                          {dias.map((iso) => {
-                            const { m, fundo } = celulaDia(iso);
-                            return (
-                              <td key={iso} className={`h-7 border border-linha/60 text-center ${fundo}`}>
-                                {m?.aniversarios.length ? (
-                                  <span title={m.aniversarios.map((n) => `Aniversário de ${n}`).join(", ")} className="inline-block h-2 w-2 rounded-full bg-rosa" />
-                                ) : null}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            );
-          })}
+                    ))}
+                    {aniversariosDoMes.length > 0 && (
+                      <tr>
+                        <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-medium text-texto-suave">
+                          Aniversários
+                        </th>
+                        {dias.map((iso, k) => {
+                          if (!iso) return foraDoMes(k);
+                          const { m, fundo } = celulaDia(iso);
+                          return (
+                            <td key={iso} className={`h-7 border border-linha/60 text-center ${fundo}`}>
+                              {m?.aniversarios.length ? (
+                                <span title={m.aniversarios.map((n) => `Aniversário de ${n}`).join(", ")} className="inline-block h-2 w-2 rounded-full bg-rosa" />
+                              ) : null}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    )}
+                  </tbody>
+                );
+              })}
+            </table>
+          </div>
         </div>
 
         <aside aria-label="Legenda" className="flex flex-col gap-4 xl:sticky xl:top-4">
@@ -367,7 +416,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
           {aberto && (
             <section
               aria-labelledby="cal-dia"
-              className="flex flex-col gap-2 rounded-cartao bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
+              className="flex flex-col gap-2 rounded-cartao print:hidden bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
             >
               <h2 id="cal-dia" className="text-lg font-semibold">
                 {nomeDoDia(aberto)}
@@ -399,7 +448,9 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
         </aside>
       </div>
 
-      <section aria-labelledby="cal-lista" className="flex flex-col gap-2">
+      </div>
+
+      <section aria-labelledby="cal-lista" className="flex flex-col gap-2 print:hidden">
         <h2 id="cal-lista" className="text-lg font-semibold">
           Feriados e datas de {ano}
         </h2>
