@@ -39,6 +39,19 @@ browser -> site (Vercel) -> API (Render) -> base de dados (TiDB)
 1. No projeto `vatech` do Vercel, em **Settings > Environment Variables**, criar `NEXT_PUBLIC_API_URL` = `https://<endereço-da-api>/api` para **Production**.
 2. Fazer **Redeploy** da última versão do `main`.
 
+### Deploy do site pela CLI (colaboradores sem plano Vercel)
+
+No plano grátis (Hobby) o Vercel só publica commits do dono da conta. O workflow `.github/workflows/deploy-web.yml` publica a `main` com o token do dono, por isso qualquer pessoa que faça merge consegue publicar.
+
+Passos manuais, feitos uma vez pelo dono da conta Vercel:
+
+1. No Vercel, **Settings > Tokens**: criar um token. Nunca o colar em conversas nem em ficheiros.
+2. Em `web/`, correr `vercel link` e ler `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID` de `.vercel/project.json` (a pasta `.vercel` não vai para o git).
+3. No GitHub, **Settings > Secrets and variables > Actions**: criar `VERCEL_TOKEN`, `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID`.
+4. No Vercel, **Settings > Git**: desligar o deploy automático (senão cada push gera dois deploys).
+
+Sem os secrets, o workflow termina com um aviso e não publica. Os previews por PR deixam de existir.
+
 ## Atualizações
 
 Cada merge no `main` faz o Render e o Vercel publicarem a versão nova sozinhos. As migrações correm no arranque da API.
