@@ -34,7 +34,7 @@ describe("pagina do calendario", () => {
     fireEvent.click(screen.getByLabelText(/Aniversário de Eva/));
     expect(screen.getByRole("heading", { name: /10 de março/ })).toBeTruthy();
 
-    fireEvent.click(screen.getByText("Ano seguinte"));
+    fireEvent.click(screen.getByLabelText("Ano seguinte"));
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2027-01-01", "2027-12-31"));
   });
 
