@@ -12,7 +12,7 @@ import { acao, acaoDestaque } from "../ui";
 import AvisoFerias from "./AvisoFerias";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
-import CartaoContador from "./CartaoContador";
+import CalendarioMes from "./CalendarioMes";
 import WidgetContagem from "./WidgetContagem";
 import WidgetFeriados from "./WidgetFeriados";
 
@@ -26,7 +26,6 @@ export default function DashboardFuncionario({ user }: { user: User }) {
   const pedidos = useFonte(useCallback(() => api.pedidos(), []));
 
   const n = pedidos.dados ? contarPorEstado(pedidos.dados) : null;
-  const aCarregar = !pedidos.erro && pedidos.dados === null;
 
   return (
     <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
@@ -61,23 +60,12 @@ export default function DashboardFuncionario({ user }: { user: User }) {
       </div>
       <AvisoFerias comTransitadas />
       <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
-      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:min-w-0 lg:flex-[2]">
-        <CartaoContador
-          rotulo="Pendentes"
-          valor={n?.pendente ?? null}
-          aCarregar={aCarregar}
-          ligacao={{ href: "/", texto: "Ver pedidos" }}
-          Icone={IconePedidos}
-          cor="violeta"
-        />
-        <CartaoContador rotulo="Aprovados" valor={n?.aprovado ?? null} aCarregar={aCarregar} Icone={IconePedidos} cor="positivo" />
-        <CartaoContador rotulo="Recusados" valor={n?.recusado ?? null} aCarregar={aCarregar} Icone={IconePedidos} cor="rosa" />
-      </ul>
-      <WidgetContagem pedidos={pedidos.dados} hoje={hoje} className="lg:min-w-0 lg:flex-1" />
+      <WidgetContagem pedidos={pedidos.dados} hoje={hoje} className="lg:min-w-0 lg:flex-[2]" />
       <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
       </div>
 
-      <div className="grid gap-4 lg:min-h-0 lg:flex-1">
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:overflow-y-auto lg:scroll-fino">
+      <CalendarioMes hoje={hoje} className="lg:self-start" />
       <BlocoEstado
         efeito="recentes"
         titulo="Os meus pedidos"
