@@ -17,7 +17,7 @@ import WidgetContagem from "./WidgetContagem";
 import WidgetFeriados from "./WidgetFeriados";
 
 const MAX = 5;
-const barraEstado = { aprovado: "bg-positivo", pendente: "bg-primaria", recusado: "bg-rosa" } as const;
+const barraEstado = { aprovado: "bg-positivo", pendente: "bg-primaria", recusado: "bg-rosa", cancelado: "bg-texto-suave" } as const;
 const nDias = (n: number) => `${n} ${n === 1 ? "dia" : "dias"}`;
 const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 

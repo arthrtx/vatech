@@ -60,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/pedidos', [PedidoController::class, 'store']);
         Route::put('/pedidos/{id}', [PedidoController::class, 'update']);
         Route::delete('/pedidos/{id}', [PedidoController::class, 'destroy']);
+        Route::post('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
         Route::post('/pedidos/{id}/anexos', [AnexoController::class, 'store'])->middleware('throttle:20,1');
         Route::delete('/pedidos/{id}/anexos/{anexo}', [AnexoController::class, 'destroy']);
     });

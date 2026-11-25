@@ -74,7 +74,7 @@ export function intervaloDoMes(m: Mes): { de: string; ate: string } {
 }
 
 /** Recusados nunca aparecem na agenda. */
-export const visiveis = (pedidos: Pedido[]) => pedidos.filter((p) => p.estado !== "recusado");
+export const visiveis = (pedidos: Pedido[]) => pedidos.filter((p) => p.estado !== "recusado" && p.estado !== "cancelado");
 
 /** Dias de calendario do pedido, inclusive (inicio e fim contam). */
 export const diasDoPedido = (p: Pedido) =>

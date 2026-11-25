@@ -52,7 +52,7 @@ export function detetar(
           href,
         });
       }
-    } else if (antes === "pendente" && p.estado !== "pendente") {
+    } else if (antes === "pendente" && p.estado !== "pendente" && p.estado !== "cancelado") {
       const decisao = p.estado === "aprovado" ? "aprovado" : "recusado";
       novas.push({
         id: `${p.id}-${decisao}`,

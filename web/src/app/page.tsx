@@ -107,6 +107,14 @@ function Conteudo() {
             )
           }
           onEditar={(p) => setEditando(p)}
+          onCancelar={async (p) => {
+            try {
+              const r = await api.cancelarPedido(p.id);
+              setPedidos((ps) => ps.map((x) => (x.id === p.id ? { ...x, ...r.data } : x)));
+            } catch (e) {
+              setErro(mensagemDeErro(e));
+            }
+          }}
           onApagar={async (p) => {
             if (editando?.id === p.id) setEditando(null);
             try {

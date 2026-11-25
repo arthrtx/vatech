@@ -101,6 +101,20 @@ class PedidoController extends Controller
         return response()->json(null, 204);
     }
 
+    /** O funcionario cancela ferias suas ja aprovadas que ainda nao terminaram. */
+    public function cancelar(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        $pedido = Pedido::where('empresa_id', $user->empresa_id)->where('user_id', $user->id)->findOrFail($id);
+
+        abort_if($pedido->tipo !== 'ferias' || $pedido->estado !== 'aprovado', 409, 'Só é possível cancelar férias aprovadas.');
+        abort_if($pedido->data_fim->format('Y-m-d') < now('Europe/Lisbon')->toDateString(), 409, 'As férias já terminaram.');
+
+        $pedido->update(['estado' => 'cancelado']);
+
+        return response()->json(['data' => $pedido->refresh()]);
+    }
+
     private function pedidoPendenteDoUtilizador(Request $request, int $id, bool $licencaPorComecar = false): Pedido
     {
         $user = $request->user();

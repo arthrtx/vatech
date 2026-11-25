@@ -25,6 +25,7 @@ export function contarPorEstado(pedidos: Pedido[]) {
     pendente: pedidos.filter((p) => p.estado === "pendente").length,
     aprovado: pedidos.filter((p) => p.estado === "aprovado").length,
     recusado: pedidos.filter((p) => p.estado === "recusado").length,
+    cancelado: pedidos.filter((p) => p.estado === "cancelado").length,
   };
 }
 

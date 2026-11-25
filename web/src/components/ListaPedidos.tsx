@@ -21,6 +21,8 @@ interface Props {
   /** Se existirem, os pedidos pendentes mostram "Editar" e "Apagar". */
   onEditar?: (p: Pedido) => void;
   onApagar?: (p: Pedido) => Promise<void> | void;
+  /** Férias aprovadas que ainda não terminaram mostram "Cancelar férias". */
+  onCancelar?: (p: Pedido) => Promise<void> | void;
 }
 
 const botaoAcao = `${botaoSec} min-h-9 px-3 py-1`;
@@ -30,7 +32,8 @@ const botaoApagar = `${botaoPerigo} min-h-9 px-3 py-1`;
 /** Licença comunicada que ainda não começou: o próprio pode cancelá-la. */
 const licencaPorComecar = (p: Pedido) => p.tipo === "licenca" && p.estado === "aprovado" && p.data_inicio.slice(0, 10) >= hojeIso();
 
-export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar }: Props) {
+export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar, onCancelar }: Props) {
+  const [aCancelar, setACancelar] = useState<number | null>(null);
   const [aApagar, setAApagar] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
   const [filtros, setFiltros] = useState(filtrosVazios);
@@ -98,6 +101,32 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
                 <p className="mt-1 break-words text-sm">Motivo da recusa: {p.motivo_recusa}</p>
               )}
               </div>
+              {onCancelar && p.tipo === "ferias" && p.estado === "aprovado" && p.data_fim.slice(0, 10) >= hojeIso() && (
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                  {aCancelar === p.id ? (
+                    <>
+                      <span className="text-sm font-medium">Cancelar estas férias?</span>
+                      <button
+                        type="button"
+                        className={`${botaoApagar} font-semibold`}
+                        onClick={async () => {
+                          await onCancelar(p);
+                          setACancelar(null);
+                        }}
+                      >
+                        Sim, cancelar
+                      </button>
+                      <button type="button" className={botaoAcao} onClick={() => setACancelar(null)}>
+                        Voltar
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" className={botaoApagar} onClick={() => setACancelar(p.id)}>
+                      Cancelar férias
+                    </button>
+                  )}
+                </div>
+              )}
               {(p.estado === "pendente" ? onEditar || onApagar : licencaPorComecar(p) && onApagar) && (
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   {aApagar === p.id ? (
