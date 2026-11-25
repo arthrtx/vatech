@@ -242,17 +242,20 @@ export default function Agenda({
 
 
   return (
-    <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1 lg:flex-row">
+    <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
+      {podeCriar && (
+        <div className="flex justify-end">
+          <button type="button" className={botao} onClick={() => setNovo({ data: sel?.iso ?? "" })}>
+            Novo pedido
+          </button>
+        </div>
+      )}
+      <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1 lg:flex-row">
       {/* Coluna da esquerda: criar, mês pequeno, filtros e lista do mês (rola por dentro). */}
       <aside
         aria-label="Calendário do mês"
         className="flex w-full shrink-0 flex-col gap-5 lg:min-h-0 lg:w-[26rem] xl:w-[32rem] lg:overflow-y-auto lg:scroll-fino lg:border-r lg:border-linha lg:pr-5"
       >
-        {podeCriar && (
-          <button type="button" className={`${botao} self-start`} onClick={() => setNovo({ data: sel?.iso ?? "" })}>
-            Novo pedido
-          </button>
-        )}
         {enviado && (
           <p role="status" className="rounded-controlo bg-primaria-suave px-3 py-2 text-sm text-texto">
             Pedido enviado. Fica pendente até ser aprovado.
@@ -743,6 +746,7 @@ export default function Agenda({
           />
         </JanelaFormulario>
       )}
+      </div>
     </div>
   );
 }
