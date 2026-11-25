@@ -70,8 +70,7 @@ describe("Agenda", () => {
     escolher("Funcionário", "Rui");
     expect(screen.getByRole("status").textContent).toBe("1 de 2 pedidos neste mês");
     expect(screen.getByText(aviso)).toBeTruthy();
-    escolher("Funcionário", "Todos");
-    fireEvent.click(screen.getByRole("button", { name: "Licença" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aprovado" }));
     expect(screen.getByRole("status").textContent).toBe("0 de 2 pedidos neste mês");
     expect(screen.getByText(aviso)).toBeTruthy();
     expect(screen.getByText("Sem resultados com estes filtros.")).toBeTruthy();
@@ -114,7 +113,7 @@ describe("Agenda", () => {
     expect(screen.getByLabelText("Funcionário")).toBeTruthy();
     rerender(<Agenda pedidos={pedidos} admin={false} hoje="2026-12-01" />);
     expect(screen.queryByLabelText("Funcionário")).toBeNull();
-    expect(screen.getByRole("group", { name: "Tipo" })).toBeTruthy();
+    expect(screen.queryByRole("group", { name: "Tipo" })).toBeNull();
     expect(screen.queryByRole("group", { name: "Estado" })).toBeNull();
   });
 
@@ -126,8 +125,8 @@ describe("Agenda", () => {
     expect(screen.getByRole("button", { name: "Pendente" }).getAttribute("aria-pressed")).toBe("true");
         fireEvent.click(screen.getByRole("button", { name: "Aprovado" }));
     expect(screen.getByRole("status").textContent).toBe("2 de 2 pedidos neste mês");
-    fireEvent.click(screen.getByRole("button", { name: "Licença" }));
-    expect(screen.getByRole("status").textContent).toBe("0 de 2 pedidos neste mês");
+    escolher("Funcionário", "Ana");
+    expect(screen.getByRole("status").textContent).toBe("1 de 2 pedidos neste mês");
   });
 
   it("sem recusado no grupo Estado e sem painel quando o mes esta vazio", () => {
