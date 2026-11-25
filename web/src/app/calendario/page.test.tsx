@@ -20,6 +20,9 @@ afterEach(() => {
   aniversarios.mockReset();
 });
 
+// O quadro do ano tem centenas de células: com a suite toda a correr, 5 s (o limite por omissão) é curto.
+const LIMITE = 30_000;
+
 describe("pagina do calendario", () => {
   it("pede o ano inteiro, mostra feriado, aniversário e férias, e muda de ano", async () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-25T12:00:00") });
@@ -43,7 +46,7 @@ describe("pagina do calendario", () => {
 
     fireEvent.click(screen.getByLabelText("Ano seguinte"));
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2027-01-01", "2027-12-31"));
-  });
+  }, LIMITE);
 
   it("mostra o erro da agenda", async () => {
     agenda.mockRejectedValue(new Error("falhou"));
@@ -65,5 +68,5 @@ describe("pagina do calendario", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Descarregar PDF" }));
     expect(imprimir).toHaveBeenCalledTimes(1);
     expect(document.title).toBe(antes);
-  });
+  }, LIMITE);
 });
