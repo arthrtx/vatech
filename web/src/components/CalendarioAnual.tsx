@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import type { Aniversario, PedidoAgenda, Ponte } from "@/lib/api";
 import { hojeIso, mesesPt, nomeDoDia, quemE, visiveis } from "@/lib/agenda";
 import { marcasDoAno } from "@/lib/calendario";
@@ -195,21 +195,6 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                   <col key={k} />
                 ))}
               </colgroup>
-              <thead>
-                <tr className="bg-primaria-suave">
-                  <th scope="col" className="border border-linha/60 px-2 py-1 text-left font-semibold">
-                    Mês
-                  </th>
-                  <th scope="col" className="border border-linha/60 px-2 py-1 text-left font-semibold">
-                    Pessoa
-                  </th>
-                  {Array.from({ length: 31 }, (_, k) => (
-                    <th key={k} scope="col" className="border border-linha/60 py-1 text-center font-medium tabular-nums">
-                      {k + 1}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
               {mesesPt.map((nome, i) => {
                 const mes = i + 1;
                 const total = diasDoMes(ano, mes);
@@ -226,20 +211,28 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                     comemorativa: !!m?.datas.some((d) => d.tipo === "comemorativa") && !feriado,
                   };
                 };
-                const foraDoMes = (k: number) => <td key={`f${k}`} aria-hidden="true" className="h-7 border border-linha/60 bg-campo" />;
+                const foraDoMes = (k: number) => <td key={`f${k}`} aria-hidden="true" className="h-7 border border-linha-forte/30 bg-campo" />;
                 const nLinhas = 1 + Math.max(linhas.length, 1) + (aniversariosDoMes.length > 0 ? 1 : 0);
                 return (
-                  <tbody key={nome} className="border-t-2 border-linha-forte/50 [break-inside:avoid]">
+                  <Fragment key={nome}>
+                  {i > 0 && (
+                    <tbody aria-hidden="true">
+                      <tr>
+                        <td colSpan={33} className="h-3 border-0 p-0" />
+                      </tr>
+                    </tbody>
+                  )}
+                  <tbody className="[break-inside:avoid]">
                     <tr>
                       <th
                         scope="rowgroup"
                         rowSpan={nLinhas}
-                        className="border border-linha/60 bg-primaria-suave px-2 pt-2 text-left align-top text-sm font-semibold uppercase tracking-wide"
+                        className="border border-primaria bg-primaria px-2 text-left align-middle text-sm font-semibold uppercase tracking-wide text-white"
                       >
                         {nome}
                       </th>
-                      <th scope="row" className="border border-linha/60 px-2 py-1 text-left text-[0.6875rem] font-normal text-texto-suave">
-                        Dia da semana
+                      <th scope="col" className="border border-linha-forte/30 bg-primaria-suave px-2 py-1 text-left text-xs font-semibold">
+                        Pessoa
                       </th>
                       {dias.map((iso, k) => {
                         if (!iso) return foraDoMes(k);
@@ -250,7 +243,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                           ...(m?.aniversarios.map((n) => `Aniversário de ${n}`) ?? []),
                         ].join(". ");
                         return (
-                          <td key={iso} className={`border border-linha/60 p-0 ${fundo}`}>
+                          <th key={iso} scope="col" className={`border border-linha-forte/30 p-0 font-normal ${fundo || "bg-primaria-suave"}`}>
                             <button
                               type="button"
                               aria-label={descricao}
@@ -258,38 +251,40 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                               aria-current={iso === hoje ? "date" : undefined}
                               title={descricao}
                               onClick={() => setAberto(aberto === iso ? null : iso)}
-                              className={`h-7 w-full text-[0.6875rem] ${foco} ${
-                                iso === hoje ? "bg-primaria font-semibold text-white" : "text-texto-suave hover:bg-primaria-suave"
+                              className={`flex h-9 w-full flex-col items-center justify-center leading-none ${foco} ${
+                                iso === hoje ? "bg-primaria text-white" : "text-texto hover:bg-primaria-suave"
                               } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso ? "ring-2 ring-inset ring-primaria" : ""}`}
                             >
-                              {letraDoDia(iso)}
+                              <span className="text-sm font-semibold tabular-nums">{Number(iso.slice(8, 10))}</span>
+                              <span className="mt-0.5 text-[0.625rem] opacity-70">{letraDoDia(iso)}</span>
                             </button>
-                          </td>
+                          </th>
                         );
                       })}
                     </tr>
                     {linhas.length === 0 && (
                       <tr>
-                        <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-normal text-texto-suave">
+                        <th scope="row" className="border border-linha-forte/30 px-2 py-1 text-left font-normal text-texto-suave">
                           Ninguém fora
                         </th>
-                        {dias.map((iso, k) => (iso ? <td key={iso} className={`h-7 border border-linha/60 ${celulaDia(iso).fundo}`} /> : foraDoMes(k)))}
+                        {dias.map((iso, k) => (iso ? <td key={iso} className={`h-7 border border-linha-forte/30 ${celulaDia(iso).fundo}`} /> : foraDoMes(k)))}
                       </tr>
                     )}
                     {linhas.map((pessoa) => (
-                      <tr key={pessoa.id}>
-                        <th scope="row" className="truncate border border-linha/60 px-2 py-1 text-left font-medium" title={pessoa.nome}>
+                      <tr key={pessoa.id} className="odd:bg-painel/40 hover:bg-primaria-suave/50">
+                        <th scope="row" className="truncate border border-linha-forte/30 px-2 py-1 text-left font-medium" title={pessoa.nome}>
+                          <span aria-hidden="true" className={`mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle ${pessoa.cor.cheia}`} />
                           {pessoa.nome}
                         </th>
                         {dias.map((iso, k) => {
                           if (!iso) return foraDoMes(k);
                           const { m, fundo } = celulaDia(iso);
                           const p = m?.pedidos.find((x) => quemE(x) === pessoa.id);
-                          if (!p) return <td key={iso} className={`h-7 border border-linha/60 ${fundo}`} />;
+                          if (!p) return <td key={iso} className={`h-7 border border-linha-forte/30 ${fundo}`} />;
                           const pendente = p.estado === "pendente";
                           const rotulo = `${pessoa.nome}: ${tipos[p.tipo].toLowerCase()}${pendente ? " (pendente)" : ""}, ${nomeDoDia(iso)}`;
                           return (
-                            <td key={iso} className={`h-7 border border-linha/60 p-0 ${fundo}`}>
+                            <td key={iso} className={`h-7 border border-linha-forte/30 p-0 ${fundo}`}>
                               <button
                                 type="button"
                                 aria-label={rotulo}
@@ -310,14 +305,14 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                     ))}
                     {aniversariosDoMes.length > 0 && (
                       <tr>
-                        <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-medium text-texto-suave">
+                        <th scope="row" className="border border-linha-forte/30 px-2 py-1 text-left font-medium text-texto-suave">
                           Aniversários
                         </th>
                         {dias.map((iso, k) => {
                           if (!iso) return foraDoMes(k);
                           const { m, fundo } = celulaDia(iso);
                           return (
-                            <td key={iso} className={`h-7 border border-linha/60 text-center ${fundo}`}>
+                            <td key={iso} className={`h-7 border border-linha-forte/30 text-center ${fundo}`}>
                               {m?.aniversarios.length ? (
                                 <span title={m.aniversarios.map((n) => `Aniversário de ${n}`).join(", ")} className="inline-block h-2 w-2 rounded-full bg-rosa" />
                               ) : null}
@@ -327,6 +322,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                       </tr>
                     )}
                   </tbody>
+                  </Fragment>
                 );
               })}
             </table>
