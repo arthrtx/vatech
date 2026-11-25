@@ -44,3 +44,19 @@ it('so o admin marca licencas como vistas', function () {
     Sanctum::actingAs($f);
     $this->postJson("/api/pedidos/{$p->id}/visto")->assertForbidden();
 });
+
+it('o admin marca as suas ferias direto, aprovadas e sem aviso, e pode apaga-las', function () {
+    $admin = User::factory()->admin()->create();
+    Sanctum::actingAs($admin);
+
+    $id = $this->postJson('/api/pedidos', ['tipo' => 'ferias', 'data_inicio' => '2026-12-21', 'data_fim' => '2026-12-23'])
+        ->assertCreated()
+        ->assertJsonPath('data.estado', 'aprovado')
+        ->assertJsonPath('data.decidido_por', $admin->id)
+        ->json('data.id');
+
+    $this->postJson('/api/pedidos', ['tipo' => 'licenca', 'data_inicio' => '2026-12-28', 'data_fim' => '2026-12-28'])->assertCreated();
+    $this->getJson('/api/pedidos?licencas_por_ver=1')->assertJsonCount(0, 'data');
+
+    $this->deleteJson("/api/pedidos/{$id}")->assertNoContent();
+});

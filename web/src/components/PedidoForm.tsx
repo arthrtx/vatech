@@ -37,6 +37,7 @@ export default function PedidoForm({
   const edicao = !!pedido;
   const { user } = useAuth();
   const semFerias = user?.papel === "estagiario";
+  const admin = user?.papel === "admin";
   const hoje = hojeIso();
   const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? (semFerias ? "ausencia" : "ferias"));
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
@@ -168,7 +169,12 @@ export default function PedidoForm({
           onChange={(v) => setTipo(v as TipoPedido)}
         />
       </div>
-      {tipo === "licenca" && !edicao && (
+      {admin && !edicao && (
+        <p role="note" className="rounded-controlo border border-linha-forte bg-painel/60 px-3 py-2 text-sm">
+          Fica marcado logo, sem pedido nem aprovação.
+        </p>
+      )}
+      {tipo === "licenca" && !edicao && !admin && (
         <p role="note" className="rounded-controlo border border-linha-forte bg-painel/60 px-3 py-2 text-sm">
           A licença é um direito seu: não precisa de aprovação. O admin recebe um aviso.
         </p>
@@ -294,7 +300,7 @@ export default function PedidoForm({
       )}
       <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={enviando} className={botao}>
-          {enviando ? "A enviar..." : edicao ? "Guardar alterações" : tipo === "licenca" ? "Comunicar licença" : "Submeter pedido"}
+          {enviando ? "A enviar..." : edicao ? "Guardar alterações" : admin ? "Marcar" : tipo === "licenca" ? "Comunicar licença" : "Submeter pedido"}
         </button>
         {edicao && onCancelar && (
           <button type="button" onClick={onCancelar} className={botaoSec}>

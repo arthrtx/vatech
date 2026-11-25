@@ -56,7 +56,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/ocorrencias', [OcorrenciaController::class, 'store']);
     });
 
-    Route::middleware('papel:funcionario,estagiario')->group(function () {
+    // O admin também marca as suas férias, ausências e licenças (ficam aprovadas logo).
+    Route::middleware('papel:funcionario,estagiario,admin')->group(function () {
         Route::post('/pedidos', [PedidoController::class, 'store']);
         Route::put('/pedidos/{id}', [PedidoController::class, 'update']);
         Route::delete('/pedidos/{id}', [PedidoController::class, 'destroy']);

@@ -80,9 +80,30 @@ function Conteudo() {
         </p>
       )}
       {!admin && <AvisoFerias />}
+      {admin && (
+        <section aria-labelledby="meus_titulo" className="flex flex-col gap-3">
+          <h2 id="meus_titulo" className="text-lg font-semibold">
+            As minhas férias e ausências
+          </h2>
+          <ListaPedidos
+            pedidos={pedidos.filter((p) => p.user_id === user?.id)}
+            carregando={carregando}
+            formulario={<PedidoForm onCriado={carregar} />}
+            apagarAprovados
+            onApagar={async (p) => {
+              try {
+                await api.apagarPedido(p.id);
+                setPedidos((ps) => ps.filter((x) => x.id !== p.id));
+              } catch (e) {
+                setErro(mensagemDeErro(e));
+              }
+            }}
+          />
+        </section>
+      )}
       {admin ? (
         <PedidosAdmin
-          pedidos={pedidos}
+          pedidos={pedidos.filter((p) => p.user_id !== user?.id)}
           carregando={carregando}
           onAprovar={(id) => decidir(() => api.aprovar(id))}
           onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
