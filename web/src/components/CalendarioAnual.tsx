@@ -101,7 +101,9 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
     const m = new Map<number, string>();
     visiveis(pedidos).forEach((p) => {
       const id = quemE(p);
-      if (id !== undefined) m.set(id, p.user?.nome ?? "Alguém");
+      const nome = p.user?.nome ?? "Alguém";
+      // A conta "Estagiário" não aparece neste calendário (pedido do dono).
+      if (id !== undefined && nome.trim().toLowerCase() !== "estagiário") m.set(id, nome);
     });
     return [...m].sort((a, b) => a[1].localeCompare(b[1], "pt")).map(([id, nome], i) => ({ id, nome, cor: cores[i % cores.length] }));
   }, [pedidos]);
@@ -189,7 +191,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
           <div className="overflow-x-auto scroll-fino print:overflow-visible">
             <table aria-label={`Calendário ${ano}`} className="w-full min-w-[60rem] table-fixed border-collapse text-xs">
               <colgroup>
-                <col className="w-20" />
+                <col className="w-28" />
                 <col className="w-28" />
                 {Array.from({ length: 31 }, (_, k) => (
                   <col key={k} />
@@ -227,7 +229,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                       <th
                         scope="rowgroup"
                         rowSpan={nLinhas}
-                        className="border border-primaria bg-primaria px-2 text-left align-middle text-sm font-semibold uppercase tracking-wide text-white"
+                        className="border border-primaria bg-primaria px-2 text-left align-middle text-xs font-semibold uppercase text-white"
                       >
                         {nome}
                       </th>
