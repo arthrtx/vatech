@@ -3,9 +3,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Agenda from "./Agenda";
 import type { Pedido, PedidoAgenda } from "@/lib/api";
 
-vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: "funcionario", empresa_id: 1 } }) }));
+let papelAtual = "funcionario";
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: papelAtual, empresa_id: 1 } }) }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  papelAtual = "funcionario";
+});
 
 const escolher = (campo: string, opcao: string) => {
   fireEvent.click(screen.getByRole("combobox", { name: campo }));
@@ -288,6 +292,15 @@ describe("Agenda", () => {
       fireEvent.click(screen.getByRole("button", { name: "Nova marcação" }));
       expect(screen.queryByRole("menu")).toBeNull();
       expect(screen.getByRole("dialog")).toBeTruthy();
+    });
+
+    it("estagiário não vê férias no menu Nova marcação", () => {
+      papelAtual = "estagiario";
+      render(<Agenda pedidos={[]} admin={false} podeCriar hoje="2026-12-01" compromissos={comp} />);
+      fireEvent.click(screen.getByRole("button", { name: "Nova marcação" }));
+      const itens = screen.getAllByRole("menuitem").map((m) => m.textContent ?? "");
+      expect(itens.some((t) => /férias/i.test(t))).toBe(false);
+      expect(itens[0]).toContain("Pedido de ausência ou licença");
     });
   });
 });
