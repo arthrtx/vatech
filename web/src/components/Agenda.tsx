@@ -32,7 +32,7 @@ import { useLocalidade } from "@/lib/localidade";
 import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
 import { subtipos, tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
-import { botao, botaoSec, label } from "./ui";
+import { botaoSec, label } from "./ui";
 import GrupoChips from "./GrupoChips";
 import CompromissoForm, { tiposCompromisso } from "./CompromissoForm";
 import { IconeSeta } from "./Icones";
@@ -243,13 +243,6 @@ export default function Agenda({
 
   return (
     <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
-      {podeCriar && (
-        <div className="flex justify-end">
-          <button type="button" className={botao} onClick={() => setNovo({ data: sel?.iso ?? "" })}>
-            Novo pedido
-          </button>
-        </div>
-      )}
       <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1 lg:flex-row">
       {/* Coluna da esquerda: criar, mês pequeno, filtros e lista do mês (rola por dentro). */}
       <aside
