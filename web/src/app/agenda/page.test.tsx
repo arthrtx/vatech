@@ -24,7 +24,7 @@ describe("pagina da agenda", () => {
     render(<AgendaPage />);
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2026-11-30", "2027-01-03"));
     expect(agenda).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByText("Mês seguinte"));
+    fireEvent.click(screen.getByLabelText("Mês seguinte"));
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2026-12-28", "2027-01-31"));
   });
 

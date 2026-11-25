@@ -38,45 +38,50 @@ describe("Agenda", () => {
   it("navega por texto, assinala sobreposicao e esconde recusados", () => {
     render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
     expect(screen.getByText("Dezembro 2026")).toBeTruthy();
-    expect(screen.getAllByText("Sobreposição").length).toBe(2);
+    expect(screen.getByText("Sobreposição: mais de uma pessoa fora neste dia.")).toBeTruthy();
     expect(screen.queryByText(/Ana · Licença/)).toBeNull();
-    fireEvent.click(screen.getByText("Mês anterior"));
+    fireEvent.click(screen.getByLabelText("Mês anterior"));
     expect(screen.getByText("Novembro 2026")).toBeTruthy();
-    fireEvent.click(screen.getByText("Mês anterior"));
+    fireEvent.click(screen.getByLabelText("Mês anterior"));
     expect(screen.getByText("Outubro 2026")).toBeTruthy();
-    expect(screen.queryByText("Sobreposição")).toBeNull();
+    expect(screen.queryByText(/Sobreposição: mais de uma pessoa/)).toBeNull();
   });
 
-  it("filtros alteram a grelha e a sobreposicao persiste ao filtrar", () => {
+  it("setas da semana andam sete dias e acompanham o mês", () => {
     render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
-    expect(screen.getAllByTitle(/\((aprovado|pendente)\)/).length).toBe(6);
+    expect(screen.getByRole("region", { name: "Pedidos de 2026-12-01" })).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Semana anterior"));
+    expect(screen.getByRole("region", { name: "Pedidos de 2026-11-24" })).toBeTruthy();
+    expect(screen.getByText("Novembro 2026")).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Semana seguinte"));
+    expect(screen.getByRole("region", { name: "Pedidos de 2026-12-01" })).toBeTruthy();
+  });
+
+  it("filtros alteram a lista e a sobreposicao persiste ao filtrar", () => {
+    render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
+    const aviso = "Sobreposição: mais de uma pessoa fora neste dia.";
+    expect(screen.getByRole("status").textContent).toBe("2 de 2 pedidos neste mês");
     escolher("Funcionário", "Rui");
-    expect(screen.getAllByTitle(/\((aprovado|pendente)\)/).length).toBe(2);
-    expect(screen.getAllByText("Sobreposição").length).toBe(2);
+    expect(screen.getByRole("status").textContent).toBe("1 de 2 pedidos neste mês");
+    expect(screen.getByText(aviso)).toBeTruthy();
     escolher("Funcionário", "Todos");
     fireEvent.click(screen.getByRole("button", { name: "Licença" }));
-    expect(screen.queryAllByTitle(/\((aprovado|pendente)\)/).length).toBe(0);
-    expect(screen.getAllByText("Sobreposição").length).toBe(2);
+    expect(screen.getByRole("status").textContent).toBe("0 de 2 pedidos neste mês");
+    expect(screen.getByText(aviso)).toBeTruthy();
     expect(screen.getByText("Sem resultados com estes filtros.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Limpar filtros" }));
-    expect(screen.getAllByTitle(/\((aprovado|pendente)\)/).length).toBe(6);
+    expect(screen.getByRole("status").textContent).toBe("2 de 2 pedidos neste mês");
   });
 
-  it("destaca hoje, distingue pendente por texto e estilo, e usa linhas ARIA", () => {
-    const { container } = render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
-    const hoje = container.querySelector('[aria-current="date"]');
-    expect(hoje?.textContent).toContain("1");
-    expect(hoje?.textContent).toContain("(hoje)");
-    const pend = screen.getAllByText(/\(pendente\)/);
-    expect(pend.length).toBe(2);
-    // Traço vazado (contorno, sem enchimento verde), distinto do aprovado.
-    const marca = pend[0].closest("button[title]")?.className ?? "";
-    expect(marca).toContain("border-primaria");
-    expect(marca).toContain("bg-painel");
-    expect(marca).not.toContain("bg-positivo");
-    const celulas = [...container.querySelectorAll('[role="gridcell"]')];
-    expect(celulas.length % 7).toBe(0);
-    expect(celulas.every((c) => c.parentElement?.getAttribute("role") === "row")).toBe(true);
+  it("destaca hoje na semana e distingue pendente por texto e estilo", () => {
+    render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
+    const hoje = screen.getByRole("button", { name: /\(hoje\)/ });
+    expect(hoje.getAttribute("aria-pressed")).toBe("true");
+    // Pendente: pílula tracejada, distinta do aprovado.
+    const pilula = screen.getByText("Pendente", { selector: "span" });
+    expect(pilula.className).toContain("border-dashed");
+    expect(pilula.className).not.toContain("bg-positivo");
+    expect(screen.getAllByRole("button").filter((b) => /-feira|^Sábado|^Domingo/.test(b.getAttribute("aria-label") ?? "")).length).toBe(7);
   });
 
   it("filtro de funcionario ignora quem so tem recusados", () => {
@@ -113,8 +118,7 @@ describe("Agenda", () => {
     fireEvent.click(screen.getByRole("button", { name: "Pendente" }));
     expect(screen.getByRole("status").textContent).toBe("1 de 2 pedidos neste mês");
     expect(screen.getByRole("button", { name: "Pendente" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.queryAllByTitle(/\(aprovado\)/).length).toBe(0);
-    fireEvent.click(screen.getByRole("button", { name: "Aprovado" }));
+        fireEvent.click(screen.getByRole("button", { name: "Aprovado" }));
     expect(screen.getByRole("status").textContent).toBe("2 de 2 pedidos neste mês");
     fireEvent.click(screen.getByRole("button", { name: "Licença" }));
     expect(screen.getByRole("status").textContent).toBe("0 de 2 pedidos neste mês");
@@ -130,7 +134,7 @@ describe("Agenda", () => {
 
   it("clicar no dia abre a lista com aviso de sobreposicao e Escape fecha devolvendo o foco", () => {
     render(<Agenda pedidos={pedidos} admin hoje="2026-12-01" />);
-    const dia = screen.getByRole("button", { name: /^1\s*de Dezembro\s*\(hoje\)$/ });
+    const dia = screen.getByRole("button", { name: /\(hoje\)/ });
     dia.focus();
     fireEvent.click(dia);
     const painel = screen.getByRole("region", { name: "Pedidos de 2026-12-01" });
@@ -146,7 +150,7 @@ describe("Agenda", () => {
   it("clicar num pedido aprovado ou pendente mostra o detalhe sem abrir a lista do dia", () => {
     const ana = p({ observacao: "Praia", decidido_em: "2026-11-20T10:00:00Z" });
     render(<Agenda pedidos={[ana, pedidos[1]]} admin hoje="2026-12-01" />);
-    fireEvent.click(screen.getAllByTitle(/Ana: .*\(aprovado\)/)[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /^Ana · Férias/ })[0]);
     const painel = screen.getByRole("region", { name: "Pedido de Ana" });
     expect(painel.textContent).toContain("Sem subtipo");
     expect(painel.textContent).toContain("2026-11-27 a 2026-12-03");
@@ -155,7 +159,8 @@ describe("Agenda", () => {
     expect(painel.textContent).toContain("2026-11-20");
     expect(screen.queryByRole("region", { name: /^Pedidos de 2026/ })).toBeNull();
     fireEvent.click(screen.getByText("Fechar"));
-    fireEvent.click(screen.getAllByTitle(/Rui: .*\(pendente\)/)[0]);
+    fireEvent.click(screen.getByLabelText("Mês seguinte"));
+    fireEvent.click(screen.getAllByRole("button", { name: /^Rui · Férias/ })[0]);
     const pend = screen.getByRole("region", { name: "Pedido de Rui" });
     expect(pend.textContent).toContain("Pendente");
     expect(pend.textContent).toContain("Sem observação");
@@ -175,7 +180,7 @@ describe("Agenda", () => {
 
   it("detalhe de pedido de colega mostra so os campos reduzidos", () => {
     render(<Agenda pedidos={[colega]} admin={false} hoje="2026-12-01" />);
-    fireEvent.click(screen.getAllByTitle(/Rui: .*\(aprovado\)/)[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /^Rui ·/ })[0]);
     const painel = screen.getByRole("region", { name: "Pedido de Rui" });
     expect(painel.textContent).toContain("Rui");
     expect(painel.textContent).toContain("Ausência");
@@ -192,7 +197,7 @@ describe("Agenda", () => {
   it("sobreposicao da equipa conta pedido proprio e de colega sem user_id", () => {
     const meu = p({ id: 21, user_id: 1, user: { id: 1, nome: "Ana" }, data_inicio: "2026-12-01", data_fim: "2026-12-01" });
     render(<Agenda pedidos={[meu, colega]} admin={false} hoje="2026-12-01" />);
-    expect(screen.getAllByText("Sobreposição").length).toBe(1);
+    expect(screen.getByText("Sobreposição: mais de uma pessoa fora neste dia.")).toBeTruthy();
   });
 
   it("mostra o período de estágio, presenças no painel do dia e +N quando há mais de 3 pedidos", () => {
@@ -208,12 +213,10 @@ describe("Agenda", () => {
       />,
     );
     expect(screen.getByText("01/09/2026 a 28/02/2027")).toBeTruthy();
-    expect(screen.getByText("+1")).toBeTruthy();
     const painel = screen.getByRole("region", { name: "Pedidos de 2026-12-01" });
     expect(painel.textContent).toContain("Presenças neste dia");
     expect(painel.textContent).toContain("sem saída marcada");
     expect(painel.textContent).toContain("Estágio · Eva");
-    expect(screen.getAllByText("1 presença").length).toBeGreaterThan(0);
     expect(painel.textContent).not.toContain("Atrasada");
   });
 
@@ -225,8 +228,10 @@ describe("Agenda", () => {
   });
 
   it("filtro de funcionario lista colegas pelo user.id", () => {
-    render(<Agenda pedidos={[colega]} admin hoje="2026-12-01" />);
+    const ana = p({ id: 30, user_id: 1, user: { id: 1, nome: "Ana" }, data_inicio: "2026-12-01", data_fim: "2026-12-01" });
+    render(<Agenda pedidos={[colega, ana]} admin hoje="2026-12-01" />);
+    expect(screen.getByRole("status").textContent).toBe("2 de 2 pedidos neste mês");
     escolher("Funcionário", "Rui");
-    expect(screen.getAllByTitle(/Rui:/).length).toBe(2);
+    expect(screen.getByRole("status").textContent).toBe("1 de 2 pedidos neste mês");
   });
 });

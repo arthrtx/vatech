@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import type { Aniversario, PedidoAgenda as Pedido, Presenca, TipoPedido } from "@/lib/api";
 import { aplicarFiltrosAgenda, contarAtivos, type FiltrosAgenda } from "@/lib/filtros";
 import {
-  celulasDoMes,
   cobreDia,
   diasDoPedido,
   estagioCobre,
@@ -33,22 +32,17 @@ import { subtipos, tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
 import { botao, botaoSec, label } from "./ui";
 import GrupoChips from "./GrupoChips";
+import { IconeSeta } from "./Icones";
 import PainelFiltros from "./PainelFiltros";
 import PedidoForm from "./PedidoForm";
 import Seletor from "./Seletor";
 
-// Marcas por dia no calendário pequeno; o dia aberto mostra sempre todos.
-const MAX_MARCAS = 3;
+const botaoSeta =
+  "flex h-9 w-9 items-center justify-center rounded-full bg-painel/70 text-texto shadow-suave ring-1 ring-white/70 transition hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-offset-2 dark:ring-white/10";
 
 const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 // Cores de estado com os tokens de globals.css. Aprovado = traço cheio a verde, pendente = traço vazado.
-const estiloMarca = {
-  aprovado: "border-positivo bg-positivo",
-  pendente: "border-primaria bg-painel",
-  recusado: "",
-  cancelado: "",
-} as const;
 const barraEstado = { aprovado: "bg-positivo", pendente: "bg-primaria", recusado: "", cancelado: "" } as const;
 const pilulaEstado = {
   aprovado: "bg-positivo/15 text-texto",
@@ -185,10 +179,6 @@ export default function Agenda({
   const totalMes = useMemo(() => visiveis(pedidos).filter((p) => tocaMes(p, mes)).length, [pedidos, mes]);
   const ativos = contarAtivos(filtros);
   const limpar = () => setFiltros({ tipos: [], estados: [], funcionarioId: null });
-  const semanas = useMemo(() => {
-    const c = celulasDoMes(mes);
-    return Array.from({ length: c.length / 7 }, (_, i) => c.slice(i * 7, i * 7 + 7));
-  }, [mes]);
 
   const datasDePontes = useMemo(() => datasDasPontes(pontes), [pontes]);
   const especiaisDe = (iso: string) => [...datasDoDia(iso, localidade), ...datasDePontes.filter((d) => d.iso === iso)];
@@ -224,8 +214,6 @@ export default function Agenda({
     return [...m];
   }, [doMes]);
 
-  const navCls =
-    "min-h-10 rounded-controlo px-3 text-sm font-medium text-texto hover:bg-painel focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
   return (
     <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1 lg:flex-row">
@@ -245,113 +233,18 @@ export default function Agenda({
           </p>
         )}
 
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold" aria-live="polite">
-              {mesesPt[mes.mes - 1]} {mes.ano}
-            </h2>
-          </div>
-          <div className="flex gap-1 rounded-controlo bg-campo p-1">
-            <button type="button" className={`${navCls} flex-1`} onClick={() => mudarMes(mesAnterior(mes))}>
-              Mês anterior
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold" aria-live="polite">
+            {mesesPt[mes.mes - 1]} {mes.ano}
+          </h2>
+          <div className="flex items-center gap-2">
+            <button type="button" className={botaoSeta} aria-label="Mês anterior" title="Mês anterior" onClick={() => mudarMes(mesAnterior(mes))}>
+              <IconeSeta direcao="esquerda" className="h-4 w-4" />
             </button>
-            <button type="button" className={`${navCls} flex-1`} onClick={() => mudarMes(mesSeguinte(mes))}>
-              Mês seguinte
+            <button type="button" className={botaoSeta} aria-label="Mês seguinte" title="Mês seguinte" onClick={() => mudarMes(mesSeguinte(mes))}>
+              <IconeSeta direcao="direita" className="h-4 w-4" />
             </button>
           </div>
-          <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="flex flex-col gap-1">
-            <div role="row" className="grid grid-cols-7 gap-1">
-              {diasSemana.map((d) => (
-                <div key={d} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
-                  {d}
-                </div>
-              ))}
-            </div>
-            {semanas.map((linha) => (
-              <div key={linha[0].iso} role="row" className="grid grid-cols-7 gap-1">
-                {linha.map((c) => {
-                  const doDia = filtrados.filter((p) => cobreDia(p, c.iso));
-                  const sobrepoe = haSobreposicao(visiveis(pedidos).filter((p) => cobreDia(p, c.iso)));
-                  const nPres = presencasDoDia(presencas, c.iso).length;
-                  const eHoje = c.iso === hoje;
-                  const aberto = c.iso === diaAberto;
-                  const especiais = especiaisDe(c.iso);
-                  const feriado = especiais.some((d) => d.tipo !== "comemorativa");
-                  const anivs = aniversariosDoDia(c.iso);
-                  return (
-                    <div
-                      key={c.iso}
-                      role="gridcell"
-                      aria-current={eHoje ? "date" : undefined}
-                      onClick={(e) => abrir(e, { iso: c.iso })}
-                      className={`flex cursor-pointer flex-col items-center gap-0.5 rounded-controlo py-1 ${
-                        aberto ? "bg-primaria-suave" : "hover:bg-campo"
-                      } ${c.doMes ? "" : "text-texto-suave"} ${sobrepoe ? "ring-2 ring-inset ring-rosa" : ""}`}
-                    >
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          abrir(e, { iso: c.iso });
-                        }}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full text-base tabular-nums ${focoCls} ${
-                          eHoje ? "bg-primaria font-semibold text-white" : feriado ? "bg-rosa-suave font-semibold" : ""
-                        } ${especiais.length > 0 && !feriado ? "underline decoration-dotted underline-offset-2" : ""}`}
-                      >
-                        {c.dia}
-                        <span className="sr-only"> de {mesesPt[Number(c.iso.slice(5, 7)) - 1]}</span>
-                        {eHoje && <span className="sr-only"> (hoje)</span>}
-                      </button>
-                      {sobrepoe && <span className="sr-only">Sobreposição</span>}
-                      {especiais.length > 0 && <span className="sr-only">{especiais.map((d) => d.nome).join(", ")}</span>}
-                      <div className="flex min-h-1 w-full flex-wrap items-center justify-center gap-0.5 px-1">
-                        {anivs.length > 0 && (
-                          <span title={anivs.map((n) => `Aniversário de ${n}`).join(", ")} className="h-1 w-3.5 shrink-0 rounded-full bg-rosa">
-                            <span className="sr-only">{anivs.map((n) => `Aniversário de ${n}`).join(", ")}</span>
-                          </span>
-                        )}
-                        {doDia.slice(0, MAX_MARCAS).map((p) => (
-                          <button
-                            type="button"
-                            key={p.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              abrir(e, { iso: c.iso, pedidoId: p.id });
-                            }}
-                            title={`${nomeDe(p, nomeProprio)}: ${descricao(p)}, ${p.data_inicio} a ${p.data_fim} (${p.estado})`}
-                            className={`h-1 w-3.5 shrink-0 rounded-full border ${focoCls} ${estiloMarca[p.estado]}`}
-                          >
-                            <span className="sr-only">
-                              {nomeDe(p, nomeProprio)} · {tipos[p.tipo]}
-                              {p.estado === "pendente" && " (pendente)"}
-                            </span>
-                          </button>
-                        ))}
-                        {doDia.length > MAX_MARCAS && (
-                          <span className="text-[0.625rem] leading-none text-texto-suave">
-                            +{doDia.length - MAX_MARCAS}
-                            <span className="sr-only"> pedidos</span>
-                          </span>
-                        )}
-                        {nPres > 0 && (
-                          <span title={`${nPres} ${nPres === 1 ? "presença" : "presenças"}`} className="h-1 w-3.5 shrink-0 rounded-full bg-texto">
-                            <span className="sr-only">
-                              {nPres} {nPres === 1 ? "presença" : "presenças"}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-texto-suave">
-            Traço verde: aprovado. Traço vazado: pendente. Contorno rosa: mais de uma pessoa fora. Fundo rosa: feriado.
-            Sublinhado: data comemorativa. Traço preto: com presença registada. Traço rosa: aniversário. Pedidos recusados não
-            aparecem.
-          </p>
         </div>
 
         {!aCarregar && !comErro && (totalMes > 0 || ativos > 0) && (
@@ -494,6 +387,14 @@ export default function Agenda({
       <div className="flex min-w-0 flex-1 flex-col gap-4 lg:min-h-0">
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-lg font-semibold">{tituloSemana(segunda)}</p>
+          <div className="flex items-center gap-2">
+            <button type="button" className={botaoSeta} aria-label="Semana anterior" title="Semana anterior" onClick={() => irPara({ iso: somaDias(diaAberto, -7) })}>
+              <IconeSeta direcao="esquerda" className="h-4 w-4" />
+            </button>
+            <button type="button" className={botaoSeta} aria-label="Semana seguinte" title="Semana seguinte" onClick={() => irPara({ iso: somaDias(diaAberto, 7) })}>
+              <IconeSeta direcao="direita" className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div role="group" aria-label="Dias da semana" className="grid grid-cols-7 gap-1 border-b border-linha pb-3">
@@ -666,7 +567,7 @@ export default function Agenda({
                     </div>
                   ) : doDiaSel.length === 0 ? (
                     <p className="rounded-cartao bg-campo p-6 text-texto-suave">
-                      Ninguém está fora neste dia. Escolhe outro dia na semana ou no calendário.
+                      Ninguém está fora neste dia. Escolhe outro dia na semana.
                     </p>
                   ) : (
                     <ul className="flex flex-col gap-3">
@@ -716,7 +617,7 @@ export default function Agenda({
               )}
             </section>
           ) : (
-            <p className="rounded-cartao bg-campo p-6 text-texto-suave">Escolhe um dia na semana ou no calendário para ver quem está fora.</p>
+            <p className="rounded-cartao bg-campo p-6 text-texto-suave">Escolhe um dia na semana para ver quem está fora.</p>
           )}
         </div>
       </div>
