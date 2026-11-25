@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Aniversario, PedidoAgenda, Ponte, TipoPedido } from "@/lib/api";
-import { celulasDoMes, hojeIso, mesesPt, nomeDoDia, quemE } from "@/lib/agenda";
+import type { Aniversario, PedidoAgenda, Ponte } from "@/lib/api";
+import { hojeIso, mesesPt, nomeDoDia, quemE, visiveis } from "@/lib/agenda";
 import { marcasDoAno } from "@/lib/calendario";
+import { diasUteis } from "@/lib/diasUteis";
 import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { tipos } from "@/lib/rotulos";
@@ -14,7 +15,6 @@ import { IconeSeta } from "./Icones";
 import PedidoForm from "./PedidoForm";
 import { botao, botaoSec } from "./ui";
 
-const diasSemana = ["S", "T", "Q", "Q", "S", "S", "D"];
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
 const botaoAno = `${botaoSec} min-h-9 px-3 py-1`;
 const botaoSeta =
@@ -26,11 +26,24 @@ const rotulosData: Record<TipoData, string> = {
   comemorativa: "Data comemorativa",
   ponte: "Ponte",
 };
-// Ponto por tipo de pedido; pendente fica vazado (como na Agenda).
-const pontoTipo: Record<TipoPedido, string> = { ferias: "bg-positivo", ausencia: "bg-violeta", licenca: "bg-primaria" };
-const bordaTipo: Record<TipoPedido, string> = { ferias: "border-positivo", ausencia: "border-violeta", licenca: "border-primaria" };
+
+// Uma cor por pessoa (tokens da plataforma). Férias: cor cheia; ausência e licença: cor suave; pendente: só contorno tracejado.
+const cores = [
+  { cheia: "bg-positivo", suave: "bg-positivo/40", anel: "border-positivo", texto: "text-texto" },
+  { cheia: "bg-violeta", suave: "bg-violeta/40", anel: "border-violeta", texto: "text-texto" },
+  { cheia: "bg-laranja", suave: "bg-laranja/40", anel: "border-laranja", texto: "text-texto" },
+  { cheia: "bg-pessego", suave: "bg-pessego/40", anel: "border-pessego", texto: "text-texto" },
+  { cheia: "bg-primaria", suave: "bg-primaria/30", anel: "border-primaria", texto: "text-white" },
+] as const;
 
 const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+const dois = (n: number) => String(n).padStart(2, "0");
+const diasDoMes = (ano: number, mes: number) => new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+const fimDeSemana = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00Z`).getUTCDay();
+  return d === 0 || d === 6;
+};
+const inicial = (nome: string | undefined) => (nome ?? "?").trim().charAt(0).toUpperCase();
 
 interface Props {
   ano: number;
@@ -44,11 +57,10 @@ interface Props {
   aoCriar?: () => void;
 }
 
-function Ponto({ tipo, pendente }: { tipo: TipoPedido; pendente: boolean }) {
-  return <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full border ${bordaTipo[tipo]} ${pendente ? "bg-painel" : pontoTipo[tipo]}`} />;
-}
-
-/** Calendário do ano inteiro: feriados, pontes, aniversários e ausências da equipa. */
+/**
+ * Mapa do ano, como a folha de férias da equipa: um quadro por mês, os dias em colunas, uma linha por pessoa,
+ * fins de semana a cinzento e feriados e pontes em coluna rosa. À direita, a legenda com a cor e os dias de férias de cada um.
+ */
 export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, podeCriar = false, aoCriar }: Props) {
   const [localidade] = useLocalidade();
   const hoje = hojeIso();
@@ -71,6 +83,36 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
     [marcas],
   );
   const vazio = !abertoMarcas || abertoMarcas.datas.length + abertoMarcas.aniversarios.length + abertoMarcas.pedidos.length === 0;
+
+  // Pessoas com pedidos ativos no ano (por ordem alfabética), cada uma com a sua cor.
+  const pessoas = useMemo(() => {
+    const m = new Map<number, string>();
+    visiveis(pedidos).forEach((p) => {
+      const id = quemE(p);
+      if (id !== undefined) m.set(id, p.user?.nome ?? "Alguém");
+    });
+    return [...m].sort((a, b) => a[1].localeCompare(b[1], "pt")).map(([id, nome], i) => ({ id, nome, cor: cores[i % cores.length] }));
+  }, [pedidos]);
+  const visiveisNaPesquisa = useMemo(() => new Set(filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]).map((p) => quemE(p))), [pedidos, busca]);
+  const linhas = pessoas.filter((p) => visiveisNaPesquisa.has(p.id));
+
+  // Dias úteis de férias de cada pessoa neste ano (aprovadas e pendentes).
+  const diasDeFerias = useMemo(() => {
+    const m = new Map<number, number>();
+    visiveis(pedidos)
+      .filter((p) => p.tipo === "ferias")
+      .forEach((p) => {
+        const id = quemE(p);
+        if (id === undefined) return;
+        const de = p.data_inicio < `${ano}-01-01` ? `${ano}-01-01` : p.data_inicio;
+        const ate = p.data_fim > `${ano}-12-31` ? `${ano}-12-31` : p.data_fim;
+        if (de <= ate) m.set(id, (m.get(id) ?? 0) + diasUteis(de, ate));
+      });
+    return m;
+  }, [pedidos, ano]);
+
+  const totalFeriados = listaDatas.filter((d) => d.tipo === "feriado" || d.tipo === "municipal").length;
+  const totalPontes = listaDatas.filter((d) => d.tipo === "ponte").length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -112,133 +154,250 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
         </div>
       </div>
 
-      <ul aria-label="Legenda" className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-texto-suave">
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-rosa-suave" />
-          Feriado
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-primaria-suave ring-1 ring-inset ring-primaria" />
-          Ponte
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="text-texto underline decoration-dotted underline-offset-2">
-            12
-          </span>
-          Data comemorativa
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-rosa" />
-          Aniversário
-        </li>
-        {(Object.keys(tipos) as TipoPedido[]).map((t) => (
-          <li key={t} className="flex items-center gap-1.5">
-            <Ponto tipo={t} pendente={false} />
-            {tipos[t]}
-          </li>
-        ))}
-        <li className="flex items-center gap-1.5">
-          <Ponto tipo="ferias" pendente />
-          Pendente
-        </li>
-      </ul>
-
-      <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${aCarregar ? "opacity-60" : ""}`} aria-busy={aCarregar}>
-        {mesesPt.map((nome, i) => (
-          <section
-            key={nome}
-            aria-label={`${nome} ${ano}`}
-            className="rounded-cartao bg-painel/55 p-3 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
-          >
-            <h2 className="mb-2 text-sm font-semibold">{nome}</h2>
-            <div role="grid" aria-label={`${nome} ${ano}`} className="grid grid-cols-7 gap-y-1">
-              {diasSemana.map((d, k) => (
-                <div key={k} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
-                  {d}
-                </div>
-              ))}
-              {celulasDoMes({ ano, mes: i + 1 }).map((c) => {
-                if (!c.doMes) return <div key={c.iso} role="gridcell" aria-hidden="true" />;
-                const m = marcas.get(c.iso);
-                const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
-                const ponte = !!m?.datas.some((d) => d.tipo === "ponte");
-                const comemorativa = !!m?.datas.some((d) => d.tipo === "comemorativa");
-                const escolhido = aberto === c.iso;
-                // Um ponto por pessoa, tipo e estado; no máximo 3 para a célula não rebentar.
-                const pontos = [...new Map((m?.pedidos ?? []).map((p) => [`${quemE(p)}|${p.tipo}|${p.estado}`, p])).entries()].slice(0, 3);
-                const descricao = [
-                  nomeDoDia(c.iso),
-                  ...(m?.datas.map((d) => `${rotulosData[d.tipo]}: ${d.nome}`) ?? []),
-                  ...(m?.aniversarios.map((n) => `Aniversário de ${n}`) ?? []),
-                  ...(m?.pedidos.map((p) => `${p.user?.nome ?? "Alguém"}: ${tipos[p.tipo].toLowerCase()}${p.estado === "pendente" ? " (pendente)" : ""}`) ?? []),
-                ].join(". ");
-                return (
-                  <button
-                    key={c.iso}
-                    type="button"
-                    role="gridcell"
-                    aria-label={descricao}
-                    aria-selected={escolhido}
-                    aria-current={c.iso === hoje ? "date" : undefined}
-                    title={descricao}
-                    onClick={() => setAberto(escolhido ? null : c.iso)}
-                    className={`mx-auto flex h-9 w-9 flex-col items-center justify-center rounded-full text-xs tabular-nums ${foco} ${
-                      c.iso === hoje
-                        ? "bg-primaria font-semibold text-white"
-                        : feriado
-                          ? "bg-rosa-suave font-semibold text-texto"
-                          : ponte
-                            ? "bg-primaria-suave text-texto ring-1 ring-inset ring-primaria"
-                            : "text-texto hover:bg-primaria-suave"
-                    } ${comemorativa && !feriado ? "underline decoration-dotted underline-offset-2" : ""} ${escolhido ? "ring-2 ring-primaria" : ""}`}
-                  >
-                    {c.dia}
-                    <span aria-hidden="true" className="flex h-1.5 items-center gap-0.5">
-                      {m?.aniversarios.length ? <span className="h-1.5 w-1.5 rounded-full bg-rosa" /> : null}
-                      {pontos.map(([chave, p]) => (
-                        <Ponto key={chave} tipo={p.tipo} pendente={p.estado === "pendente"} />
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className={`flex min-w-0 flex-col gap-4 ${aCarregar ? "opacity-60" : ""}`} aria-busy={aCarregar}>
+          {mesesPt.map((nome, i) => {
+            const mes = i + 1;
+            const dias = Array.from({ length: diasDoMes(ano, mes) }, (_, k) => `${ano}-${dois(mes)}-${dois(k + 1)}`);
+            const aniversariosDoMes = dias.filter((iso) => marcas.get(iso)?.aniversarios.length);
+            const celulaDia = (iso: string) => {
+              const m = marcas.get(iso);
+              const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
+              const ponte = !!m?.datas.some((d) => d.tipo === "ponte");
+              return {
+                m,
+                fundo: feriado ? "bg-rosa-suave" : ponte ? "bg-primaria-suave" : fimDeSemana(iso) ? "bg-trilho" : "",
+                comemorativa: !!m?.datas.some((d) => d.tipo === "comemorativa") && !feriado,
+              };
+            };
+            return (
+              <section
+                key={nome}
+                aria-label={`${nome} ${ano}`}
+                className="overflow-hidden rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
+              >
+                <h2 className="bg-primaria-suave py-1.5 text-center text-sm font-semibold uppercase tracking-wide">{nome}</h2>
+                <div className="overflow-x-auto scroll-fino">
+                  <table aria-label={`${nome} ${ano}`} className="w-full min-w-[50rem] table-fixed border-collapse text-xs">
+                    <colgroup>
+                      <col className="w-28" />
+                      {dias.map((iso) => (
+                        <col key={iso} />
                       ))}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th scope="col" className="border border-linha/60 px-2 py-1 text-left font-medium text-texto-suave">
+                          <span className="sr-only">Pessoa</span>
+                        </th>
+                        {dias.map((iso) => {
+                          const { m, fundo, comemorativa } = celulaDia(iso);
+                          const descricao = [
+                            nomeDoDia(iso),
+                            ...(m?.datas.map((d) => `${rotulosData[d.tipo]}: ${d.nome}`) ?? []),
+                            ...(m?.aniversarios.map((n) => `Aniversário de ${n}`) ?? []),
+                          ].join(". ");
+                          return (
+                            <th key={iso} scope="col" className={`border border-linha/60 p-0 font-medium ${fundo}`}>
+                              <button
+                                type="button"
+                                aria-label={descricao}
+                                aria-pressed={aberto === iso}
+                                aria-current={iso === hoje ? "date" : undefined}
+                                title={descricao}
+                                onClick={() => setAberto(aberto === iso ? null : iso)}
+                                className={`h-7 w-full tabular-nums ${foco} ${
+                                  iso === hoje ? "bg-primaria font-semibold text-white" : "hover:bg-primaria-suave"
+                                } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso ? "ring-2 ring-inset ring-primaria" : ""}`}
+                              >
+                                {Number(iso.slice(8, 10))}
+                              </button>
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {linhas.length === 0 && (
+                        <tr>
+                          <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-normal text-texto-suave">
+                            Ninguém fora
+                          </th>
+                          {dias.map((iso) => (
+                            <td key={iso} className={`h-7 border border-linha/60 ${celulaDia(iso).fundo}`} />
+                          ))}
+                        </tr>
+                      )}
+                      {linhas.map((pessoa) => (
+                        <tr key={pessoa.id}>
+                          <th scope="row" className="truncate border border-linha/60 px-2 py-1 text-left font-medium" title={pessoa.nome}>
+                            {pessoa.nome}
+                          </th>
+                          {dias.map((iso) => {
+                            const { m, fundo } = celulaDia(iso);
+                            const p = m?.pedidos.find((x) => quemE(x) === pessoa.id);
+                            if (!p) return <td key={iso} className={`h-7 border border-linha/60 ${fundo}`} />;
+                            const pendente = p.estado === "pendente";
+                            const rotulo = `${pessoa.nome}: ${tipos[p.tipo].toLowerCase()}${pendente ? " (pendente)" : ""}, ${nomeDoDia(iso)}`;
+                            return (
+                              <td key={iso} className={`h-7 border border-linha/60 p-0 ${fundo}`}>
+                                <button
+                                  type="button"
+                                  aria-label={rotulo}
+                                  title={rotulo}
+                                  onClick={() => setAberto(iso)}
+                                  className={`flex h-full min-h-7 w-full items-center justify-center text-[0.625rem] font-semibold ${foco} ${
+                                    pendente
+                                      ? `border-2 border-dashed bg-painel/60 ${pessoa.cor.anel} text-texto`
+                                      : `${p.tipo === "ferias" ? pessoa.cor.cheia : pessoa.cor.suave} ${p.tipo === "ferias" ? pessoa.cor.texto : "text-texto"}`
+                                  }`}
+                                >
+                                  {inicial(pessoa.nome)}
+                                </button>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                      {aniversariosDoMes.length > 0 && (
+                        <tr>
+                          <th scope="row" className="border border-linha/60 px-2 py-1 text-left font-medium text-texto-suave">
+                            Aniversários
+                          </th>
+                          {dias.map((iso) => {
+                            const { m, fundo } = celulaDia(iso);
+                            return (
+                              <td key={iso} className={`h-7 border border-linha/60 text-center ${fundo}`}>
+                                {m?.aniversarios.length ? (
+                                  <span title={m.aniversarios.map((n) => `Aniversário de ${n}`).join(", ")} className="inline-block h-2 w-2 rounded-full bg-rosa" />
+                                ) : null}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            );
+          })}
+        </div>
 
-      {aberto && (
-        <section
-          aria-labelledby="cal-dia"
-          className="flex flex-col gap-2 rounded-cartao bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
-        >
-          <h2 id="cal-dia" className="text-lg font-semibold">
-            {nomeDoDia(aberto)}
-          </h2>
-          {vazio ? (
-            <p className="text-texto-suave">Sem marcações neste dia.</p>
-          ) : (
-            <ul className="flex flex-col gap-1 text-sm">
-              {abertoMarcas?.datas.map((d) => (
-                <li key={`${d.tipo}${d.nome}`}>
-                  <span className="font-medium">{d.nome}</span> · {rotulosData[d.tipo]}
-                </li>
-              ))}
-              {abertoMarcas?.aniversarios.map((n) => (
-                <li key={n} className="font-medium">
-                  Aniversário de {n}
-                </li>
-              ))}
-              {abertoMarcas?.pedidos.map((p) => (
-                <li key={p.id}>
-                  <span className="font-medium">{p.user?.nome ?? "Alguém"}</span> · {tipos[p.tipo]}
-                  {p.estado === "pendente" ? " (pendente)" : ""} · {dataCurta(p.data_inicio)} a {dataCurta(p.data_fim)}
-                </li>
-              ))}
-            </ul>
+        <aside aria-label="Legenda" className="flex flex-col gap-4 xl:sticky xl:top-4">
+          <div className="overflow-hidden rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-primaria-suave text-left">
+                  <th scope="col" className="px-3 py-1.5 font-semibold">
+                    Nome
+                  </th>
+                  <th scope="col" className="px-3 py-1.5 font-semibold">
+                    Cor
+                  </th>
+                  <th scope="col" className="px-3 py-1.5 text-right font-semibold">
+                    Dias de férias
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pessoas.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-3 py-2 text-texto-suave">
+                      Sem férias nem ausências em {ano}.
+                    </td>
+                  </tr>
+                )}
+                {pessoas.map((p) => (
+                  <tr key={p.id} className="border-t border-linha/60">
+                    <th scope="row" className="px-3 py-1.5 text-left font-normal">
+                      {p.nome}
+                    </th>
+                    <td className="px-3 py-1.5">
+                      <span aria-hidden="true" className={`flex h-5 w-10 items-center justify-center rounded-sm text-[0.625rem] font-semibold ${p.cor.cheia} ${p.cor.texto}`}>
+                        {inicial(p.nome)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-1.5 text-right tabular-nums">{diasDeFerias.get(p.id) ?? 0}</td>
+                  </tr>
+                ))}
+                <tr className="border-t-2 border-linha-forte/60">
+                  <th scope="row" className="px-3 py-1.5 text-left font-normal">
+                    Feriados
+                  </th>
+                  <td className="px-3 py-1.5">
+                    <span aria-hidden="true" className="block h-5 w-10 rounded-sm bg-rosa-suave" />
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{totalFeriados}</td>
+                </tr>
+                <tr className="border-t border-linha/60">
+                  <th scope="row" className="px-3 py-1.5 text-left font-normal">
+                    Pontes
+                  </th>
+                  <td className="px-3 py-1.5">
+                    <span aria-hidden="true" className="block h-5 w-10 rounded-sm bg-primaria-suave" />
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{totalPontes}</td>
+                </tr>
+                <tr className="border-t border-linha/60">
+                  <th scope="row" className="px-3 py-1.5 text-left font-normal">
+                    Descanso semanal
+                  </th>
+                  <td className="px-3 py-1.5">
+                    <span aria-hidden="true" className="block h-5 w-10 rounded-sm bg-trilho" />
+                  </td>
+                  <td />
+                </tr>
+                <tr className="border-t border-linha/60">
+                  <th scope="row" className="px-3 py-1.5 text-left font-normal">
+                    Aniversário
+                  </th>
+                  <td className="px-3 py-1.5">
+                    <span aria-hidden="true" className="block h-2 w-2 rounded-full bg-rosa" />
+                  </td>
+                  <td />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-texto-suave">
+            Cor cheia: férias. Cor suave: ausência ou licença. Contorno tracejado: pedido pendente. Dias de férias: dias úteis, sem feriados.
+          </p>
+
+          {aberto && (
+            <section
+              aria-labelledby="cal-dia"
+              className="flex flex-col gap-2 rounded-cartao bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
+            >
+              <h2 id="cal-dia" className="text-lg font-semibold">
+                {nomeDoDia(aberto)}
+              </h2>
+              {vazio ? (
+                <p className="text-texto-suave">Sem marcações neste dia.</p>
+              ) : (
+                <ul className="flex flex-col gap-1 text-sm">
+                  {abertoMarcas?.datas.map((d) => (
+                    <li key={`${d.tipo}${d.nome}`}>
+                      <span className="font-medium">{d.nome}</span> · {rotulosData[d.tipo]}
+                    </li>
+                  ))}
+                  {abertoMarcas?.aniversarios.map((n) => (
+                    <li key={n} className="font-medium">
+                      Aniversário de {n}
+                    </li>
+                  ))}
+                  {abertoMarcas?.pedidos.map((p) => (
+                    <li key={p.id}>
+                      <span className="font-medium">{p.user?.nome ?? "Alguém"}</span> · {tipos[p.tipo]}
+                      {p.estado === "pendente" ? " (pendente)" : ""} · {dataCurta(p.data_inicio)} a {dataCurta(p.data_fim)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           )}
-        </section>
-      )}
+        </aside>
+      </div>
 
       <section aria-labelledby="cal-lista" className="flex flex-col gap-2">
         <h2 id="cal-lista" className="text-lg font-semibold">
