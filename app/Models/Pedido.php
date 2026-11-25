@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['empresa_id', 'user_id', 'tipo', 'subtipo', 'data_inicio', 'data_fim', 'observacao', 'urgente', 'estado', 'decidido_por', 'decidido_em', 'motivo_recusa'])]
+#[Fillable(['empresa_id', 'user_id', 'tipo', 'subtipo', 'data_inicio', 'data_fim', 'observacao', 'urgente', 'estado', 'decidido_por', 'decidido_em', 'visto_em', 'motivo_recusa'])]
 class Pedido extends Model
 {
     use HasFactory;
@@ -19,6 +19,7 @@ class Pedido extends Model
             'data_inicio' => 'date:Y-m-d',
             'data_fim' => 'date:Y-m-d',
             'decidido_em' => 'datetime',
+            'visto_em' => 'datetime',
             'urgente' => 'boolean',
         ];
     }

@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import type { Pedido } from "@/lib/api";
 import { filtrar } from "@/lib/busca";
 import { estados, formatarData, subtipos, tipos } from "@/lib/rotulos";
+import { hojeIso } from "@/lib/agenda";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import AnexosDoPedido from "./AnexosDoPedido";
 import PontoUrgente from "./PontoUrgente";
@@ -26,6 +27,9 @@ const botaoAcao = `${botaoSec} min-h-9 px-3 py-1`;
 const botaoApagar = `${botaoPerigo} min-h-9 px-3 py-1`;
 
 /** `formulario` (opcional) fica à esquerda; pesquisa e filtros ao lado, a lista por baixo. */
+/** Licença comunicada que ainda não começou: o próprio pode cancelá-la. */
+const licencaPorComecar = (p: Pedido) => p.tipo === "licenca" && p.estado === "aprovado" && p.data_inicio.slice(0, 10) >= hojeIso();
+
 export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar }: Props) {
   const [aApagar, setAApagar] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
@@ -83,7 +87,7 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
               <p className="font-medium">
                 {p.urgente && <PontoUrgente />}
                 {tipos[p.tipo]}
-                {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""} · {estados[p.estado]}
+                {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""} · {p.tipo === "licenca" && p.estado === "aprovado" ? "Comunicada" : estados[p.estado]}
               </p>
               <p className="text-sm text-texto-suave">
                 {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
@@ -94,7 +98,7 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
                 <p className="mt-1 break-words text-sm">Motivo da recusa: {p.motivo_recusa}</p>
               )}
               </div>
-              {p.estado === "pendente" && (onEditar || onApagar) && (
+              {(p.estado === "pendente" ? onEditar || onApagar : licencaPorComecar(p) && onApagar) && (
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   {aApagar === p.id ? (
                     <>
@@ -115,7 +119,7 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
                     </>
                   ) : (
                     <>
-                      {onEditar && (
+                      {onEditar && p.estado === "pendente" && (
                         <button type="button" className={botaoAcao} onClick={() => onEditar(p)}>
                           Editar
                         </button>

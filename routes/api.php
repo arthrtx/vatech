@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/funcionarios/{id}', [FuncionarioController::class, 'update']);
         Route::delete('/funcionarios/{id}', [FuncionarioController::class, 'destroy']);
         Route::post('/pedidos/{id}/aprovar', [PedidoController::class, 'aprovar']);
+        Route::post('/pedidos/{id}/visto', [PedidoController::class, 'visto']);
         Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
     });
 

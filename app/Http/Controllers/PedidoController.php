@@ -27,6 +27,9 @@ class PedidoController extends Controller
         if ($request->filled('estado')) {
             $query->where('estado', $request->query('estado'));
         }
+        if ($request->boolean('licencas_por_ver')) {
+            $query->where('tipo', 'licenca')->whereNull('visto_em');
+        }
 
         return response()->json(['data' => $query->get()]);
     }
@@ -43,7 +46,9 @@ class PedidoController extends Controller
             ->where('data_fim', '>=', $dados['data_inicio'])
             ->exists();
 
-        $pedido = Pedido::create([...$dados, 'user_id' => $user->id, 'empresa_id' => $user->empresa_id]);
+        // A licença é um direito do trabalhador: não fica à espera de aprovação, o admin só é avisado.
+        $licenca = $dados['tipo'] === 'licenca' ? ['estado' => 'aprovado', 'decidido_em' => now()] : [];
+        $pedido = Pedido::create([...$dados, ...$licenca, 'user_id' => $user->id, 'empresa_id' => $user->empresa_id]);
 
         $resposta = ['data' => $pedido->refresh()->load('anexos')];
         if ($sobrepoe) {
@@ -86,25 +91,37 @@ class PedidoController extends Controller
         }
     }
 
-    /** O funcionario apaga um pedido seu enquanto esta pendente. */
+    /** O funcionario apaga um pedido seu enquanto esta pendente, ou cancela uma licença que ainda não começou. */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $pedido = $this->pedidoPendenteDoUtilizador($request, $id);
+        $pedido = $this->pedidoPendenteDoUtilizador($request, $id, licencaPorComecar: true);
         // Os anexos (e os seus bytes) saem em cascata.
         $pedido->delete();
 
         return response()->json(null, 204);
     }
 
-    private function pedidoPendenteDoUtilizador(Request $request, int $id): Pedido
+    private function pedidoPendenteDoUtilizador(Request $request, int $id, bool $licencaPorComecar = false): Pedido
     {
         $user = $request->user();
         // 404 para pedidos de outros utilizadores ou empresas (nao revela existencia).
         $pedido = Pedido::where('empresa_id', $user->empresa_id)->where('user_id', $user->id)->findOrFail($id);
 
-        abort_if($pedido->estado !== 'pendente', 409, 'Só é possível alterar pedidos pendentes.');
+        $cancelavel = $licencaPorComecar && $pedido->tipo === 'licenca'
+            && $pedido->data_inicio->format('Y-m-d') >= now('Europe/Lisbon')->toDateString();
+        abort_if($pedido->estado !== 'pendente' && ! $cancelavel, 409, 'Só é possível alterar pedidos pendentes.');
 
         return $pedido;
+    }
+
+    /** O admin marca que viu o aviso de uma licença. */
+    public function visto(Request $request, int $id): JsonResponse
+    {
+        $pedido = Pedido::where('empresa_id', $request->user()->empresa_id)->where('tipo', 'licenca')->findOrFail($id);
+        $pedido->visto_em ??= now();
+        $pedido->save();
+
+        return response()->json(['data' => $pedido->refresh()]);
     }
 
     public function aprovar(Request $request, int $id): JsonResponse
