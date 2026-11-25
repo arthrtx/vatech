@@ -1,0 +1,65 @@
+# Deploy do site (web/) para o Vercel pela CLI, a cada push na main.
+#
+# Porque existe: no plano grátis (Hobby) o Vercel só aceita deploys de commits do dono da conta,
+# e uma colaboradora não consegue publicar. Aqui o deploy é pedido com o token do dono, por isso
+# o autor do commit deixa de contar.
+#
+# Requisitos (passos manuais, ver docs/DEPLOY.md §Deploy do site pela CLI):
+#   - Secrets do repo: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID.
+#   - Desligar o deploy automático pelo Git no painel do Vercel (senão há dois deploys por push).
+# Sem os secrets, o job termina sem falhar e avisa.
+
+name: Deploy web (Vercel)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Verificar secrets
+        id: secrets
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::warning::Secrets do Vercel em falta (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID). Deploy ignorado."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.secrets.outputs.ok == 'true'
+
+      - uses: actions/setup-node@v7
+        if: steps.secrets.outputs.ok == 'true'
+        with:
+          node-version: '24'
+
+      - name: Instalar a CLI do Vercel
+        if: steps.secrets.outputs.ok == 'true'
+        run: npm install --global vercel@latest
+
+      # Corre na raiz: o "Root Directory" (web) vem das definições do projeto no Vercel.
+      - name: Obter configuração do projeto
+        if: steps.secrets.outputs.ok == 'true'
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build
+        if: steps.secrets.outputs.ok == 'true'
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy
+        if: steps.secrets.outputs.ok == 'true'
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
