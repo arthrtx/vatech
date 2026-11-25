@@ -12,7 +12,7 @@ class PresencaController extends Controller
 {
     public function hoje(Request $request): JsonResponse
     {
-        return response()->json(['data' => $this->doDia($request)?->load('user:id,nome')->toContrato()]);
+        return response()->json(['data' => $this->doDia($request)?->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()]);
     }
 
     public function entrada(Request $request): JsonResponse
@@ -26,7 +26,7 @@ class PresencaController extends Controller
             abort(422, 'Já marcou a entrada hoje.');
         }
 
-        return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()], 201);
+        return response()->json(['data' => $presenca->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()], 201);
     }
 
     public function saida(Request $request): JsonResponse
@@ -37,7 +37,24 @@ class PresencaController extends Controller
 
         $presenca->update(['saida' => now()]);
 
-        return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()]);
+        return response()->json(['data' => $presenca->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()]);
+    }
+
+    /** O estagiário define (ou apaga, com os dois campos vazios) o seu horário de almoço. */
+    public function almoco(Request $request): JsonResponse
+    {
+        $dados = $request->validate([
+            'almoco_inicio' => ['nullable', 'date_format:H:i', 'required_with:almoco_fim'],
+            'almoco_fim' => ['nullable', 'date_format:H:i', 'required_with:almoco_inicio', 'after:almoco_inicio'],
+        ], [
+            'almoco_fim.after' => 'O fim do almoço tem de ser depois do início.',
+            'almoco_inicio.required_with' => 'Indique a hora de início do almoço.',
+            'almoco_fim.required_with' => 'Indique a hora de fim do almoço.',
+        ]);
+        $user = $request->user();
+        $user->update(['almoco_inicio' => $dados['almoco_inicio'] ?? null, 'almoco_fim' => $dados['almoco_fim'] ?? null]);
+
+        return response()->json(['user' => $user->fresh()->toContrato()]);
     }
 
     public function atrasada(StorePresencaAtrasadaRequest $request): JsonResponse
@@ -54,7 +71,7 @@ class PresencaController extends Controller
             abort(422, 'Já existe presença nesse dia.');
         }
 
-        return response()->json(['data' => $presenca->load('user:id,nome')->toContrato()], 201);
+        return response()->json(['data' => $presenca->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()], 201);
     }
 
     public function index(Request $request): JsonResponse
@@ -66,7 +83,7 @@ class PresencaController extends Controller
             'user_id' => ['nullable', 'integer'],
         ]);
 
-        $query = Presenca::with('user:id,nome')->latest('data')->latest('id');
+        $query = Presenca::with('user:id,nome,almoco_inicio,almoco_fim')->latest('data')->latest('id');
 
         if ($user->isAdmin()) {
             $query->whereHas('user', fn ($q) => $q->where('empresa_id', $user->empresa_id));

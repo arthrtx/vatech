@@ -5,10 +5,11 @@ const hora = new Intl.DateTimeFormat("pt-PT", { hour: "2-digit", minute: "2-digi
 /** "09:05" a partir de um ISO8601 do servidor; "" se vazio. */
 export const horaDe = (iso: string | null) => (iso ? hora.format(new Date(iso)) : "");
 
-/** Total entre entrada e saída, ex.: "7 h 30 min"; "" se ainda sem saída. */
-export function totalHoras(p: Pick<Presenca, "entrada" | "saida">): string {
+/** Total entre entrada e saída sem o almoço, ex.: "7 h 30 min"; "" se ainda sem saída. */
+export function totalHoras(p: Pick<Presenca, "entrada" | "saida" | "almoco_min">): string {
   if (!p.saida) return "";
-  const min = Math.max(0, Math.round((Date.parse(p.saida) - Date.parse(p.entrada)) / 60000));
+  const bruto = Math.round((Date.parse(p.saida) - Date.parse(p.entrada)) / 60000);
+  const min = Math.max(0, bruto - (p.almoco_min ?? 0));
   return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")} min`;
 }
 

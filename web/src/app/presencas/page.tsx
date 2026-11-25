@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import AppShell from "@/components/AppShell";
 import CampoData from "@/components/CampoData";
+import HorarioAlmoco from "@/components/HorarioAlmoco";
 import PresencaAtrasada from "@/components/PresencaAtrasada";
 import Seletor from "@/components/Seletor";
 import { botao, botaoSec, erro as erroCls, label, vidro } from "@/components/ui";
@@ -63,13 +64,18 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Presenças</h1>
+        <h1 className="text-2xl font-semibold">Estágio</h1>
         {!admin && !esqueci && (
           <button type="button" className={`${botao} min-h-10`} onClick={() => setEsqueci(true)}>
             Esqueci de marcar presença
           </button>
         )}
       </div>
+      {!admin && (
+        <section aria-label="Horário de almoço" className={`${vidro} p-4`}>
+          <HorarioAlmoco onGuardado={() => setVolta((v) => v + 1)} />
+        </section>
+      )}
       {!admin && esqueci && (
         <PresencaAtrasada
           min={user?.estagio_inicio}

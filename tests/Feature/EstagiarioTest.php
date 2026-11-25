@@ -145,3 +145,35 @@ it('presenca atrasada e so para estagiarios', function () {
     Sanctum::actingAs(User::factory()->admin()->create());
     $this->postJson('/api/presencas/atrasada', $body)->assertForbidden();
 });
+
+it('estagiario define o horario de almoco e o contrato devolve-o', function () {
+    Sanctum::actingAs(estagiario());
+
+    $this->putJson('/api/me/almoco', ['almoco_inicio' => '12:30', 'almoco_fim' => '13:30'])
+        ->assertOk()
+        ->assertJsonPath('user.almoco_inicio', '12:30')
+        ->assertJsonPath('user.almoco_fim', '13:30');
+
+    $this->putJson('/api/me/almoco', ['almoco_inicio' => '13:30', 'almoco_fim' => '12:30'])
+        ->assertStatus(422)->assertJsonValidationErrors('almoco_fim');
+
+    $this->putJson('/api/me/almoco', ['almoco_inicio' => null, 'almoco_fim' => null])
+        ->assertOk()->assertJsonPath('user.almoco_inicio', null);
+});
+
+it('so o estagiario define horario de almoco', function () {
+    Sanctum::actingAs(User::factory()->create());
+    $this->putJson('/api/me/almoco', ['almoco_inicio' => '12:30', 'almoco_fim' => '13:30'])->assertForbidden();
+});
+
+it('desconta o almoco que cai entre a entrada e a saida', function () {
+    // Novembro: Lisboa está em UTC, por isso 12:30 de Lisboa = 12:30 UTC.
+    $e = estagiario(['almoco_inicio' => '12:30', 'almoco_fim' => '13:30']);
+    $todo = Presenca::create(['user_id' => $e->id, 'data' => '2026-11-23', 'entrada' => '2026-11-23 09:00:00', 'saida' => '2026-11-23 18:00:00']);
+    $parte = Presenca::create(['user_id' => $e->id, 'data' => '2026-11-24', 'entrada' => '2026-11-24 09:00:00', 'saida' => '2026-11-24 13:00:00']);
+    $manha = Presenca::create(['user_id' => $e->id, 'data' => '2026-11-25', 'entrada' => '2026-11-25 08:00:00', 'saida' => '2026-11-25 12:00:00']);
+
+    expect($todo->fresh()->toContrato()['almoco_min'])->toBe(60)
+        ->and($parte->fresh()->toContrato()['almoco_min'])->toBe(30)
+        ->and($manha->fresh()->toContrato()['almoco_min'])->toBe(0);
+});
