@@ -136,15 +136,15 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col items-start gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 max-w-md flex-1">
+          <CampoBusca id="busca-calendario" rotulo="Pesquisar no calendário" valor={busca} onChange={setBusca} />
+        </div>
         {podeCriar && (
-          <button type="button" className={botao} onClick={() => setNovo(true)}>
+          <button type="button" className={`${botao} shrink-0`} onClick={() => setNovo(true)}>
             Novo pedido
           </button>
         )}
-        <div className="w-full max-w-md">
-          <CampoBusca id="busca-calendario" rotulo="Pesquisar no calendário" valor={busca} onChange={setBusca} />
-        </div>
       </div>
       {enviado && (
         <p role="status" className="rounded-controlo bg-primaria-suave px-3 py-2 text-sm text-texto">
