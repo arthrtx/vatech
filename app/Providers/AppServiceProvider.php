@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +22,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        VerifyEmail::toMailUsing(fn ($user, string $url) => (new MailMessage)
+            ->subject('Confirme o seu email — vatech')
+            ->greeting('Olá, '.$user->nome.'!')
+            ->line('Para ativar a sua conta, confirme o seu endereço de email.')
+            ->action('Confirmar email', $url)
+            ->line('Se não criou esta conta, ignore este email.')
+            ->salutation('vatech'));
+
         // O link do email abre o site (Next.js), não a API.
         ResetPassword::toMailUsing(function ($user, string $token) {
             $url = rtrim((string) config('app.frontend_url'), '/')

@@ -5,20 +5,20 @@ Base: `/api`. Auth: Sanctum, token Bearer. Respostas JSON. Erros de validacao: 4
 
 ## Modelos
 - `empresas`: id, nome
-- `users`: id, empresa_id, nome, email (unico), password, papel (`admin` | `funcionario`)
+- `users`: id, empresa_id, nome, email (unico), email_verified_at (nullable), termos_aceites_em (nullable), password, papel (`admin` | `funcionario` | `estagiario`)
 - `pedidos`: id, empresa_id, user_id, tipo (`ferias` | `ausencia` | `licenca`), subtipo (nullable; ausencia: `medica` | `documentacao` | `falta_justificada`), data_inicio, data_fim (date, `data_fim >= data_inicio`), observacao (nullable), estado (`pendente` | `aprovado` | `recusado`, default `pendente`), decidido_por (nullable), decidido_em (nullable), motivo_recusa (nullable)
 - Tudo filtrado pela `empresa_id` do utilizador autenticado (multi-empresa). Nunca devolver dados de outra empresa.
 
 ## Endpoints
 | Metodo e rota | Papel | Corpo | Resposta |
 |---|---|---|---|
-| POST `/api/login` | publico | `{email, password}` | 200 `{token, user}` |
+| POST `/api/login` | publico | `{email, password}` | 200 `{token, user}`; 422 em `email` se a conta tem o email por confirmar (sem token) |
+| POST `/api/registo` | publico, throttle 5/min | `{nome, email, password, password_confirmation, aceita_termos: boolean}` (`aceita_termos` tem de ser true; password min 8; cria `funcionario` na unica empresa; grava `termos_aceites_em`; envia email de verificacao) | 201 `{message}` sem token; 422 validacao; 503 `{message}` se nao existir empresa |
+| POST `/api/email/reenviar` | publico, throttle 5/min | `{email}` | 200 `{message}` sempre igual, exista ou nao a conta |
+| GET `/api/email/verificar/{id}/{hash}` | link assinado (email) | - | 302 para `FRONTEND_URL/login?verificado=1`; link invalido ou expirado: 302 para `FRONTEND_URL/login?verificado=0` |
 | POST `/api/logout` | autenticado | - | 204 |
 | GET `/api/me` | autenticado | - | 200 `{user}` |
-| GET `/api/funcionarios` | admin | - | 200 `{data: [user]}` |
-| POST `/api/funcionarios` | admin | `{nome, email, password}` (papel=funcionario, empresa do admin) | 201 `{data: user}` |
-| PUT `/api/funcionarios/{id}` | admin | `{nome, email, password?}` (email unico ignorando o proprio; password so muda se enviada) | 200 `{data: user}`; 422 validacao; 404 se nao existir, for de outra empresa ou nao for funcionario |
-| DELETE `/api/funcionarios/{id}` | admin | - | 204 (soft delete, tokens revogados); 404 nos mesmos casos do PUT |
+| GET `/api/funcionarios` | admin | - | 200 `{data: [user]}`. Lista so de leitura: o admin ja nao cria, edita nem apaga contas (cada pessoa regista-se em `/api/registo`); POST/PUT/DELETE `/api/funcionarios` deixaram de existir (405/404) |
 | GET `/api/pedidos` | autenticado | query `?estado=` opcional | 200 `{data: [pedido]}`; admin ve todos da empresa (com `user: {id, nome}`), funcionario so os seus; pedidos de funcionarios apagados ficam ocultos |
 | GET `/api/agenda` | autenticado | query `?de=AAAA-MM-DD&ate=AAAA-MM-DD` obrigatorios (`ate >= de`) | 200 `{data: [...]}` dos pedidos da empresa pendentes/aprovados que intersectam o intervalo (`data_inicio <= ate` e `data_fim >= de`, limites inclusivos); admin: pedidos completos com `user: {id, nome}`; funcionario: os seus completos + aprovados dos colegas so com `{id, user: {id, nome}, tipo, data_inicio, data_fim, estado}`; exclui recusados, apagados e outras empresas; 422 se parametros invalidos |
 | POST `/api/pedidos` | funcionario | `{tipo, subtipo?, data_inicio, data_fim, observacao?}` | 201 `{data: pedido}` (estado pendente) |
@@ -31,4 +31,4 @@ Base: `/api`. Auth: Sanctum, token Bearer. Respostas JSON. Erros de validacao: 4
 Uma empresa "Empresa Demo", admin `admin@vatech.test`, funcionario `funcionario@vatech.test`; password de dev `password` (so local, nunca em producao).
 
 ## Frontend
-Next.js `web/`, variavel `NEXT_PUBLIC_API_URL` (default `http://localhost:8000/api`). Ecras (PT): `/login`, `/` (funcionario: os meus pedidos + novo pedido; admin: pedidos pendentes + aprovar/recusar), `/funcionarios` (admin: lista + criar). Token em memoria + localStorage. Sem setas na UI; sem cores/fontes inventadas (`TODO: token em falta`, Tailwind neutro).
+Next.js `web/`, variavel `NEXT_PUBLIC_API_URL` (default `http://localhost:8000/api`). Ecras (PT): `/login`, `/` (funcionario: os meus pedidos + novo pedido; admin: pedidos pendentes + aprovar/recusar), `/registo`, `/funcionarios` (admin: so lista). Token em memoria + localStorage. Sem setas na UI; sem cores/fontes inventadas (`TODO: token em falta`, Tailwind neutro).

@@ -27,7 +27,7 @@ class ProducaoSeeder extends Seeder
 
         User::firstOrCreate(
             ['email' => $email],
-            ['empresa_id' => $empresa->id, 'nome' => env('ADMIN_NOME', 'Administrador'), 'papel' => 'admin', 'password' => $password],
+            ['empresa_id' => $empresa->id, 'nome' => env('ADMIN_NOME', 'Administrador'), 'papel' => 'admin', 'email_verified_at' => now(), 'password' => $password],
         );
     }
 }
