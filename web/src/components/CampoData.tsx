@@ -79,16 +79,7 @@ export default function CampoData({ id, valor, onChange, min, required, classNam
     };
   }, [aberto]);
 
-  /** Põe as "/" sozinho enquanto se escrevem só dígitos (ddmmaaaa → dd/mm/aaaa); apagar continua a funcionar. */
-  function mascarar(texto: string, anterior: string) {
-    if (!/^[\d/]*$/.test(texto)) return texto;
-    const d = texto.replace(/\D/g, "").slice(0, 8);
-    const base = [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("/");
-    return texto.length > anterior.length && (d.length === 2 || d.length === 4) ? `${base}/` : base;
-  }
-
-  function escrever(bruto: string) {
-    const texto = mascarar(bruto, rascunho ?? formatar(valor));
+  function escrever(texto: string) {
     const lida = lerData(texto);
     // Data escrita antes do mínimo: não vale (volta ao valor anterior ao sair do campo).
     const iso = lida && !(min && lida < min) ? lida : null;
