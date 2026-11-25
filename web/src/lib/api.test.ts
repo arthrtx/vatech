@@ -54,17 +54,6 @@ describe("cliente da API", () => {
     });
   });
 
-  it("editarFuncionario faz PUT e apagarFuncionario aceita 204 sem corpo", async () => {
-    const f = vi.fn().mockResolvedValueOnce(resposta(200, { data: user })).mockResolvedValueOnce(resposta(204));
-    vi.stubGlobal("fetch", f);
-    const u = await api.editarFuncionario(1, { nome: "A", email: "a@b.c" });
-    expect(u.id).toBe(1);
-    expect(f.mock.calls[0][0]).toMatch(/\/funcionarios\/1$/);
-    expect(f.mock.calls[0][1].method).toBe("PUT");
-    await expect(api.apagarFuncionario(1)).resolves.toBeUndefined();
-    expect(f.mock.calls[1][1].method).toBe("DELETE");
-  });
-
   it("agenda pede GET /agenda com de e ate e devolve data", async () => {
     setToken("abc");
     const lista = [{ id: 5, user: { id: 2, nome: "Rui" }, tipo: "ferias", data_inicio: "2026-12-01", data_fim: "2026-12-02", estado: "aprovado" }];

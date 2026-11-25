@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { mensagemDeErro } from "@/lib/api";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api, ApiError, mensagemDeErro } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { botao, erro as erroCls, input, label } from "@/components/ui";
+import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
 
-export default function LoginPage() {
+function Formulario() {
+  const verificado = useSearchParams().get("verificado");
   const { user, loading, login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [porConfirmar, setPorConfirmar] = useState(false);
+  const [reenviado, setReenviado] = useState(false);
 
   useEffect(() => {
     if (!loading && user) router.replace("/");
@@ -22,10 +25,27 @@ export default function LoginPage() {
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
+    setPorConfirmar(false);
+    setReenviado(false);
     setEnviando(true);
     try {
       await login(email, password);
       router.replace("/");
+    } catch (err) {
+      setErro(mensagemDeErro(err));
+      setPorConfirmar(err instanceof ApiError && err.status === 422 && !!err.errors?.email?.some((m) => /confirm/i.test(m)));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function reenviar() {
+    setErro(null);
+    setEnviando(true);
+    try {
+      await api.reenviarConfirmacao(email);
+      setReenviado(true);
+      setPorConfirmar(false);
     } catch (err) {
       setErro(mensagemDeErro(err));
     } finally {
@@ -42,6 +62,21 @@ export default function LoginPage() {
           </span>
           vatech
         </h1>
+        {verificado === "1" && (
+          <p role="status" className="rounded-controlo border border-linha-forte bg-primaria-suave px-3 py-2 text-sm text-texto">
+            Email confirmado. Já pode entrar.
+          </p>
+        )}
+        {verificado === "0" && (
+          <p role="alert" className={erroCls}>
+            Link inválido ou expirado.
+          </p>
+        )}
+        {reenviado && (
+          <p role="status" className="rounded-controlo border border-linha-forte bg-primaria-suave px-3 py-2 text-sm text-texto">
+            Enviámos um novo link de confirmação para o seu email.
+          </p>
+        )}
         <form onSubmit={enviar} className="flex flex-col gap-4">
           <div>
             <label htmlFor="email" className={label}>
@@ -82,11 +117,27 @@ export default function LoginPage() {
               {erro}
             </p>
           )}
+          {porConfirmar && (
+            <button type="button" disabled={enviando} onClick={reenviar} className={botaoSec}>
+              Reenviar link
+            </button>
+          )}
           <button type="submit" disabled={enviando} className={botao}>
             {enviando ? "A entrar..." : "Entrar"}
           </button>
+          <Link href="/registo" className="text-center text-sm text-texto-suave underline underline-offset-2 hover:text-texto">
+            Criar conta
+          </Link>
         </form>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <Formulario />
+    </Suspense>
   );
 }

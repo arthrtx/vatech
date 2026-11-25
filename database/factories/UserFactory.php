@@ -28,6 +28,11 @@ class UserFactory extends Factory
         ];
     }
 
+    public function unverified(): static
+    {
+        return $this->state(['email_verified_at' => null]);
+    }
+
     public function admin(): static
     {
         return $this->state(['papel' => 'admin']);
