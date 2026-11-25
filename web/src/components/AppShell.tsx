@@ -8,7 +8,7 @@ import AvisoLicencas from "./AvisoLicencas";
 import type { Papel } from "@/lib/api";
 import { primeiroNome } from "@/lib/saudacao";
 import {
-  IconeAgenda,
+  IconeAgendaMenu,
   IconeCalendario,
   IconeDashboard,
   IconeDefinicoes,
@@ -103,7 +103,7 @@ export default function AppShell({
   const links = [
     { href: "/dashboard", texto: "Dashboard", Icone: IconeDashboard },
     { href: "/", texto: user.papel === "admin" ? "Pedidos" : "Os meus pedidos", Icone: IconePedidos },
-    { href: "/agenda", texto: "Agenda", Icone: IconeAgenda },
+    { href: "/agenda", texto: "Agenda", Icone: IconeAgendaMenu },
     { href: "/calendario", texto: "Calendário", Icone: IconeCalendario },
   ];
   if (user.papel === "admin") {

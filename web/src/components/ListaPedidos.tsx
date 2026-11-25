@@ -10,13 +10,18 @@ import PontoUrgente from "./PontoUrgente";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos } from "./FiltrosPedidosCampos";
 import { ResumoFiltros } from "./PainelFiltros";
-import { botaoPerigo, botaoSec } from "./ui";
+import JanelaFormulario from "./JanelaFormulario";
+import { botao, botaoPerigo, botaoSec } from "./ui";
 
 interface Props {
   pedidos: Pedido[];
   /** Primeiro carregamento em curso: mostra "A carregar" em vez do estado vazio. */
   carregando?: boolean;
+  /** Formulário "Novo pedido": fica numa janela que abre com o botão "Novo pedido". */
   formulario?: ReactNode;
+  formAberto?: boolean;
+  aoAbrirForm?: () => void;
+  aoFecharForm?: () => void;
   /** Se existirem, os pedidos pendentes mostram "Editar" e "Apagar". */
   onEditar?: (p: Pedido) => void;
   onApagar?: (p: Pedido) => Promise<void> | void;
@@ -29,8 +34,8 @@ interface Props {
 const botaoAcao = `${botaoSec} min-h-9 px-3 py-1`;
 const botaoApagar = `${botaoPerigo} min-h-9 px-3 py-1`;
 
-/** `formulario` (opcional) fica à esquerda; pesquisa e filtros ao lado, a lista por baixo. */
-export default function ListaPedidos({ pedidos, carregando = false, formulario, onEditar, onApagar, onCancelar, apagarAprovados = false }: Props) {
+/** Pesquisa e filtros em cima, a lista por baixo; com `formulario`, o botão "Novo pedido" abre-o numa janela. */
+export default function ListaPedidos({ pedidos, carregando = false, formulario, formAberto = false, aoAbrirForm, aoFecharForm, onEditar, onApagar, onCancelar, apagarAprovados = false }: Props) {
   const [aCancelar, setACancelar] = useState<number | null>(null);
   const [aApagar, setAApagar] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
@@ -43,8 +48,19 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
   ]);
   return (
     <div className="flex flex-col gap-3">
-      <div className={formulario ? "grid items-start gap-5 lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)]" : "contents"}>
-        {formulario}
+      {formulario && (
+        <div>
+          <button type="button" className={botao} onClick={aoAbrirForm}>
+            Novo pedido
+          </button>
+        </div>
+      )}
+      {formulario && formAberto && (
+        <JanelaFormulario titulo="Formulário de pedido" aoFechar={() => aoFecharForm?.()}>
+          {formulario}
+        </JanelaFormulario>
+      )}
+      <div className="contents">
         <div className="flex min-w-0 flex-col gap-3">
           <CampoBusca id="busca-meus-pedidos" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
           {pedidos.length > 0 && (

@@ -1,0 +1,26 @@
+"use client";
+
+import { useEffect, useRef, type ReactNode } from "react";
+
+/** Janela por cima da página (fecha com Escape ou ao clicar fora). Usada para o formulário "Novo pedido". */
+export default function JanelaFormulario({ children, aoFechar, titulo }: { children: ReactNode; aoFechar: () => void; titulo: string }) {
+  const caixa = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    caixa.current?.focus();
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && aoFechar();
+    document.addEventListener("keydown", tecla);
+    return () => document.removeEventListener("keydown", tecla);
+  }, [aoFechar]);
+
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/40 p-3 sm:items-center sm:p-6"
+      onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}
+    >
+      <div ref={caixa} role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} className="w-full max-w-xl focus:outline-none">
+        {children}
+      </div>
+    </div>
+  );
+}

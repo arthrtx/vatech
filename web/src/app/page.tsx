@@ -18,6 +18,8 @@ function Conteudo() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [editando, setEditando] = useState<Pedido | null>(null);
+  const [novoAberto, setNovoAberto] = useState(false);
+  const [novoAdminAberto, setNovoAdminAberto] = useState(false);
 
   const carregar = useCallback(async () => {
     try {
@@ -88,7 +90,17 @@ function Conteudo() {
           <ListaPedidos
             pedidos={pedidos.filter((p) => p.user_id === user?.id)}
             carregando={carregando}
-            formulario={<PedidoForm onCriado={carregar} />}
+            formulario={
+              <PedidoForm
+                onCriado={(avisos) => {
+                  carregar();
+                  if (avisos.length === 0) setNovoAdminAberto(false);
+                }}
+              />
+            }
+            formAberto={novoAdminAberto}
+            aoAbrirForm={() => setNovoAdminAberto(true)}
+            aoFecharForm={() => setNovoAdminAberto(false)}
             apagarAprovados
             onApagar={async (p) => {
               try {
@@ -124,9 +136,23 @@ function Conteudo() {
                 onCancelar={() => setEditando(null)}
               />
             ) : (
-              <PedidoForm onCriado={carregar} />
+              <PedidoForm
+                onCriado={(avisos) => {
+                  carregar();
+                  if (avisos.length === 0) setNovoAberto(false);
+                }}
+              />
             )
           }
+          formAberto={novoAberto || !!editando}
+          aoAbrirForm={() => {
+            setEditando(null);
+            setNovoAberto(true);
+          }}
+          aoFecharForm={() => {
+            setEditando(null);
+            setNovoAberto(false);
+          }}
           onEditar={(p) => setEditando(p)}
           onCancelar={async (p) => {
             try {

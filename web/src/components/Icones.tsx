@@ -40,6 +40,16 @@ export function IconeAgenda(p: Props) {
   );
 }
 
+/** Agenda no menu: caderno com lombada e linhas, para se distinguir do Calendário. */
+export function IconeAgendaMenu(p: Props) {
+  return (
+    <Base {...p}>
+      <rect x="5" y="3.5" width="14.5" height="17" rx="2.5" />
+      <path d="M9 3.5v17M12.5 8.5h4M12.5 12h4M12.5 15.5h2.5" />
+    </Base>
+  );
+}
+
 export function IconeCalendario(p: Props) {
   return (
     <Base {...p}>
