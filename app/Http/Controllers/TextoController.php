@@ -32,7 +32,8 @@ TXT;
 
         $chave = config('services.anthropic.key');
         if (! $chave) {
-            return response()->json(['message' => 'A melhoria de texto não está configurada.'], 503);
+            // Sem chave paga usa o LanguageTool, gratuito: corrige ortografia, gramática e pontuação.
+            return $this->corrigirComLanguageTool($dados['texto']);
         }
 
         try {
@@ -51,6 +52,40 @@ TXT;
         $texto = trim((string) data_get($resposta->json(), 'content.0.text', ''));
         if (! $resposta->successful() || $texto === '') {
             return response()->json(['message' => 'Não foi possível melhorar o texto agora. Tente de novo.'], 502);
+        }
+
+        return response()->json(['texto' => mb_substr($texto, 0, 2000)]);
+    }
+
+    private function corrigirComLanguageTool(string $texto): JsonResponse
+    {
+        try {
+            $resposta = Http::asForm()->timeout(15)->post('https://api.languagetool.org/v2/check', [
+                'text' => $texto,
+                'language' => 'pt-PT',
+            ]);
+        } catch (\Throwable) {
+            return response()->json(['message' => 'Não foi possível contactar o serviço de melhoria de texto.'], 502);
+        }
+        if (! $resposta->successful()) {
+            return response()->json(['message' => 'Não foi possível melhorar o texto agora. Tente de novo.'], 502);
+        }
+
+        // Aplica a primeira sugestão de cada erro, do fim para o início para os índices não mudarem.
+        $erros = collect($resposta->json('matches', []))->sortByDesc('offset');
+        foreach ($erros as $erro) {
+            $troca = data_get($erro, 'replacements.0.value');
+            if ($troca === null) {
+                continue;
+            }
+            $inicio = (int) $erro['offset'];
+            $texto = mb_substr($texto, 0, $inicio).$troca.mb_substr($texto, $inicio + (int) $erro['length']);
+        }
+
+        $texto = trim(preg_replace('/[ \t]+/u', ' ', $texto));
+        $texto = mb_strtoupper(mb_substr($texto, 0, 1)).mb_substr($texto, 1);
+        if (! preg_match('/[.!?…]$/u', $texto)) {
+            $texto .= '.';
         }
 
         return response()->json(['texto' => mb_substr($texto, 0, 2000)]);

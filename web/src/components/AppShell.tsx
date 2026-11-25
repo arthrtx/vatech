@@ -129,13 +129,13 @@ export default function AppShell({
         className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip p-3 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:p-5 md:shadow-suave ${classeFundoQuente} ${ecraInteiro ? "lg:[@media(min-height:820px)]:h-full lg:[@media(min-height:820px)]:min-h-0" : ""}`}
       >
         <FundoQuente />
-        <aside className="relative z-30 flex items-center gap-3 rounded-barra bg-painel/45 px-3 py-2 text-texto shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 md:sticky md:top-11 md:h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
+        <aside className="relative z-30 flex items-center gap-3 rounded-barra bg-painel/45 px-3 py-2 text-texto shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 md:sticky md:top-11 md:min-h-[calc(100vh-5.5rem)] md:w-[4.5rem] md:shrink-0 md:self-start md:flex-col md:gap-4 md:px-0 md:py-5">
           <p className="flex h-10 w-10 items-center justify-center rounded-controlo overflow-hidden bg-barra">
             <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
             <span className="sr-only">Setuptech</span>
           </p>
           <span aria-hidden="true" className="hidden h-px w-8 bg-linha md:block" />
-          <nav aria-label="Principal" className="flex gap-1 md:flex-col md:gap-3">
+          <nav aria-label="Principal" className="flex shrink-0 gap-1 md:flex-col md:gap-3">
             {links.map(({ href, texto, Icone }) => (
               <Link
                 key={href}
@@ -151,7 +151,7 @@ export default function AppShell({
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex gap-1 md:ml-0 md:mt-auto md:flex-col md:gap-3">
+          <div className="ml-auto flex shrink-0 gap-1 md:ml-0 md:mt-auto md:flex-col md:gap-3">
             <Link
               href={definicoes.href}
               aria-label={definicoes.texto}

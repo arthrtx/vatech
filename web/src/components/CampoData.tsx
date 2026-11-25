@@ -23,6 +23,28 @@ function lerData(texto: string): string | null {
   return a && valida(a, m, d) ? isoDe(a, m, d) : null;
 }
 
+/**
+ * Põe as barras sozinhas enquanto se escreve: "2511" passa a "25/11/". Ao apagar não volta a pôr a barra.
+ * "1/" vira "01/". Uma data colada em aaaa-mm-dd fica como está.
+ */
+export function mascaraData(texto: string, anterior: string): string {
+  if (/^\d{4}-/.test(texto)) return texto;
+  const partes = texto.split(/[/.-]/);
+  const digitos = partes
+    .map((p, i) => {
+      const d = p.replace(/\D/g, "");
+      return i < partes.length - 1 && i < 2 && d.length === 1 ? `0${d}` : d;
+    })
+    .join("")
+    .slice(0, 8);
+  const aApagar = texto.length < anterior.length;
+  let r = digitos.slice(0, 2);
+  if (digitos.length > 2 || (!aApagar && digitos.length === 2)) r += "/";
+  r += digitos.slice(2, 4);
+  if (digitos.length > 4 || (!aApagar && digitos.length === 4)) r += "/";
+  return r + digitos.slice(4);
+}
+
 const formatar = (iso: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : "");
 
 interface Props {
@@ -96,8 +118,9 @@ export default function CampoData({ id, valor, onChange, min, required, classNam
         placeholder="dd/mm/aaaa"
         required={required}
         className={`${input} pr-11 ${className}`}
+        maxLength={10}
         value={rascunho ?? formatar(valor)}
-        onChange={(e) => escrever(e.target.value)}
+        onChange={(e) => escrever(mascaraData(e.target.value, rascunho ?? formatar(valor)))}
         onBlur={() => setRascunho(null)}
         {...aria}
       />
