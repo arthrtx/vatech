@@ -64,7 +64,7 @@ export default function DashboardFuncionario({ user }: { user: User }) {
       <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
       </div>
 
-      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
       <CalendarioMes hoje={hoje} className="lg:self-start" />
       <BlocoEstado
         efeito="recentes"

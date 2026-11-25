@@ -14,7 +14,7 @@ import { vidro } from "../ui";
 const diasSemana = ["S", "T", "Q", "Q", "S", "S", "D"];
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
 const botaoSeta =
-  "flex h-9 w-9 items-center justify-center rounded-full bg-painel/70 text-texto shadow-suave ring-1 ring-white/70 transition hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-offset-2 dark:ring-white/10";
+  "flex h-10 w-10 items-center justify-center rounded-full bg-painel/70 text-texto shadow-suave ring-1 ring-white/70 transition hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-offset-2 dark:ring-white/10";
 const rotulosData: Record<TipoData, string> = {
   feriado: "Feriado nacional",
   municipal: "Feriado municipal",
@@ -47,9 +47,9 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
   const vazio = !dia || dia.datas.length + dia.aniversarios.length + dia.pedidos.length === 0;
 
   return (
-    <section aria-labelledby="w-calendario" className={`${vidro} arco flex flex-col gap-3 p-4 motion-safe:animate-subir ${className}`}>
+    <section aria-labelledby="w-calendario" className={`${vidro} arco flex flex-col gap-3 p-5 motion-safe:animate-subir ${className}`}>
       <div className="flex items-center justify-between gap-2">
-        <h2 id="w-calendario" className="text-base font-semibold" aria-live="polite">
+        <h2 id="w-calendario" className="text-lg font-semibold" aria-live="polite">
           {mesesPt[mes.mes - 1]} {mes.ano}
         </h2>
         <div className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
 
       {agenda.erro && <p className="text-sm text-texto-suave">Não foi possível carregar as ausências.</p>}
 
-      <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="grid grid-cols-7 gap-y-1">
+      <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="grid grid-cols-7 gap-y-2">
         {diasSemana.map((d, k) => (
           <div key={k} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
             {d}
@@ -86,7 +86,7 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
               aria-selected={escolhido}
               aria-current={c.iso === hoje ? "date" : undefined}
               onClick={() => setAberto(escolhido ? null : c.iso)}
-              className={`mx-auto flex h-10 w-10 flex-col items-center justify-center rounded-full text-sm tabular-nums ${foco} ${
+              className={`mx-auto flex h-12 w-12 flex-col items-center justify-center rounded-full text-base tabular-nums ${foco} ${
                 c.iso === hoje
                   ? "bg-primaria font-semibold text-white"
                   : feriado
