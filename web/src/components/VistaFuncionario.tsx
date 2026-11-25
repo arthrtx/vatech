@@ -12,6 +12,7 @@ const corEstado: Record<Pedido["estado"], string> = {
   pendente: "bg-violeta/25",
   aprovado: "bg-positivo/25",
   recusado: "bg-rosa/20",
+  cancelado: "bg-texto-suave/20",
 };
 
 const hora = (h: string | null) => (h ? h.slice(0, 5) : "-");

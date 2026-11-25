@@ -4,7 +4,7 @@ export const subtipos = {
   documentacao: "Documentação",
   falta_justificada: "Falta justificada",
 } as const;
-export const estados = { pendente: "Pendente", aprovado: "Aprovado", recusado: "Recusado" } as const;
+export const estados = { pendente: "Pendente", aprovado: "Aprovado", recusado: "Recusado", cancelado: "Cancelado" } as const;
 
 /** "2026-12-01" para "01/12/2026". */
 export const formatarData = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");

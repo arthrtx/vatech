@@ -47,12 +47,14 @@ const estiloMarca = {
   aprovado: "border-positivo bg-positivo",
   pendente: "border-primaria bg-painel",
   recusado: "",
+  cancelado: "",
 } as const;
-const barraEstado = { aprovado: "bg-positivo", pendente: "bg-primaria", recusado: "" } as const;
+const barraEstado = { aprovado: "bg-positivo", pendente: "bg-primaria", recusado: "", cancelado: "" } as const;
 const pilulaEstado = {
   aprovado: "bg-positivo/15 text-texto",
   pendente: "border border-dashed border-primaria text-texto",
   recusado: "",
+  cancelado: "",
 } as const;
 
 const rotulosData = { feriado: "Feriado nacional", municipal: "Feriado municipal", comemorativa: "Data comemorativa", ponte: "Ponte" } as const;
@@ -210,7 +212,7 @@ export default function Agenda({
   const semana = Array.from({ length: 7 }, (_, i) => somaDias(segunda, i));
 
   const pedidoSel =
-    sel?.pedidoId !== undefined ? pedidos.find((p) => p.id === sel.pedidoId && p.estado !== "recusado") : undefined;
+    sel?.pedidoId !== undefined ? pedidos.find((p) => p.id === sel.pedidoId && p.estado !== "recusado" && p.estado !== "cancelado") : undefined;
   const presencasSel = sel ? presencasDoDia(presencas, sel.iso) : [];
   const estagiosSel = sel ? estagios.filter((e) => estagioCobre(e, sel.iso)) : [];
   const doDiaSel = sel ? filtrados.filter((p) => cobreDia(p, sel.iso)) : [];

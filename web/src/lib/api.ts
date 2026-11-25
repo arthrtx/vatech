@@ -5,7 +5,7 @@ const TOKEN_KEY = "vatech_token";
 export type Papel = "admin" | "funcionario" | "estagiario";
 export type TipoPedido = "ferias" | "ausencia" | "licenca";
 export type SubtipoPedido = "medica" | "documentacao" | "falta_justificada";
-export type EstadoPedido = "pendente" | "aprovado" | "recusado";
+export type EstadoPedido = "pendente" | "aprovado" | "recusado" | "cancelado";
 
 export interface User {
   id: number;
@@ -292,6 +292,7 @@ export const api = {
   guardarLimites: async (limites: { tipo: TipoPedido; dias_ano: number | null }[]) =>
     (await request<{ data: Limite[] }>("PUT", "/limites", { limites })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
+  cancelarPedido: (id: number) => request<{ data: Pedido }>("POST", `/pedidos/${id}/cancelar`),
   melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
   enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {
     const f = new FormData();
