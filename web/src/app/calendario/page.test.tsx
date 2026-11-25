@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 const agenda = vi.fn();
 const aniversarios = vi.fn();
@@ -32,7 +32,8 @@ describe("pagina do calendario", () => {
     expect(screen.getAllByLabelText(/Rui: férias/)).toHaveLength(3);
     expect(screen.getAllByRole("table", { name: /2026$/ })).toHaveLength(12);
     // legenda: a cor e os dias úteis de férias de cada pessoa (3 a 5 de agosto, seg a qua)
-    const linha = screen.getByRole("rowheader", { name: "Rui" }).closest("tr") as HTMLElement;
+    const legenda = screen.getByRole("complementary", { name: "Legenda" });
+    const linha = within(legenda).getByRole("rowheader", { name: "Rui" }).closest("tr") as HTMLElement;
     expect(linha.textContent).toContain("3");
 
     fireEvent.click(screen.getByLabelText(/Aniversário de Eva/));
