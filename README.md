@@ -41,7 +41,7 @@ A versão local usa a sua própria base de dados, separada da online. O que se c
 |---|---|---|
 | Admin (dono) | `admin@vatech.test` | `password` |
 | Funcionário | `funcionario@vatech.test` | `password` |
-| Estagiário | `estagiario@vatech.test` | `password` |
+| Estagiário | `estagiario@teste.com` | `password` |
 
 Criadas pelo seeder (`database/seeders/DatabaseSeeder.php`) quando a API local arranca.
 
