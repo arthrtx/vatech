@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\LimiteFerias;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 class LimitesPedidoService
 {
@@ -150,22 +151,56 @@ class LimitesPedidoService
      */
     public function diasExcedentes(Pedido $pedido): int
     {
-        if ($pedido->tipo !== 'ferias' || ! in_array($pedido->estado, ['pendente', 'aprovado'], true)) {
+        if (! $this->contaParaExcedente($pedido)) {
             return 0;
         }
 
+        return $this->excedenteDe($pedido, $this->feriasAtivas([$pedido->user_id])->get($pedido->user_id, collect()));
+    }
+
+    /** Calcula os excedentes de uma listagem com 1 query (em vez de 1 por pedido). */
+    public function anexarExcedentes(iterable $pedidos): void
+    {
+        $pedidos = collect($pedidos);
+        $contam = $pedidos->filter(fn (Pedido $p) => $this->contaParaExcedente($p));
+        $ativas = $contam->isEmpty() ? collect() : $this->feriasAtivas($contam->pluck('user_id')->unique()->all());
+
+        foreach ($pedidos as $pedido) {
+            $pedido->definirExcedentes($this->contaParaExcedente($pedido)
+                ? $this->excedenteDe($pedido, $ativas->get($pedido->user_id, collect()))
+                : 0);
+        }
+    }
+
+    private function contaParaExcedente(Pedido $pedido): bool
+    {
+        return $pedido->tipo === 'ferias' && in_array($pedido->estado, ['pendente', 'aprovado'], true);
+    }
+
+    /**
+     * Ferias pendentes+aprovadas dos utilizadores, por data_inicio (depois id), agrupadas por utilizador.
+     *
+     * @param  array<int, int>  $userIds
+     * @return Collection<int, Collection<int, Pedido>>
+     */
+    private function feriasAtivas(array $userIds)
+    {
+        return Pedido::whereIn('user_id', $userIds)
+            ->where('tipo', 'ferias')
+            ->whereIn('estado', ['pendente', 'aprovado'])
+            ->orderBy('data_inicio')->orderBy('id')
+            ->get(['id', 'user_id', 'data_inicio', 'data_fim'])
+            ->groupBy('user_id');
+    }
+
+    /** @param  Collection<int, Pedido>  $ordenados */
+    private function excedenteDe(Pedido $pedido, $ordenados): int
+    {
         $inicio = CarbonImmutable::parse($pedido->data_inicio);
         $fim = CarbonImmutable::parse($pedido->data_fim);
         $total = 0;
         for ($ano = $inicio->year; $ano <= $fim->year; $ano++) {
             $acumulado = 0;
-            $ordenados = Pedido::where('user_id', $pedido->user_id)
-                ->where('tipo', 'ferias')
-                ->whereIn('estado', ['pendente', 'aprovado'])
-                ->whereDate('data_inicio', '<=', "{$ano}-12-31")
-                ->whereDate('data_fim', '>=', "{$ano}-01-01")
-                ->orderBy('data_inicio')->orderBy('id')
-                ->get(['id', 'data_inicio', 'data_fim']);
             foreach ($ordenados as $p) {
                 $dias = $this->diasNoAno($p->data_inicio, $p->data_fim, $ano);
                 if ($p->id === $pedido->id) {

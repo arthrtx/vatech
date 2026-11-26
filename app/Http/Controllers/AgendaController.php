@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AgendaRequest;
 use App\Models\Pedido;
 use App\Models\User;
+use App\Services\LimitesPedidoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 
 class AgendaController extends Controller
 {
+    public function __construct(private LimitesPedidoService $limites) {}
+
     /**
      * Aniversarios da empresa no intervalo. So expoe nome e o dia (nunca o ano de nascimento).
      * Quem nasceu a 29 de fevereiro faz anos a 28 nos anos nao bissextos.
@@ -62,7 +65,10 @@ class AgendaController extends Controller
                 ->orWhere('estado', 'aprovado'));
         }
 
-        $data = $query->get()->map(fn (Pedido $pedido) => $verTodos || $pedido->user_id === $user->id
+        $pedidos = $query->get();
+        $this->limites->anexarExcedentes($pedidos->filter(fn (Pedido $p) => $verTodos || $p->user_id === $user->id));
+
+        $data = $pedidos->map(fn (Pedido $pedido) => $verTodos || $pedido->user_id === $user->id
             ? $pedido
             : [
                 'id' => $pedido->id,

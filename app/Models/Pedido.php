@@ -17,6 +17,8 @@ class Pedido extends Model
 
     protected $appends = ['dias_excedentes'];
 
+    private ?int $excedentesEmLote = null;
+
     protected function casts(): array
     {
         return [
@@ -31,7 +33,13 @@ class Pedido extends Model
     /** Dias uteis de ferias acima dos 22 do ano (0 nos outros tipos). Regra em LimitesPedidoService::diasExcedentes. */
     protected function diasExcedentes(): Attribute
     {
-        return Attribute::get(fn () => app(LimitesPedidoService::class)->diasExcedentes($this));
+        return Attribute::get(fn () => $this->excedentesEmLote ?? app(LimitesPedidoService::class)->diasExcedentes($this));
+    }
+
+    /** Valor calculado em lote pela listagem (LimitesPedidoService::anexarExcedentes); evita 1 query por pedido. */
+    public function definirExcedentes(int $dias): void
+    {
+        $this->excedentesEmLote = $dias;
     }
 
     public function anexos(): HasMany
