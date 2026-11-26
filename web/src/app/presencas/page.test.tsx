@@ -65,6 +65,18 @@ describe("Estágio: esqueci de marcar", () => {
     await waitFor(() => expect(screen.getAllByText("Atrasada")).toHaveLength(1));
   });
 
+  it("mostra o atraso na chegada só quando passa da tolerância (atraso_min > 0)", async () => {
+    const base = { user_id: 2, entrada: "2026-02-03T09:00:00", saida: "2026-02-03T17:00:00", atrasada: false };
+    presencas.mockResolvedValue([
+      { ...base, id: 1, data: "2026-02-03", atraso_min: 20 },
+      { ...base, id: 2, data: "2026-02-02", atraso_min: 0 },
+    ]);
+    render(<PresencasPage />);
+    await screen.findAllByRole("row");
+    await waitFor(() => expect(screen.getAllByText("Chegou 20 min depois")).toHaveLength(1));
+    expect(screen.queryByText(/Chegou 0 min/)).toBeNull();
+  });
+
   it("submete os dados, fecha o formulário e recarrega a lista", async () => {
     atrasada.mockResolvedValue({});
     render(<PresencasPage />);

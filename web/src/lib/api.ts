@@ -112,6 +112,8 @@ export interface Presenca {
   saida: string | null;
   /** true quando registada pelo botão «Esqueci de marcar presença». */
   atrasada: boolean;
+  /** Minutos de atraso na chegada; 0 dentro da tolerância de 15 min depois da hora de entrada. */
+  atraso_min?: number;
   /** Minutos do almoço que caem entre a entrada e a saída; já descontados no total. */
   almoco_min?: number;
 }

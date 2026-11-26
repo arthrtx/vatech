@@ -200,3 +200,18 @@ it('GET /api/presencas faz as mesmas queries com mais presencas e traz o almoco'
 
     expect($contar())->toBe($com2);
 });
+
+it('a tolerancia de 15 minutos: ate la nao ha atraso, depois conta o atraso todo', function () {
+    $u = User::factory()->create();
+
+    expect(presencaHorario($u, '08:15', '12:00', '2026-11-23')->minutosDeAtraso())->toBe(0);
+    expect(presencaHorario($u, '08:16', '12:00', '2026-11-24')->minutosDeAtraso())->toBe(16);
+    expect(presencaHorario($u, '07:50', '12:00', '2026-11-25')->minutosDeAtraso())->toBe(0);
+});
+
+it('so o primeiro periodo do dia conta para o atraso', function () {
+    $u = User::factory()->create();
+    presencaHorario($u, '08:00', '12:00');
+
+    expect(presencaHorario($u, '13:30', '17:00')->minutosDeAtraso())->toBe(0);
+});

@@ -207,6 +207,11 @@ function Conteudo() {
                       {g.periodos.map((p) => (
                         <li key={p.id}>
                           {textoPeriodo(p)}
+                          {(p.atraso_min ?? 0) > 0 && (
+                            <span className="ml-2 rounded-full border border-linha-forte px-2.5 py-0.5 text-xs text-texto-suave">
+                              Chegou {p.atraso_min} min depois
+                            </span>
+                          )}
                           {p.atrasada && (
                             <span className="ml-2 rounded-full border border-linha-forte px-2.5 py-0.5 text-xs text-texto-suave">
                               Atrasada

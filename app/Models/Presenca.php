@@ -15,6 +15,9 @@ class Presenca extends Model
     /** Relações que o contrato precisa (a empresa dá o horário por defeito): sem N+1 nas listagens. */
     public const RELACOES = ['user:id,nome,empresa_id,horario_entrada,horario_saida,horario_almoco_inicio,almoco_minutos', 'user.empresa:id,horario_entrada,horario_saida,almoco_inicio,almoco_minutos'];
 
+    /** Minutos depois da hora de entrada do horário em que ainda não conta como atraso. */
+    public const TOLERANCIA_MIN = 15;
+
     protected function casts(): array
     {
         return ['data' => 'date:Y-m-d', 'entrada' => 'datetime', 'saida' => 'datetime', 'atrasada' => 'boolean'];
@@ -25,7 +28,7 @@ class Presenca extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** @return array{id:int,user_id:int,user:array{id:int,nome:string}|null,data:string,entrada:string,saida:string|null,atrasada:bool,almoco_min:int} */
+    /** @return array{id:int,user_id:int,user:array{id:int,nome:string}|null,data:string,entrada:string,saida:string|null,atrasada:bool,atraso_min:int,almoco_min:int} */
     public function toContrato(): array
     {
         return [
@@ -36,8 +39,29 @@ class Presenca extends Model
             'entrada' => $this->entrada->toIso8601String(),
             'saida' => $this->saida?->toIso8601String(),
             'atrasada' => (bool) $this->atrasada,
+            'atraso_min' => $this->minutosDeAtraso(),
             'almoco_min' => $this->minutosDeAlmoco(),
         ];
+    }
+
+    /**
+     * Atraso na chegada, contado desde a hora de entrada do horário. Até TOLERANCIA_MIN depois dessa hora
+     * não há atraso (0); passado esse limite conta o atraso todo. Só o primeiro período do dia conta.
+     */
+    public function minutosDeAtraso(): int
+    {
+        if (! $this->user?->empresa) {
+            return 0;
+        }
+        $inicio = Carbon::parse($this->data->format('Y-m-d').' '.$this->user->horario()['entrada'], 'Europe/Lisbon');
+        $atraso = $inicio->diffInMinutes($this->entrada, false);
+        if ($atraso <= self::TOLERANCIA_MIN) {
+            return 0;
+        }
+        $anterior = static::where('user_id', $this->user_id)->where('data', $this->data->format('Y-m-d'))
+            ->where('entrada', '<', $this->entrada)->exists();
+
+        return $anterior ? 0 : (int) floor($atraso);
     }
 
     /**
