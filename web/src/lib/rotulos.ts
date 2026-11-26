@@ -14,3 +14,7 @@ export const papeis: Record<"admin" | "funcionario" | "estagiario", string> = {
   funcionario: "Funcionário",
   estagiario: "Estagiário",
 };
+
+/** Nome do tipo personalizado, se houver; senão o papel por extenso. */
+export const rotuloPapel = (u: { papel: keyof typeof papeis; tipo?: { nome: string } | null; tipo_nome?: string | null }) =>
+  u.tipo?.nome ?? u.tipo_nome ?? papeis[u.papel];

@@ -15,6 +15,9 @@ export interface Convite {
   email: string;
   papel: Exclude<Papel, "admin">;
   expira_em: string;
+  /** Tipo personalizado (ausente em respostas antigas). */
+  tipo_id?: number | null;
+  tipo_nome?: string | null;
   /** Link de aceitação (em produção sem SMTP é o admin que o partilha). */
   link: string;
 }
@@ -47,6 +50,15 @@ export interface Permissoes {
   papeis: MatrizPermissoes;
 }
 
+/** Tipo personalizado de pessoa: herda o papel `base` e tem permissões próprias. */
+export interface TipoPessoa {
+  id: number;
+  nome: string;
+  base: PapelComPermissoes;
+  permissoes: Record<string, boolean>;
+  em_uso: number;
+}
+
 export interface User {
   id: number;
   nome: string;
@@ -55,6 +67,10 @@ export interface User {
   empresa_id: number;
   /** Chaves de permissão concedidas (o admin tem todas). Ausente em respostas antigas: tratar como []. */
   permissoes?: string[];
+  /** Tipo personalizado, se tiver. Ausente em respostas antigas: tratar como null. */
+  tipo?: { id: number; nome: string } | null;
+  tipo_id?: number | null;
+  tipo_nome?: string | null;
   /** Ausente em respostas antigas: tratar como «aprovado». */
   estado_conta?: EstadoConta;
   avatar_url?: string | null;
@@ -329,7 +345,7 @@ export const api = {
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   convites: {
     listar: async () => (await request<{ data: Convite[] }>("GET", "/funcionarios/convites")).data,
-    criar: async (b: { nome: string; email: string; papel: Convite["papel"] }) =>
+    criar: async (b: { nome: string; email: string; papel?: Convite["papel"]; tipo_id?: number | null }) =>
       (await request<{ data: Convite }>("POST", "/funcionarios/convites", b)).data,
     reenviar: async (id: number) => (await request<{ data: Convite }>("POST", `/funcionarios/convites/${id}/reenviar`)).data,
     revogar: (id: number) => request<void>("DELETE", `/funcionarios/convites/${id}`),
@@ -385,6 +401,14 @@ export const api = {
   getPermissoes: async () => (await request<{ data: Permissoes }>("GET", "/definicoes/permissoes")).data,
   putPermissoes: async (papeis: MatrizPermissoes) =>
     (await request<{ data: Permissoes }>("PUT", "/definicoes/permissoes", { papeis })).data,
+  getTipos: async () => (await request<{ data: TipoPessoa[] }>("GET", "/definicoes/tipos")).data,
+  criarTipo: async (b: { nome: string; base: PapelComPermissoes; permissoes?: Record<string, boolean> }) =>
+    (await request<{ data: TipoPessoa }>("POST", "/definicoes/tipos", b)).data,
+  editarTipo: async (id: number, b: { nome?: string; permissoes?: Record<string, boolean> }) =>
+    (await request<{ data: TipoPessoa }>("PUT", `/definicoes/tipos/${id}`, b)).data,
+  apagarTipo: (id: number) => request<void>("DELETE", `/definicoes/tipos/${id}`),
+  definirTipoPessoa: async (id: number, tipo_id: number | null, papel?: PapelComPermissoes) =>
+    (await request<{ data: User }>("PUT", `/funcionarios/${id}/tipo`, papel ? { tipo_id, papel } : { tipo_id })).data,
   textoConvite: async () => (await request<{ data: TextoConvite }>("GET", "/definicoes/convite")).data,
   guardarTextoConvite: async (texto: string | null) =>
     (await request<{ data: TextoConvite }>("PUT", "/definicoes/convite", { texto })).data,

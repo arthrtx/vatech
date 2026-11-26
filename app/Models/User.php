@@ -7,13 +7,14 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim', 'almoco_inicio', 'almoco_fim', 'email_verified_at', 'termos_aceites_em'])]
+#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim', 'almoco_inicio', 'almoco_fim', 'email_verified_at', 'termos_aceites_em', 'tipo_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -32,7 +33,26 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
-        return (bool) (Empresa::find($this->empresa_id)?->permissoesDoPapel((string) $this->papel)[$chave] ?? false);
+        return (bool) ($this->permissoesEfectivas()[$chave] ?? false);
+    }
+
+    public function tipo(): BelongsTo
+    {
+        return $this->belongsTo(Tipo::class);
+    }
+
+    /**
+     * Do tipo, se tiver; senão do papel na empresa.
+     *
+     * @return array<string,bool>
+     */
+    private function permissoesEfectivas(): array
+    {
+        if ($this->tipo_id && $tipo = $this->tipo) {
+            return $tipo->permissoesEfectivas();
+        }
+
+        return Empresa::find($this->empresa_id)?->permissoesDoPapel((string) $this->papel) ?? [];
     }
 
     /** @return list<string> */
@@ -41,9 +61,8 @@ class User extends Authenticatable implements MustVerifyEmail
         if ($this->isAdmin()) {
             return Empresa::chavesPermissoes();
         }
-        $papel = Empresa::find($this->empresa_id)?->permissoesDoPapel((string) $this->papel) ?? [];
 
-        return array_keys(array_filter($papel));
+        return array_keys(array_filter($this->permissoesEfectivas()));
     }
 
     /**
@@ -61,12 +80,13 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,almoco_inicio:string|null,almoco_fim:string|null,estado_conta:string,permissoes:list<string>} */
+    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,almoco_inicio:string|null,almoco_fim:string|null,estado_conta:string,permissoes:list<string>,tipo:array{id:int,nome:string}|null} */
     public function toContrato(): array
     {
         return $this->only(['id', 'nome', 'email', 'papel', 'empresa_id']) + [
             'estado_conta' => $this->estado_conta ?? 'aprovado',
             'permissoes' => $this->permissoes(),
+            'tipo' => $this->tipo_id && $this->tipo ? ['id' => $this->tipo->id, 'nome' => $this->tipo->nome] : null,
             'avatar_url' => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
             'data_nascimento' => $this->data_nascimento?->format('Y-m-d'),
             'estagio_inicio' => $this->estagio_inicio?->format('Y-m-d'),

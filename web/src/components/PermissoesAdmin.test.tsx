@@ -5,7 +5,7 @@ import { ApiError, api } from "@/lib/api";
 
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
-  api: { getPermissoes: vi.fn(), putPermissoes: vi.fn() },
+  api: { getPermissoes: vi.fn(), putPermissoes: vi.fn(), getTipos: vi.fn(), criarTipo: vi.fn(), editarTipo: vi.fn(), apagarTipo: vi.fn() },
 }));
 
 const dados = {
@@ -19,8 +19,11 @@ const dados = {
   },
 };
 
+const tipoRh = { id: 7, nome: "Responsável de RH", base: "funcionario" as const, permissoes: { pedir_ferias: true, aprovar_pedidos: true }, em_uso: 2 };
+
 beforeEach(() => {
   vi.mocked(api.getPermissoes).mockResolvedValue(dados);
+  vi.mocked(api.getTipos).mockResolvedValue([]);
 });
 afterEach(() => {
   cleanup();
@@ -50,7 +53,7 @@ describe("PermissoesAdmin", () => {
         estagiario: { pedir_ferias: true, aprovar_pedidos: false },
       }),
     );
-    expect((await screen.findByRole("status")).textContent).toBe("Permissões guardadas.");
+    expect(await screen.findByText("Permissões guardadas.")).toBeTruthy();
   });
 
   it("mostra o erro do servidor ao guardar sem perder as alterações", async () => {
@@ -66,5 +69,37 @@ describe("PermissoesAdmin", () => {
     vi.mocked(api.getPermissoes).mockRejectedValue(new ApiError(403, ""));
     render(<PermissoesAdmin />);
     expect((await screen.findByRole("alert")).textContent).toContain("Não tem permissão");
+  });
+
+  it("cria um tipo personalizado e mostra a sua coluna com a base", async () => {
+    vi.mocked(api.criarTipo).mockResolvedValue(tipoRh);
+    render(<PermissoesAdmin />);
+    fireEvent.click(await screen.findByRole("button", { name: "Novo tipo" }));
+    fireEvent.change(screen.getByLabelText("Nome do tipo"), { target: { value: "Responsável de RH" } });
+    fireEvent.click(screen.getByRole("button", { name: "Criar tipo" }));
+    await waitFor(() => expect(api.criarTipo).toHaveBeenCalledWith({ nome: "Responsável de RH", base: "funcionario" }));
+    expect(await screen.findByText("Tipo «Responsável de RH» criado.")).toBeTruthy();
+    expect((screen.getByLabelText("Aprovar pedidos: Responsável de RH") as HTMLInputElement).checked).toBe(true);
+    expect(screen.getAllByText("base: Funcionário").length).toBeGreaterThan(0);
+  });
+
+  it("apagar um tipo em uso mostra a mensagem 409 e mantém o tipo", async () => {
+    vi.mocked(api.getTipos).mockResolvedValue([tipoRh]);
+    vi.mocked(api.apagarTipo).mockRejectedValue(new ApiError(409, "Há pessoas com este tipo. Passe-as para outro tipo antes de apagar."));
+    render(<PermissoesAdmin />);
+    fireEvent.click(await screen.findByRole("button", { name: "Apagar Responsável de RH" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar apagar Responsável de RH" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Há pessoas com este tipo.");
+    expect(screen.getByLabelText("Pedir férias: Responsável de RH")).toBeTruthy();
+  });
+
+  it("Guardar grava também as permissões do tipo alterado", async () => {
+    vi.mocked(api.getTipos).mockResolvedValue([tipoRh]);
+    vi.mocked(api.editarTipo).mockResolvedValue({ ...tipoRh, permissoes: { pedir_ferias: false, aprovar_pedidos: true } });
+    render(<PermissoesAdmin />);
+    fireEvent.click(await screen.findByLabelText("Pedir férias: Responsável de RH"));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    await waitFor(() => expect(api.editarTipo).toHaveBeenCalledWith(7, { permissoes: { pedir_ferias: false, aprovar_pedidos: true } }));
+    expect(api.putPermissoes).not.toHaveBeenCalled();
   });
 });
