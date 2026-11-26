@@ -1,12 +1,13 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { pastasRh } from "@/lib/rh";
 
-export default function PastaRhPage() {
-  const { pasta } = useParams<{ pasta: string }>();
+export function generateStaticParams() {
+  return pastasRh.map((p) => ({ pasta: p.slug }));
+}
+
+export default async function PastaRhPage({ params }: { params: Promise<{ pasta: string }> }) {
+  const { pasta } = await params;
   const atual = pastasRh.find((p) => p.slug === pasta);
   return (
     <AppShell soAdmin>
