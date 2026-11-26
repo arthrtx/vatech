@@ -6,6 +6,7 @@ import CalendarioAnual from "@/components/CalendarioAnual";
 import { api, mensagemDeErro, type Aniversario, type PedidoAgenda, type Ponte } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { useAuth } from "@/lib/auth";
+import { podePedir } from "@/lib/permissoes";
 import { erro as erroCls } from "@/components/ui";
 
 interface Dados {
@@ -51,7 +52,7 @@ function Conteudo() {
         pedidos={pronto?.pedidos ?? []}
         aniversarios={pronto?.aniversarios ?? []}
         pontes={pronto?.pontes ?? []}
-        podeCriar={!!user && user.papel !== "admin"}
+        podeCriar={!!user && user.papel !== "admin" && podePedir(user)}
         aoCriar={() => setRecarga((r) => r + 1)}
       />
     </div>

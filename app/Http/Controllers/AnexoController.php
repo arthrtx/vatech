@@ -72,7 +72,7 @@ class AnexoController extends Controller
         $user = $request->user();
         // 404 para pedidos de outra empresa ou de outro funcionario (nao revela existencia).
         $query = Pedido::where('empresa_id', $user->empresa_id);
-        if (! $user->isAdmin()) {
+        if (! $user->temPermissao('aprovar_pedidos')) {
             $query->where('user_id', $user->id);
         }
         $anexo = $query->findOrFail($id)->anexos()->findOrFail($anexoId);

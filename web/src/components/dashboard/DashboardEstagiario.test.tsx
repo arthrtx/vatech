@@ -1,3 +1,4 @@
+import { CHAVES_DIA_A_DIA } from "@/lib/permissoes";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import DashboardEstagiario from "./DashboardEstagiario";
@@ -8,7 +9,7 @@ vi.mock("@/lib/api", async (orig) => {
   return { ...real, api: { presencaHoje: vi.fn(), marcarEntrada: vi.fn(), marcarSaida: vi.fn() } };
 });
 
-const user = { id: 3, nome: "Rita Costa", papel: "estagiario" } as User;
+const user = { id: 3, nome: "Rita Costa", papel: "estagiario", permissoes: CHAVES_DIA_A_DIA } as User;
 const presenca = { id: 1, user_id: 3, data: "2026-11-19", entrada: "2026-11-19T09:00:00", saida: null } as unknown as Presenca;
 
 beforeEach(() => {

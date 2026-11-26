@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import AvisoLicencas from "./AvisoLicencas";
 import type { Papel } from "@/lib/api";
+import { temPermissao, type Permissao } from "@/lib/permissoes";
 import { primeiroNome } from "@/lib/saudacao";
 import {
   IconeAgendaMenu,
@@ -47,12 +48,15 @@ export default function AppShell({
   children,
   soAdmin = false,
   papeis,
+  permissao,
   ecraInteiro = false,
 }: {
   children: React.ReactNode;
   soAdmin?: boolean;
   /** Papéis com acesso à página; os outros são redirecionados para «/». */
   papeis?: Papel[];
+  /** Com `soAdmin`, também deixa entrar quem tem esta permissão. */
+  permissao?: Permissao;
   /** Em ecrã grande (lg+) a página cabe na janela, sem scroll; o conteúdo gere o próprio espaço. */
   ecraInteiro?: boolean;
 }) {
@@ -63,7 +67,7 @@ export default function AppShell({
   const [aSair, setASair] = useState(false);
   const { escuro, definir: definirTema } = useTema();
   const [agora, setAgora] = useState<Date | null>(null);
-  const semAcesso = !!user && ((soAdmin && user.papel !== "admin") || (!!papeis && !papeis.includes(user.papel)));
+  const semAcesso = !!user && ((soAdmin && user.papel !== "admin" && !(permissao && temPermissao(user, permissao))) || (!!papeis && !papeis.includes(user.papel)));
   const fecharPesquisa = useCallback(() => setPesquisaAberta(false), []);
 
   useEffect(() => {
@@ -107,8 +111,10 @@ export default function AppShell({
     { href: "/agenda", texto: "Agenda", Icone: IconeAgendaMenu },
     { href: "/calendario", texto: "Calendário", Icone: IconeCalendario },
   ];
-  if (user.papel === "admin") {
+  if (temPermissao(user, "convidar_pessoas")) {
     links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
+  }
+  if (user.papel === "admin") {
     links.push({ href: "/rh", texto: "RH", Icone: IconeFuncionarios });
   }
   links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });

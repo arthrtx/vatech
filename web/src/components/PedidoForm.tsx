@@ -6,11 +6,14 @@ import { api, mensagemDeErro, type Anexo, type Limite, type Pedido, type Subtipo
 import { hojeIso } from "@/lib/agenda";
 import CampoHora from "./CampoHora";
 import { tipos } from "@/lib/rotulos";
+import { temPermissao } from "@/lib/permissoes";
 import CampoAnexos from "./CampoAnexos";
 import { diasUteis } from "@/lib/diasUteis";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
 import { areaTexto, botao, botaoSec, erro as erroCls, label, vidro } from "./ui";
+
+const PERMISSAO_DO_TIPO = { ferias: "pedir_ferias", ausencia: "pedir_ausencia", licenca: "pedir_licenca" } as const;
 
 const subtipos: { v: SubtipoPedido; t: string }[] = [
   { v: "medica", t: "Médica" },
@@ -37,10 +40,12 @@ export default function PedidoForm({
 }) {
   const edicao = !!pedido;
   const { user } = useAuth();
-  const semFerias = user?.papel === "estagiario";
+  const permitidos = (["ferias", "ausencia", "licenca"] as const).filter((t) => temPermissao(user, PERMISSAO_DO_TIPO[t]));
+  const podeAnexar = temPermissao(user, "anexar_documentos");
+  const podeMelhorar = temPermissao(user, "melhorar_texto");
   const admin = user?.papel === "admin";
   const hoje = hojeIso();
-  const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? (semFerias ? "ausencia" : "ferias"));
+  const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? permitidos[0] ?? "ausencia");
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
@@ -122,7 +127,7 @@ export default function PedidoForm({
       const r = pedido ? await api.editarPedido(pedido.id, corpo) : await api.criarPedido(corpo);
       setAvisos(r.avisos ?? []);
       let falhaAnexos: string | null = null;
-      if (novos.length > 0) {
+      if (podeAnexar && novos.length > 0) {
         try {
           const criados = await api.enviarAnexos(r.data.id, novos);
           setGuardados((g) => [...g, ...criados]);
@@ -177,10 +182,10 @@ export default function PedidoForm({
           id="tipo"
           valor={tipo}
           opcoes={[
-            ...(semFerias ? [] : [{ valor: "ferias", rotulo: "Férias" }]),
+            { valor: "ferias", rotulo: "Férias" },
             { valor: "ausencia", rotulo: "Ausência" },
             { valor: "licenca", rotulo: "Licença" },
-          ]}
+          ].filter((o) => permitidos.includes(o.valor as TipoPedido) || (edicao && o.valor === pedido?.tipo))}
           onChange={(v) => setTipo(v as TipoPedido)}
         />
       </div>
@@ -271,9 +276,11 @@ export default function PedidoForm({
           }}
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button type="button" disabled={aMelhorar || obs.trim().length < 3} onClick={melhorar} className={`${botaoSec} min-h-9 px-3 py-1`}>
-            {aMelhorar ? "A melhorar..." : "Melhorar texto"}
-          </button>
+          {podeMelhorar && (
+            <button type="button" disabled={aMelhorar || obs.trim().length < 3} onClick={melhorar} className={`${botaoSec} min-h-9 px-3 py-1`}>
+              {aMelhorar ? "A melhorar..." : "Melhorar texto"}
+            </button>
+          )}
           {antesDeMelhorar !== null && !aMelhorar && (
             <>
               <button
@@ -298,6 +305,7 @@ export default function PedidoForm({
           </p>
         )}
       </div>
+      {podeAnexar && (
       <CampoAnexos
         novos={novos}
         onNovos={setNovos}
@@ -312,6 +320,7 @@ export default function PedidoForm({
           }
         }}
       />
+      )}
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}

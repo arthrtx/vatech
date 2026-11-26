@@ -7,6 +7,7 @@ import EscolhaLocalidade from "@/components/EscolhaLocalidade";
 import CampoData from "@/components/CampoData";
 import FormaCanto from "./FormaCanto";
 import EscolhaTema from "@/components/EscolhaTema";
+import PermissoesAdmin from "@/components/PermissoesAdmin";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
 import { ApiError, api, mensagemDeErro, type TipoPedido, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -575,7 +576,7 @@ function TextoConvite() {
 
 function Conteudo() {
   const { user, atualizarUser } = useAuth();
-  const [separador, setSeparador] = useState<"conta" | "geral">("conta");
+  const [separador, setSeparador] = useState<"conta" | "geral" | "permissoes">("conta");
   if (!user) return null;
   const admin = user.papel === "admin";
   const aba = admin ? separador : "conta";
@@ -626,6 +627,7 @@ function Conteudo() {
             [
               ["conta", "Configurações da conta"],
               ["geral", "Geral"],
+              ["permissoes", "Permissões"],
             ] as const
           ).map(([id, nome]) => (
             <button
@@ -646,6 +648,10 @@ function Conteudo() {
       {aba === "conta" ? (
         <div role={admin ? "tabpanel" : undefined} id="painel-conta" aria-labelledby={admin ? "separador-conta" : undefined}>
           {colunaConta}
+        </div>
+      ) : aba === "permissoes" ? (
+        <div role="tabpanel" id="painel-permissoes" aria-labelledby="separador-permissoes" className="max-w-3xl">
+          <PermissoesAdmin />
         </div>
       ) : (
         <div role="tabpanel" id="painel-geral" aria-labelledby="separador-geral" className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">

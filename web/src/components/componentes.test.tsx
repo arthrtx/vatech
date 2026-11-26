@@ -1,3 +1,4 @@
+import { CHAVES_DIA_A_DIA } from "@/lib/permissoes";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PedidoForm from "./PedidoForm";
@@ -9,7 +10,11 @@ import { somaDias } from "@/lib/agenda";
 import { ApiError, api, type Papel, type Pedido } from "@/lib/api";
 
 let papelAtual: Papel = "funcionario";
-vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 2, nome: "Ana", papel: papelAtual } }) }));
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({
+    user: { id: 2, nome: "Ana", papel: papelAtual, permissoes: papelAtual === "estagiario" ? CHAVES_DIA_A_DIA.filter((c) => c !== "pedir_ferias") : CHAVES_DIA_A_DIA },
+  }),
+}));
 
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();

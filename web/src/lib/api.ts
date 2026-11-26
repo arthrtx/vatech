@@ -31,12 +31,30 @@ export interface TextoConvite {
   predefinido: boolean;
 }
 
+export type GrupoPermissao = "dia_a_dia" | "gestao";
+export type PapelComPermissoes = "funcionario" | "estagiario";
+
+export interface PermissaoCatalogo {
+  chave: string;
+  rotulo: string;
+  grupo: GrupoPermissao;
+}
+
+export type MatrizPermissoes = Record<PapelComPermissoes, Record<string, boolean>>;
+
+export interface Permissoes {
+  catalogo: PermissaoCatalogo[];
+  papeis: MatrizPermissoes;
+}
+
 export interface User {
   id: number;
   nome: string;
   email: string;
   papel: Papel;
   empresa_id: number;
+  /** Chaves de permissão concedidas (o admin tem todas). Ausente em respostas antigas: tratar como []. */
+  permissoes?: string[];
   /** Ausente em respostas antigas: tratar como «aprovado». */
   estado_conta?: EstadoConta;
   avatar_url?: string | null;
@@ -230,6 +248,7 @@ export function setUnauthorizedHandler(fn: (() => void) | null) {
 
 export function mensagemDeErro(err: unknown): string {
   if (err instanceof ApiError) {
+    if (err.status === 403 && /^(Ocorreu um erro\.|This action is unauthorized\.|)$/.test(err.message)) return "Não tem permissão para esta ação. Peça a um administrador.";
     return err.errors ? Object.values(err.errors).flat().join(" ") : err.message;
   }
   return "Não foi possível contactar o servidor.";
@@ -363,6 +382,9 @@ export const api = {
     const r = await request<{ data: FeriasResumo[]; prazo_ferias: string }>("GET", "/ferias-resumo");
     return { resumo: r.data, prazo_ferias: r.prazo_ferias };
   },
+  getPermissoes: async () => (await request<{ data: Permissoes }>("GET", "/definicoes/permissoes")).data,
+  putPermissoes: async (papeis: MatrizPermissoes) =>
+    (await request<{ data: Permissoes }>("PUT", "/definicoes/permissoes", { papeis })).data,
   textoConvite: async () => (await request<{ data: TextoConvite }>("GET", "/definicoes/convite")).data,
   guardarTextoConvite: async (texto: string | null) =>
     (await request<{ data: TextoConvite }>("PUT", "/definicoes/convite", { texto })).data,

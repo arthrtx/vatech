@@ -7,6 +7,7 @@ import { diasDoPedido, hojeIso, horasDoPedido } from "@/lib/agenda";
 import { contarPorEstado } from "@/lib/dashboard";
 import { estados, tipos } from "@/lib/rotulos";
 import { useFonte } from "@/lib/useFonte";
+import { podePedir, temPermissao } from "@/lib/permissoes";
 import { IconeAgenda, IconePedidos } from "../Icones";
 import { acao, acaoDestaque } from "../ui";
 import AvisoFerias from "./AvisoFerias";
@@ -51,15 +52,17 @@ export default function DashboardFuncionario({ user }: { user: User }) {
                   <IconeAgenda className="h-4 w-4" />
                   Agenda
                 </Link>
-                <Link href="/" className={acaoDestaque}>
-                  <IconePedidos className="h-4 w-4" />
-                  Novo pedido
-                </Link>
+                {podePedir(user) && (
+                  <Link href="/" className={acaoDestaque}>
+                    <IconePedidos className="h-4 w-4" />
+                    Novo pedido
+                  </Link>
+                )}
               </>
             }
           />
       </div>
-      <CartaoPresenca />
+      {temPermissao(user, "marcar_presenca") && <CartaoPresenca />}
       <AvisoFerias comTransitadas />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="grid min-w-0 items-start gap-4 2xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
