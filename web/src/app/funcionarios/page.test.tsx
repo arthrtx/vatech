@@ -110,7 +110,7 @@ describe("Funcionários: convites e contas por autorizar", () => {
     expect(screen.getByText("Nenhuma conta por autorizar.")).toBeTruthy();
   });
 
-  it("cria convite e mostra o link copiável", async () => {
+  it("cria convite e confirma o envio por email, sem mostrar o link", async () => {
     vi.mocked(api.funcionarios).mockResolvedValue([]);
     vi.mocked(api.convites.criar).mockResolvedValue(convite);
     render(<FuncionariosPage />);
@@ -119,8 +119,9 @@ describe("Funcionários: convites e contas por autorizar", () => {
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "rui@x.pt" } });
     fireEvent.change(screen.getByLabelText("Papel"), { target: { value: "estagiario" } });
     fireEvent.click(screen.getByRole("button", { name: "Criar convite" }));
-    const link = (await screen.findByLabelText("Link do convite")) as HTMLInputElement;
-    expect(link.value).toBe(convite.link);
+    expect(await screen.findByText(/Convite enviado por email para/)).toBeTruthy();
+    expect(screen.queryByLabelText("Link do convite")).toBeNull();
+    expect(screen.queryByText(convite.link)).toBeNull();
     expect(api.convites.criar).toHaveBeenCalledWith({ nome: "Rui", email: "rui@x.pt", papel: "estagiario" });
   });
 

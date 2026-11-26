@@ -15,7 +15,6 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
   const [papel, setPapel] = useState<Convite["papel"]>("funcionario");
   const [enviando, setEnviando] = useState(false);
   const [novo, setNovo] = useState<Convite | null>(null);
-  const [copiado, setCopiado] = useState(false);
 
   const carregar = useCallback(async () => {
     try {
@@ -47,7 +46,6 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
     try {
       const c = await api.convites.criar({ nome, email, papel });
       setNovo(c);
-      setCopiado(false);
       setNome("");
       setEmail("");
       setPapel("funcionario");
@@ -59,19 +57,9 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
     }
   }
 
-  async function copiar(link: string) {
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopiado(true);
-    } catch {
-      setCopiado(false);
-    }
-  }
-
   const reenviar = (c: Convite) =>
     acao(async () => {
       setNovo(await api.convites.reenviar(c.id));
-      setCopiado(false);
     }, carregar);
 
   return (
@@ -135,23 +123,9 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
         </form>
       )}
       {novo && (
-        <div role="status" className="flex flex-col gap-2 rounded-controlo border border-linha-forte bg-primaria-suave p-3 text-sm text-texto">
-          <p>
-            Convite para <strong>{novo.email}</strong>. Partilhe este link (válido até {formatarData(novo.expira_em)}):
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <input
-              aria-label="Link do convite"
-              readOnly
-              className={`${input} flex-1`}
-              value={novo.link}
-              onFocus={(e) => e.currentTarget.select()}
-            />
-            <button type="button" className={botaoSec} onClick={() => copiar(novo.link)}>
-              {copiado ? "Copiado" : "Copiar link"}
-            </button>
-          </div>
-        </div>
+        <p role="status" className="rounded-controlo border border-linha-forte bg-primaria-suave p-3 text-sm text-texto">
+          Convite enviado por email para <strong>{novo.email}</strong>. Válido até {formatarData(novo.expira_em)}.
+        </p>
       )}
 
       <div className="flex flex-col gap-2">
