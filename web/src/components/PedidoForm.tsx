@@ -23,7 +23,7 @@ export default function PedidoForm({
   pedido,
   onCancelar,
   dataInicial = "",
-  className = `flex max-w-xl flex-col gap-4 p-6 ${vidro} has-[[role=dialog]]:relative has-[[role=dialog]]:z-20`,
+  className = `flex max-w-xl flex-col gap-3 p-5 ${vidro} has-[[role=dialog]]:relative has-[[role=dialog]]:z-20`,
 }: {
   /** Chamado depois de criar (ou, em modo de edição, de guardar) o pedido. */
   onCriado?: (avisos: string[]) => void;
@@ -213,7 +213,7 @@ export default function PedidoForm({
           />
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label htmlFor="data_inicio" className={label}>
             Data de início
@@ -236,7 +236,7 @@ export default function PedidoForm({
           <CampoData id="data_fim" required min={inicio && inicio > hoje ? inicio : hoje} valor={fim} onChange={setFim} />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label htmlFor="hora_inicio" className={label}>
             Das (opcional)
@@ -261,7 +261,7 @@ export default function PedidoForm({
         </label>
         <textarea
           id="observacao"
-          rows={3}
+          rows={2}
           className={areaTexto}
           value={obs}
           maxLength={2000}
