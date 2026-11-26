@@ -21,13 +21,20 @@ services:
     environment:
       DB_HOST: mysql
       DB_PORT: "3306"
+      MAIL_MAILER: smtp   # emails de dev caem no Mailpit (http://localhost:8025)
+      MAIL_HOST: mailpit
+      MAIL_PORT: "1025"
     command: sh docker/api/entrypoint.sh
     depends_on:
       mysql: { condition: service_healthy }
+      mailpit: { condition: service_started }
   phpmyadmin:
     image: phpmyadmin:5
     ports: ["8080:80"]
     environment: { PMA_HOST: mysql }
     depends_on: [mysql]
+  mailpit:
+    image: axllent/mailpit
+    ports: ["8025:8025", "1025:1025"]  # UI web em 8025, SMTP em 1025
 volumes:
   mysql-data:
