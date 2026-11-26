@@ -110,16 +110,16 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
   const visiveisNaPesquisa = useMemo(() => new Set(filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]).map((p) => quemE(p))), [pedidos, busca]);
   const linhas = pessoas.filter((p) => visiveisNaPesquisa.has(p.id));
 
-  // Aniversário marcado na linha da própria pessoa; quem não tem linha fica na linha "Aniversários".
+  // Aniversário marcado na linha da própria pessoa; quem não tem linha ganha uma só para o aniversário, com o seu nome.
   const { anivNaLinha, anivSemLinha } = useMemo(() => {
     const idsComLinha = new Set(linhas.map((l) => l.id));
     const naLinha = new Set<string>();
-    const semLinha = new Map<string, string[]>();
+    const semLinha: { id: number; nome: string; iso: string }[] = [];
     filtrar(aniversarios, busca, (a) => [a.user.nome, "aniversario"])
       .filter((a) => Number(a.data.slice(0, 4)) === ano)
       .forEach((a) => {
         if (idsComLinha.has(a.user.id)) naLinha.add(`${a.user.id}|${a.data}`);
-        else semLinha.set(a.data, [...(semLinha.get(a.data) ?? []), a.user.nome]);
+        else semLinha.push({ id: a.user.id, nome: a.user.nome, iso: a.data });
       });
     return { anivNaLinha: naLinha, anivSemLinha: semLinha };
   }, [aniversarios, busca, ano, linhas]);
@@ -216,7 +216,9 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                 const total = diasDoMes(ano, mes);
                 // 31 posições; as que passam do fim do mês ficam vazias.
                 const dias = Array.from({ length: 31 }, (_, k) => (k < total ? `${ano}-${dois(mes)}-${dois(k + 1)}` : null));
-                const aniversariosDoMes = dias.filter((iso) => iso && anivSemLinha.get(iso)?.length);
+                const aniversariantes = [...new Map(anivSemLinha.filter((a) => a.iso.slice(5, 7) === dois(mes)).map((a) => [a.id, a.nome])).entries()]
+                  .map(([id, nomeP]) => ({ id, nome: nomeP }))
+                  .sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
                 const celulaDia = (iso: string) => {
                   const m = marcas.get(iso);
                   const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
@@ -228,7 +230,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                   };
                 };
                 const foraDoMes = (k: number) => <td key={`f${k}`} aria-hidden="true" className="h-7 border border-linha-forte/30 bg-campo" />;
-                const nLinhas = 1 + Math.max(linhas.length, 1) + (aniversariosDoMes.length > 0 ? 1 : 0);
+                const nLinhas = 1 + Math.max(linhas.length, 1) + aniversariantes.length;
                 return (
                   <Fragment key={nome}>
                   {i > 0 && (
@@ -335,25 +337,31 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                         })}
                       </tr>
                     ))}
-                    {aniversariosDoMes.length > 0 && (
-                      <tr>
-                        <th scope="row" className="border border-linha-forte/30 px-2 py-1 text-left font-medium text-texto-suave">
-                          Aniversários
+                    {aniversariantes.map((pessoa) => (
+                      <tr key={`aniv-${pessoa.id}`} className="odd:bg-painel/40 hover:bg-primaria-suave/50">
+                        <th scope="row" className="truncate border border-linha-forte/30 px-2 py-1 text-left font-medium" title={pessoa.nome}>
+                          <span aria-hidden="true" className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-rosa align-middle" />
+                          {pessoa.nome}
                         </th>
                         {dias.map((iso, k) => {
                           if (!iso) return foraDoMes(k);
                           const { fundo } = celulaDia(iso);
-                          const nomes = anivSemLinha.get(iso);
+                          const faz = anivSemLinha.some((a) => a.id === pessoa.id && a.iso === iso);
                           return (
                             <td key={iso} className={`h-7 border border-linha-forte/30 text-center ${fundo}`}>
-                              {nomes?.length ? (
-                                <span title={nomes.map((n) => `Aniversário de ${n}`).join(", ")} className="inline-block h-2 w-2 rounded-full bg-rosa" />
+                              {faz ? (
+                                <span
+                                  role="img"
+                                  title={`Aniversário de ${pessoa.nome}`}
+                                  aria-label={`Aniversário de ${pessoa.nome}`}
+                                  className="inline-block h-2 w-2 rounded-full bg-rosa"
+                                />
                               ) : null}
                             </td>
                           );
                         })}
                       </tr>
-                    )}
+                    ))}
                   </tbody>
                   </Fragment>
                 );

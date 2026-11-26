@@ -30,7 +30,9 @@ describe("pagina do calendario", () => {
     aniversarios.mockResolvedValue([{ user: { id: 3, nome: "Eva" }, data: "2026-03-10" }]);
     render(<CalendarioPage />);
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2026-01-01", "2026-12-31"));
-    expect(await screen.findByLabelText(/Aniversário de Eva/)).toBeTruthy();
+    const marcaEva = await screen.findByRole("img", { name: "Aniversário de Eva" });
+    // sem pedidos, a Eva ganha uma linha própria: nome e marca no mesmo sítio
+    expect(marcaEva.closest("tr")?.querySelector("th")?.textContent).toContain("Eva");
     expect(screen.getByLabelText(/Feriado nacional: Natal/)).toBeTruthy();
     expect(screen.getAllByLabelText(/Rui: férias/)).toHaveLength(3);
     // um só quadro contínuo, sem faixas nem cartões por mês: o mês é a primeira coluna de cada bloco
@@ -41,7 +43,7 @@ describe("pagina do calendario", () => {
     const linha = within(legenda).getByRole("rowheader", { name: "Rui" }).closest("tr") as HTMLElement;
     expect(linha.textContent).toContain("3");
 
-    fireEvent.click(screen.getByLabelText(/Aniversário de Eva/));
+    fireEvent.click(screen.getByRole("button", { name: /Aniversário de Eva/ }));
     expect(screen.getByRole("heading", { name: /10 de março/ })).toBeTruthy();
 
     fireEvent.click(screen.getByLabelText("Ano seguinte"));
