@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Empresa;
+use App\Models\Pedido;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -46,11 +48,11 @@ it('a actualizacao do pedido muda a cor', function () {
 });
 
 it('a agenda devolve a cor aos colegas e ao proprio', function () {
-    $empresa = App\Models\Empresa::factory()->create();
+    $empresa = Empresa::factory()->create();
     $eu = User::factory()->create(['empresa_id' => $empresa->id]);
     $colega = User::factory()->create(['empresa_id' => $empresa->id]);
     foreach ([$eu, $colega] as $u) {
-        App\Models\Pedido::factory()->create(['empresa_id' => $empresa->id, 'user_id' => $u->id, 'estado' => 'aprovado', 'data_inicio' => '2026-12-10', 'data_fim' => '2026-12-11', 'cor' => 'violeta']);
+        Pedido::factory()->create(['empresa_id' => $empresa->id, 'user_id' => $u->id, 'estado' => 'aprovado', 'data_inicio' => '2026-12-10', 'data_fim' => '2026-12-11', 'cor' => 'violeta']);
     }
     Sanctum::actingAs($eu);
 
