@@ -125,9 +125,6 @@ function Formulario() {
           <button type="submit" disabled={enviando} className={botao}>
             {enviando ? "A entrar..." : "Entrar"}
           </button>
-          <Link href="/registo" className="text-center text-sm text-texto-suave underline underline-offset-2 hover:text-texto">
-            Criar conta
-          </Link>
         </form>
     </AuthQuadro>
   );

@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Empresa;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,55 +10,10 @@ use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
-function dadosRegisto(array $extra = []): array
-{
-    return ['nome' => 'Ana', 'email' => 'ana@x.test', 'password' => 'segredo123', 'password_confirmation' => 'segredo123', 'aceita_termos' => true, ...$extra];
-}
-
 function linkVerificacao(User $user, ?Carbon $expira = null): string
 {
     return URL::temporarySignedRoute('verification.verify', $expira ?? now()->addHour(), ['id' => $user->id, 'hash' => sha1($user->email)]);
 }
-
-it('regista um funcionario na empresa unica e envia o email de verificacao', function () {
-    Notification::fake();
-    $empresa = Empresa::factory()->create();
-
-    $this->postJson('/api/registo', dadosRegisto())
-        ->assertStatus(201)
-        ->assertJsonStructure(['message'])
-        ->assertJsonMissingPath('token');
-
-    $user = User::where('email', 'ana@x.test')->firstOrFail();
-    expect($user->papel)->toBe('funcionario')
-        ->and($user->empresa_id)->toBe($empresa->id)
-        ->and($user->termos_aceites_em)->not->toBeNull()
-        ->and($user->email_verified_at)->toBeNull();
-    Notification::assertSentTo($user, VerifyEmail::class);
-});
-
-it('falha o registo sem aceitar os termos', function () {
-    Empresa::factory()->create();
-
-    $this->postJson('/api/registo', dadosRegisto(['aceita_termos' => false]))
-        ->assertStatus(422)->assertJsonValidationErrors('aceita_termos');
-    $this->postJson('/api/registo', collect(dadosRegisto())->except('aceita_termos')->all())
-        ->assertStatus(422)->assertJsonValidationErrors('aceita_termos');
-    expect(User::count())->toBe(0);
-});
-
-it('falha o registo com email duplicado ou password sem confirmacao', function () {
-    $empresa = Empresa::factory()->create();
-    User::factory()->create(['empresa_id' => $empresa->id, 'email' => 'ana@x.test']);
-
-    $this->postJson('/api/registo', dadosRegisto())->assertStatus(422)->assertJsonValidationErrors('email');
-    $this->postJson('/api/registo', dadosRegisto(['email' => 'b@x.test', 'password_confirmation' => 'outra']))
-        ->assertStatus(422)->assertJsonValidationErrors('password');
-});
-
-it('devolve 503 no registo quando nao existe empresa', function () {
-    $this->postJson('/api/registo', dadosRegisto())->assertStatus(503)->assertJsonStructure(['message']);
-});
 
 it('bloqueia o login por verificar e nao emite token', function () {
     User::factory()->unverified()->create(['email' => 'ana@x.test']);

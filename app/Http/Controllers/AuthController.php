@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\UpdatePerfilRequest;
-use App\Models\Empresa;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +25,14 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => ['Credenciais inválidas.']]);
         }
 
+        if ($user->estado_conta === 'pendente') {
+            return response()->json(['message' => 'A sua conta aguarda autorização do administrador.'], 403);
+        }
+
+        if ($user->estado_conta === 'recusado') {
+            return response()->json(['message' => 'A sua conta não foi autorizada.'], 403);
+        }
+
         if (! $user->hasVerifiedEmail()) {
             throw ValidationException::withMessages(['email' => ['Confirme o seu email para entrar. Enviámos-lhe um link; se não o encontra, peça um novo.']]);
         }
@@ -34,34 +41,6 @@ class AuthController extends Controller
             'token' => $user->createToken('api')->plainTextToken,
             'user' => $user->toContrato(),
         ]);
-    }
-
-    public function registo(Request $request): JsonResponse
-    {
-        $dados = $request->validate([
-            'nome' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'aceita_termos' => ['required', 'accepted'],
-        ]);
-
-        $empresa = Empresa::orderBy('id')->first();
-
-        if (! $empresa) {
-            return response()->json(['message' => 'O registo não está disponível de momento.'], 503);
-        }
-
-        $user = User::create([
-            'nome' => $dados['nome'],
-            'email' => $dados['email'],
-            'password' => $dados['password'],
-            'empresa_id' => $empresa->id,
-            'papel' => 'funcionario',
-            'termos_aceites_em' => now(),
-        ]);
-        $user->sendEmailVerificationNotification();
-
-        return response()->json(['message' => 'Conta criada. Enviámos-lhe um email para confirmar o endereço.'], 201);
     }
 
     /** Reenvia o link de verificacao. Resposta sempre igual, exista ou nao a conta. */

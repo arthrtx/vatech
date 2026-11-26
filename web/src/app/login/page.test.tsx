@@ -35,12 +35,12 @@ const porConfirmar = () =>
   new ApiError(422, "invalid", { email: ["Confirme o seu email para entrar. Enviámos-lhe um link; se não o encontra, peça um novo."] });
 
 describe("Login", () => {
-  it("não mostra avisos nem Reenviar link por omissão e liga a Criar conta", () => {
+  it("não mostra avisos nem Reenviar link por omissão e não oferece criar conta", () => {
     render(<LoginPage />);
     expect(screen.queryByRole("status")).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.queryByRole("button", { name: "Reenviar link" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Criar conta" }).getAttribute("href")).toBe("/registo");
+    expect(screen.queryByRole("link", { name: /criar conta/i })).toBeNull();
   });
 
   it("?verificado=1 mostra o aviso de email confirmado", () => {
@@ -82,6 +82,13 @@ describe("Login", () => {
     entrar();
     await screen.findByRole("alert");
     expect(screen.queryByRole("button", { name: "Reenviar link" })).toBeNull();
+  });
+
+  it("conta pendente (403) mostra a mensagem da API", async () => {
+    login.mockRejectedValue(new ApiError(403, "A sua conta aguarda autorização do administrador.", undefined));
+    render(<LoginPage />);
+    entrar();
+    expect((await screen.findByRole("alert")).textContent).toBe("A sua conta aguarda autorização do administrador.");
   });
 
   it("login com sucesso vai para a página inicial", async () => {
