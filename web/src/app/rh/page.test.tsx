@@ -118,9 +118,57 @@ describe("RH, grelha de fichas", () => {
     expect(mocks.enviarFicheiroRh).not.toHaveBeenCalled();
 
     const ok = new File(["x"], "cv.pdf", { type: "application/pdf" });
+    expect((screen.getByRole("button", { name: "Adicionar ficheiro" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(campo, { target: { files: [ok] } });
-    await waitFor(() => expect(mocks.enviarFicheiroRh).toHaveBeenCalledWith(2, ok));
+    expect((await screen.findByRole("alert")).textContent).toContain("Escolha o tipo de documento");
+    expect(mocks.enviarFicheiroRh).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Tipo de documento"), { target: { value: "outro" } });
+    expect((screen.getByRole("button", { name: "Adicionar ficheiro" }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.change(campo, { target: { files: [ok] } });
+    await waitFor(() => expect(mocks.enviarFicheiroRh).toHaveBeenCalledWith(2, ok, "outro", undefined));
     expect(await screen.findByText("cv.pdf")).toBeTruthy();
+  });
+
+  it("envia com o tipo escolhido e exige nome no personalizado", async () => {
+    mocks.enviarFicheiroRh.mockResolvedValue({ id: 22, nome: "x.pdf", tamanho: 10, mime: "application/pdf", criado_em: "2026-01-04T10:00:00Z", categoria: "personalizado", categoria_nome: "Atestado" });
+    render(<RhPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Abrir ficha de Ana Dias" }));
+    await screen.findByText("contrato.pdf");
+    const tipo = screen.getByLabelText("Tipo de documento");
+    expect(Array.from((tipo as HTMLSelectElement).options).map((o) => o.text)).toEqual(["Escolha o tipo…", "Declaração", "Documentos de estágio", "Contrato", "Recibo", "Outro", "Personalizado"]);
+
+    fireEvent.change(tipo, { target: { value: "recibo" } });
+    const recibo = new File(["x"], "r.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText("Escolher ficheiro"), { target: { files: [recibo] } });
+    await waitFor(() => expect(mocks.enviarFicheiroRh).toHaveBeenCalledWith(2, recibo, "recibo", undefined));
+
+    fireEvent.change(tipo, { target: { value: "personalizado" } });
+    const x = new File(["x"], "x.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText("Escolher ficheiro"), { target: { files: [x] } });
+    expect((await screen.findByRole("alert")).textContent).toContain("nome do tipo");
+    expect(mocks.enviarFicheiroRh).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByLabelText("Nome do tipo"), { target: { value: " Atestado " } });
+    fireEvent.change(screen.getByLabelText("Escolher ficheiro"), { target: { files: [x] } });
+    await waitFor(() => expect(mocks.enviarFicheiroRh).toHaveBeenCalledWith(2, x, "personalizado", "Atestado"));
+    expect((await screen.findAllByText("Atestado")).length).toBeGreaterThan(0);
+  });
+
+  it("mostra o tipo de cada ficheiro e filtra por tipo", async () => {
+    mocks.fichaRh.mockResolvedValue({
+      ...detalhe,
+      ficheiros: [
+        { id: 20, nome: "a.pdf", tamanho: 1, mime: "application/pdf", criado_em: "2026-01-03T10:00:00Z", categoria: "contrato", categoria_nome: null },
+        { id: 21, nome: "b.pdf", tamanho: 1, mime: "application/pdf", criado_em: "2026-01-03T10:00:00Z", categoria: "personalizado", categoria_nome: "Atestado" },
+      ],
+    });
+    render(<RhPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Abrir ficha de Ana Dias" }));
+    await screen.findByText("a.pdf");
+    expect(screen.getAllByTestId("tipo-ficheiro").map((e) => e.textContent)).toEqual(["Contrato", "Atestado"]);
+    fireEvent.change(screen.getByLabelText("Ver por tipo"), { target: { value: "contrato" } });
+    expect(screen.queryByText("b.pdf")).toBeNull();
+    expect(screen.getByText("a.pdf")).toBeTruthy();
   });
 
   it("Esc fecha a ficha", async () => {

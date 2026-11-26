@@ -11,6 +11,9 @@ php artisan storage:link --force
 php artisan migrate --force
 php artisan db:seed --class=ProducaoSeeder --force
 php artisan config:cache
+# Retenção do histórico (6 meses): limpa no arranque (o plano grátis adormece) e corre o scheduler em segundo plano.
+php artisan historico:limpar || true
+(while true; do php artisan schedule:run >/dev/null 2>&1; sleep 60; done) &
 export PHP_CLI_SERVER_WORKERS=4
 cd public
 exec php -S 0.0.0.0:"${PORT:-8000}" ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php

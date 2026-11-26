@@ -17,6 +17,7 @@ import {
   IconeLua,
   IconePedidos,
   IconePesquisa,
+  IconeRelogio,
   IconeSair,
   IconeSol,
   IconeUtilizador,
@@ -118,6 +119,9 @@ export default function AppShell({
     links.push({ href: "/rh", texto: "RH", Icone: IconeFuncionarios });
   }
   links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });
+  if (user.papel === "admin") {
+    links.push({ href: "/historico", texto: "Histórico", Icone: IconeRelogio });
+  }
   const definicoes = { href: "/definicoes", texto: "Definições" };
   const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa text-white" : itemInativo}`;
 
@@ -143,7 +147,7 @@ export default function AppShell({
             </p>
             <span className="text-lg font-bold tracking-tight max-[360px]:hidden">Nick Fury</span>
           </div>
-          <nav aria-label="Principal" className="flex shrink-0 items-center gap-1 max-[360px]:gap-0.5 md:flex-col md:items-stretch md:gap-1">
+          <nav aria-label="Principal" className="flex min-w-0 max-md:flex-wrap md:shrink-0 items-center gap-1 max-[360px]:gap-0.5 md:flex-col md:items-stretch md:gap-1">
             <p className={rotuloSecao}>Geral</p>
             {links.map(({ href, texto, Icone }) => (
               <Link

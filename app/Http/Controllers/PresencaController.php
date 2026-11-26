@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePresencaAtrasadaRequest;
 use App\Models\Presenca;
 use App\Models\User;
+use App\Services\RegistoAtividade;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,8 @@ class PresencaController extends Controller
             return Presenca::create(['user_id' => $request->user()->id, 'data' => $this->diaLocal(), 'entrada' => now()]);
         });
 
+        RegistoAtividade::registar('presenca', "{$request->user()->nome} marcou a entrada", $request->user());
+
         return response()->json(['data' => $presenca->load(Presenca::RELACOES)->toContrato()], 201);
     }
 
@@ -37,6 +41,8 @@ class PresencaController extends Controller
             return $aberta;
         });
 
+        RegistoAtividade::registar('presenca', "{$request->user()->nome} marcou a saída", $request->user());
+
         return response()->json(['data' => $presenca->load(Presenca::RELACOES)->toContrato()]);
     }
 
@@ -49,6 +55,8 @@ class PresencaController extends Controller
             'saida' => $request->instante('saida'),
             'atrasada' => true,
         ]);
+
+        RegistoAtividade::registar('presenca', "{$request->user()->nome} registou presença em atraso de ".Carbon::parse($request->input('data'))->format('d/m'), $request->user());
 
         return response()->json(['data' => $presenca->load(Presenca::RELACOES)->toContrato()], 201);
     }

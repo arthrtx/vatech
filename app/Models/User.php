@@ -15,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim', 'horario_entrada', 'horario_saida', 'horario_almoco_inicio', 'almoco_minutos', 'email_verified_at', 'termos_aceites_em', 'tipo_id', 'cargo'])]
+#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim', 'instituicao_ensino', 'horario_entrada', 'horario_saida', 'horario_almoco_inicio', 'almoco_minutos', 'email_verified_at', 'termos_aceites_em', 'tipo_id', 'cargo'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -118,7 +118,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,estado_conta:string,cargo:string|null,permissoes:list<string>,tipo:array{id:int,nome:string}|null} */
+    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,instituicao_ensino:string|null,estado_conta:string,cargo:string|null,permissoes:list<string>,tipo:array{id:int,nome:string}|null} */
     public function toContrato(): array
     {
         return $this->only(['id', 'nome', 'email', 'papel', 'empresa_id']) + [
@@ -130,6 +130,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'data_nascimento' => $this->data_nascimento?->format('Y-m-d'),
             'estagio_inicio' => $this->estagio_inicio?->format('Y-m-d'),
             'estagio_fim' => $this->estagio_fim?->format('Y-m-d'),
+            'instituicao_ensino' => $this->instituicao_ensino,
         ];
     }
 }

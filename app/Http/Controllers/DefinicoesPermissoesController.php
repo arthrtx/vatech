@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Empresa;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -46,6 +47,7 @@ class DefinicoesPermissoesController extends Controller
         }
         $empresa = Empresa::findOrFail($request->user()->empresa_id);
         $empresa->update(['permissoes' => $guardar]);
+        RegistoAtividade::registar('definicoes', "{$request->user()->nome} alterou as permissões por papel", $request->user());
 
         return $this->resposta($empresa->refresh());
     }

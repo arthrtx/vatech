@@ -6,6 +6,7 @@ use App\Models\Convite;
 use App\Models\Empresa;
 use App\Models\Tipo;
 use App\Models\User;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,8 @@ class TipoController extends Controller
             'permissoes' => $this->permissoesValidas($dados['permissoes'] ?? []),
         ]);
 
+        RegistoAtividade::registar('definicoes', "{$request->user()->nome} criou o tipo {$tipo->nome}", $request->user());
+
         return response()->json(['data' => $tipo->toContrato()], 201);
     }
 
@@ -61,6 +64,7 @@ class TipoController extends Controller
             $tipo->permissoes = $this->permissoesValidas($dados['permissoes']);
         }
         $tipo->save();
+        RegistoAtividade::registar('definicoes', "{$request->user()->nome} alterou o tipo {$tipo->nome}", $request->user());
 
         return response()->json(['data' => $tipo->toContrato()]);
     }
@@ -79,6 +83,7 @@ class TipoController extends Controller
             Convite::where('tipo_id', $tipo->id)->update(['tipo_id' => null]);
             $tipo->delete();
         });
+        RegistoAtividade::registar('definicoes', "{$request->user()->nome} apagou o tipo {$tipo->nome}", $request->user());
 
         return response()->json(null, 204);
     }
@@ -97,6 +102,9 @@ class TipoController extends Controller
             throw ValidationException::withMessages(['tipo_id' => ['Uma conta de administrador não tem tipo.']]);
         }
 
+        $papelAntes = $user->papel;
+        $tipoAntes = $user->tipo?->nome;
+
         if ($dados['tipo_id'] === null) {
             $user->forceFill(['tipo_id' => null, 'papel' => $dados['papel'] ?? $user->papel])->save();
         } else {
@@ -104,6 +112,18 @@ class TipoController extends Controller
             $user->forceFill(['tipo_id' => $tipo->id, 'papel' => $tipo->base])->save();
         }
         $user->load('tipo');
+
+        // Uma só linha no histórico, com o que mudou (papel e/ou tipo).
+        $mudancas = [];
+        if ($user->papel !== $papelAntes) {
+            $mudancas[] = 'o papel passou a '.($user->papel === 'estagiario' ? 'estagiário' : 'funcionário');
+        }
+        if ($user->tipo?->nome !== $tipoAntes) {
+            $mudancas[] = $user->tipo ? "o tipo passou a {$user->tipo->nome}" : 'ficou sem tipo';
+        }
+        if ($mudancas !== []) {
+            RegistoAtividade::registar('conta', "{$admin->nome} alterou {$user->nome}: ".implode(' e ', $mudancas), $admin, $user);
+        }
 
         return response()->json(['data' => $user->toContrato() + ['tipo_id' => $user->tipo_id, 'tipo_nome' => $user->tipo?->nome]]);
     }

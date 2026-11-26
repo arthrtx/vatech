@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import CalendarioAnual from "@/components/CalendarioAnual";
-import { api, mensagemDeErro, type Aniversario, type PedidoAgenda, type Ponte } from "@/lib/api";
+import { api, mensagemDeErro, type Aniversario, type Estagio, type PedidoAgenda, type Ponte } from "@/lib/api";
 import { hojeIso, quemE } from "@/lib/agenda";
 import { useAuth } from "@/lib/auth";
 import { podePedir } from "@/lib/permissoes";
@@ -16,6 +16,7 @@ interface Dados {
   pedidos: PedidoAgenda[];
   aniversarios: Aniversario[];
   pontes: Ponte[];
+  estagios: Estagio[];
   erro: string | null;
 }
 
@@ -37,9 +38,9 @@ function Conteudo() {
     const de = `${ano}-01-01`;
     const ate = `${ano}-12-31`;
     // Aniversários e pontes são acessórios: se falharem, o calendário mostra-se sem eles.
-    Promise.all([api.agenda(de, ate), api.aniversarios(de, ate).catch(() => []), api.pontes(de, ate).catch(() => [])])
-      .then(([pedidos, aniversarios, pontes]) => vivo && setDados({ ano, pedidos, aniversarios, pontes, erro: null }))
-      .catch((e) => vivo && setDados({ ano, pedidos: [], aniversarios: [], pontes: [], erro: mensagemDeErro(e) }));
+    Promise.all([api.agenda(de, ate), api.aniversarios(de, ate).catch(() => []), api.pontes(de, ate).catch(() => []), api.estagios(de, ate).catch(() => [])])
+      .then(([pedidos, aniversarios, pontes, estagios]) => vivo && setDados({ ano, pedidos, aniversarios, pontes, estagios, erro: null }))
+      .catch((e) => vivo && setDados({ ano, pedidos: [], aniversarios: [], pontes: [], estagios: [], erro: mensagemDeErro(e) }));
     return () => {
       vivo = false;
     };
@@ -67,6 +68,7 @@ function Conteudo() {
             pedidos={pronto?.pedidos ?? []}
             aniversarios={pronto?.aniversarios ?? []}
             pontes={pronto?.pontes ?? []}
+            estagios={pronto?.estagios ?? []}
             podeCriar={!!user && user.papel !== "admin" && podePedir(user)}
             aoCriar={() => setRecarga((r) => r + 1)}
           />

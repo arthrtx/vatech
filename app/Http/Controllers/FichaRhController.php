@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\RhFicheiro;
 use App\Models\RhInfo;
 use App\Models\User;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FichaRhController extends Controller
@@ -50,6 +53,8 @@ class FichaRhController extends Controller
             'criado_por' => $request->user()->id,
         ]);
 
+        RegistoAtividade::registar('rh', "{$request->user()->nome} acrescentou uma informação à ficha de {$user->nome}", $request->user(), $user);
+
         return response()->json(['data' => $info->toContrato()], 201);
     }
 
@@ -57,13 +62,16 @@ class FichaRhController extends Controller
     {
         $info = RhInfo::where('empresa_id', $request->user()->empresa_id)->findOrFail($id);
         $info->update($this->validarInfo($request));
+        RegistoAtividade::registar('rh', "{$request->user()->nome} editou uma informação da ficha de ".$this->nomeDe($info->user_id), $request->user(), User::find($info->user_id));
 
         return response()->json(['data' => $info->toContrato()]);
     }
 
     public function destroyInfo(Request $request, int $id): JsonResponse
     {
-        RhInfo::where('empresa_id', $request->user()->empresa_id)->findOrFail($id)->delete();
+        $info = RhInfo::where('empresa_id', $request->user()->empresa_id)->findOrFail($id);
+        $info->delete();
+        RegistoAtividade::registar('rh', "{$request->user()->nome} apagou uma informação da ficha de ".$this->nomeDe($info->user_id), $request->user(), User::find($info->user_id));
 
         return response()->json(null, 204);
     }
@@ -75,13 +83,25 @@ class FichaRhController extends Controller
         $tipoInvalido = 'Tipo de ficheiro não permitido (PDF, imagem, Word, Excel ou texto).';
         $request->validate([
             'ficheiro' => ['required', 'file', 'extensions:'.$tipos, 'mimes:'.$tipos, 'max:'.self::MAX_KB],
+            'categoria' => ['required', 'string', Rule::in(RhFicheiro::CATEGORIAS)],
+            'categoria_nome' => [Rule::requiredIf($request->input('categoria') === 'personalizado'), 'nullable', 'string', 'max:60'],
         ], [
+            'categoria.required' => 'Escolha o tipo de documento.',
+            'categoria.in' => 'Tipo de documento inválido.',
+            'categoria_nome.required' => 'Indique o nome do tipo de documento.',
+            'categoria_nome.max' => 'O nome do tipo pode ter no máximo 60 caracteres.',
             'ficheiro.required' => 'Escolha um ficheiro.',
             'ficheiro.file' => 'Não foi possível ler o ficheiro.',
             'ficheiro.extensions' => $tipoInvalido,
             'ficheiro.mimes' => $tipoInvalido,
             'ficheiro.max' => 'O ficheiro pode ter no máximo 10 MB.',
         ]);
+
+        $categoria = $request->input('categoria');
+        $categoriaNome = $categoria === 'personalizado' ? trim((string) $request->input('categoria_nome')) : null;
+        if ($categoria === 'personalizado' && $categoriaNome === '') {
+            throw ValidationException::withMessages(['categoria_nome' => 'Indique o nome do tipo de documento.']);
+        }
 
         $f = $request->file('ficheiro');
         $caminho = $f->store("rh/{$user->empresa_id}/{$user->id}", 'local');
@@ -90,11 +110,15 @@ class FichaRhController extends Controller
             'empresa_id' => $user->empresa_id,
             'user_id' => $user->id,
             'nome' => $this->nomeSeguro($f->getClientOriginalName()),
+            'categoria' => $categoria,
+            'categoria_nome' => $categoriaNome,
             'caminho' => $caminho,
             'mime' => $f->getClientMimeType(),
             'tamanho' => $f->getSize(),
             'criado_por' => $request->user()->id,
         ]);
+
+        RegistoAtividade::registar('rh', "{$request->user()->nome} carregou um ficheiro na ficha de {$user->nome}", $request->user(), $user);
 
         return response()->json(['data' => $ficheiro->toContrato()], 201);
     }
@@ -112,8 +136,14 @@ class FichaRhController extends Controller
         $f = RhFicheiro::where('empresa_id', $request->user()->empresa_id)->findOrFail($id);
         Storage::disk('local')->delete($f->caminho);
         $f->delete();
+        RegistoAtividade::registar('rh', "{$request->user()->nome} apagou um ficheiro da ficha de ".$this->nomeDe($f->user_id), $request->user(), User::find($f->user_id));
 
         return response()->json(null, 204);
+    }
+
+    private function nomeDe(int $userId): string
+    {
+        return User::withTrashed()->find($userId)?->nome ?? 'uma pessoa';
     }
 
     private function pessoaDaEmpresa(Request $request, int $userId): User

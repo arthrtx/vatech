@@ -7,6 +7,7 @@ use App\Models\Empresa;
 use App\Models\Tipo;
 use App\Models\User;
 use App\Notifications\ConviteNotification;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,8 @@ class ConviteController extends Controller
         });
 
         $this->enviar($convite);
+        $papelTxt = $convite->papel === 'estagiario' ? 'estagiário' : 'funcionário';
+        RegistoAtividade::registar('convite', "{$admin->nome} convidou {$convite->email} como {$papelTxt}", $admin);
 
         return response()->json(['data' => $convite->toContrato()], 201);
     }
@@ -78,13 +81,16 @@ class ConviteController extends Controller
 
         $convite->update(['token' => Str::random(48), 'expira_em' => now()->addDays(7)]);
         $this->enviar($convite);
+        RegistoAtividade::registar('convite', "{$request->user()->nome} reenviou o convite a {$convite->email}", $request->user());
 
         return response()->json(['data' => $convite->toContrato()]);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
     {
-        Convite::whereNull('usado_em')->where('empresa_id', $request->user()->empresa_id)->findOrFail($id)->delete();
+        $convite = Convite::whereNull('usado_em')->where('empresa_id', $request->user()->empresa_id)->findOrFail($id);
+        $convite->delete();
+        RegistoAtividade::registar('convite', "{$request->user()->nome} cancelou o convite a {$convite->email}", $request->user());
 
         return response()->json(null, 204);
     }
@@ -109,7 +115,8 @@ class ConviteController extends Controller
             'aceita_termos' => ['required', 'accepted'],
         ]);
 
-        DB::transaction(function () use ($token, $dados) {
+        $novo = null;
+        DB::transaction(function () use ($token, $dados, &$novo) {
             $convite = Convite::validos()->where('token', $token)->lockForUpdate()->firstOrFail();
 
             if (User::withTrashed()->where('email', $convite->email)->exists()) {
@@ -130,7 +137,9 @@ class ConviteController extends Controller
             $user->forceFill(['estado_conta' => 'pendente'])->save();
 
             $convite->update(['usado_em' => now()]);
+            $novo = $user;
         });
+        RegistoAtividade::registar('conta', "{$novo->nome} aceitou o convite e aguarda aprovação", $novo);
 
         return response()->json(['message' => 'Conta criada. Aguarde a autorização do administrador para entrar.'], 201);
     }
