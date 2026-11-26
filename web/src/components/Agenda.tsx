@@ -28,7 +28,6 @@ import { useAuth } from "@/lib/auth";
 import { useLocalidade } from "@/lib/localidade";
 import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
 import { subtipos, tipos } from "@/lib/rotulos";
-import EscolhaLocalidade from "./EscolhaLocalidade";
 import { botaoSec, label, vidro } from "./ui";
 import GrupoChips from "./GrupoChips";
 import CompromissoForm, { tiposCompromisso } from "./CompromissoForm";
@@ -344,7 +343,6 @@ export default function Agenda({
             <h3 id="ag-datas" className="text-base font-semibold">
               Feriados e datas de {mesesPt[mes.mes - 1]}
             </h3>
-            <EscolhaLocalidade id="ag-localidade" compacta />
             {datasMes.length === 0 && aniversariosMes.length === 0 && (
               <p className="text-sm text-texto-suave">Sem feriados, datas nem aniversários neste mês.</p>
             )}

@@ -261,7 +261,7 @@ export default function PedidoForm({
         </label>
         <textarea
           id="observacao"
-          rows={3}
+          rows={2}
           className={areaTexto}
           value={obs}
           maxLength={2000}

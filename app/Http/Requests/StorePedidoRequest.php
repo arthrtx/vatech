@@ -23,6 +23,8 @@ class StorePedidoRequest extends FormRequest
             'hora_fim' => ['nullable', 'date_format:H:i', 'required_with:hora_inicio', 'after:hora_inicio'],
             'observacao' => ['nullable', 'string', 'max:2000'],
             'urgente' => ['nullable', 'boolean'],
+            // Cor escolhida pelo utilizador para o calendario da equipa.
+            'cor' => ['nullable', Rule::in(['verde', 'violeta', 'laranja', 'pessego', 'escuro'])],
         ];
     }
 }
