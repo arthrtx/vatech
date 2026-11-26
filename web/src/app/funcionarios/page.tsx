@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api, mensagemDeErro, type FeriasResumo, type User } from "@/lib/api";
 import CampoBusca from "@/components/CampoBusca";
+import ConvitesAdmin from "@/components/ConvitesAdmin";
 import FuncionarioLinha from "@/components/FuncionarioLinha";
 import VistaFuncionario from "@/components/VistaFuncionario";
 import { filtrar } from "@/lib/busca";
@@ -43,11 +44,14 @@ function Conteudo() {
     };
   }, []);
 
-  const visiveis = filtrar(lista ?? [], busca, (u) => [u.nome, u.email]);
+  const pendentes = (lista ?? []).filter((u) => u.estado_conta === "pendente");
+  const ativos = (lista ?? []).filter((u) => u.estado_conta !== "pendente" && u.estado_conta !== "recusado");
+  const visiveis = filtrar(ativos, busca, (u) => [u.nome, u.email]);
 
   return (
     <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
       <h1 className="titulo-bento">Pessoas</h1>
+      <ConvitesAdmin pendentes={pendentes} onDecidida={carregar} />
       <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1">
         <div className="flex min-w-0 flex-col gap-3 lg:max-h-full lg:min-h-0">
         {erro && (
@@ -58,7 +62,7 @@ function Conteudo() {
         <CampoBusca id="busca-funcionarios" rotulo="Pesquisar pessoas" valor={busca} onChange={setBusca} />
         {lista !== null && visiveis.length === 0 && (
           <p className="text-texto-suave">
-            {lista.length === 0 ? "Ainda não há utilizadores." : `Nenhum resultado para "${busca.trim()}"`}
+            {ativos.length === 0 ? "Ainda não há utilizadores." : `Nenhum resultado para "${busca.trim()}"`}
           </p>
         )}
         <ul className="scroll-fino grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] content-start items-start gap-2 lg:min-h-0 lg:overflow-y-auto">

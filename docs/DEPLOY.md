@@ -28,7 +28,7 @@ browser -> site (Vercel) -> API (Render) -> base de dados (TiDB)
 | `APP_URL` | endereço do serviço no Render, ex. `https://vatech-api.onrender.com` |
 | `CORS_ALLOWED_ORIGINS` | endereço do site no Vercel, ex. `https://vatech.vercel.app` |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOME` | a primeira conta de admin |
-| `MAIL_*` (`MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`) | `TODO: credencial SMTP em falta (MAIL_*)`; sem isto o email de verificação do registo não chega (em dev `MAIL_MAILER=log`) |
+| `MAIL_*` (`MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`) | `TODO: credencial SMTP em falta (MAIL_*)`; sem isto o email do convite não chega (o admin copia o link que aparece ao convidar) (em dev `MAIL_MAILER=log`) |
 
 4. Ao arrancar, a API cria as tabelas e a conta de admin. As contas de teste (`admin@vatech.test`) não existem em produção.
 5. Confirmar que `https://<endereço-da-api>/up` responde.

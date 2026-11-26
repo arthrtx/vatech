@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useBloquearScroll } from "@/lib/bloquearScroll";
 
 /**
  * Janela por cima da página (fecha com Escape ou ao clicar fora). Usada para o formulário "Novo pedido".
@@ -15,6 +16,8 @@ export default function JanelaFormulario({ children, aoFechar, titulo }: { child
     () => true,
     () => false,
   );
+
+  useBloquearScroll(true);
 
   useEffect(() => {
     if (!montado) return;

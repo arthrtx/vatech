@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import FuncionariosPage from "./page";
 import { api } from "@/lib/api";
 
@@ -7,11 +7,18 @@ vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: Re
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1 } }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
-  return { ...real, api: { funcionarios: vi.fn(), feriasResumo: vi.fn() } };
+  return { ...real, api: {
+      funcionarios: vi.fn(),
+      feriasResumo: vi.fn(),
+      convites: { listar: vi.fn(), criar: vi.fn(), reenviar: vi.fn(), revogar: vi.fn() },
+      aprovarConta: vi.fn(),
+      recusarConta: vi.fn(),
+    } };
 });
 
 beforeEach(() => {
   vi.mocked(api.feriasResumo).mockResolvedValue({ resumo: [], prazo_ferias: "2026-04-30" });
+  vi.mocked(api.convites.listar).mockResolvedValue([]);
 });
 afterEach(cleanup);
 
@@ -90,5 +97,55 @@ describe("Funcionários: férias por pessoa", () => {
     expect(await screen.findByText("Férias: 8/30 dias úteis (8 transitados)")).toBeTruthy();
     expect(screen.getByText("Férias: 5/22 dias úteis")).toBeTruthy();
     expect(screen.getAllByText(/^Férias:/)).toHaveLength(2);
+  });
+});
+
+describe("Funcionários: convites e contas por autorizar", () => {
+  const convite = { id: 7, nome: "Rui", email: "rui@x.pt", papel: "estagiario" as const, expira_em: "2026-12-10T00:00:00Z", link: "http://x/convite/tok" };
+
+  it("estados vazios", async () => {
+    vi.mocked(api.funcionarios).mockResolvedValue([]);
+    render(<FuncionariosPage />);
+    expect(await screen.findByText("Sem convites pendentes.")).toBeTruthy();
+    expect(screen.getByText("Nenhuma conta por autorizar.")).toBeTruthy();
+  });
+
+  it("cria convite e mostra o link copiável", async () => {
+    vi.mocked(api.funcionarios).mockResolvedValue([]);
+    vi.mocked(api.convites.criar).mockResolvedValue(convite);
+    render(<FuncionariosPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Convidar funcionário" }));
+    fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Rui" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "rui@x.pt" } });
+    fireEvent.change(screen.getByLabelText("Papel"), { target: { value: "estagiario" } });
+    fireEvent.click(screen.getByRole("button", { name: "Criar convite" }));
+    const link = (await screen.findByLabelText("Link do convite")) as HTMLInputElement;
+    expect(link.value).toBe(convite.link);
+    expect(api.convites.criar).toHaveBeenCalledWith({ nome: "Rui", email: "rui@x.pt", papel: "estagiario" });
+  });
+
+  it("reenvia e revoga convites pendentes", async () => {
+    vi.mocked(api.funcionarios).mockResolvedValue([]);
+    vi.mocked(api.convites.listar).mockResolvedValue([convite]);
+    vi.mocked(api.convites.reenviar).mockResolvedValue(convite);
+    vi.mocked(api.convites.revogar).mockResolvedValue(undefined);
+    render(<FuncionariosPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Reenviar" }));
+    await waitFor(() => expect(api.convites.reenviar).toHaveBeenCalledWith(7));
+    fireEvent.click(screen.getByRole("button", { name: "Revogar" }));
+    await waitFor(() => expect(api.convites.revogar).toHaveBeenCalledWith(7));
+  });
+
+  it("contas pendentes saem da lista principal e podem ser autorizadas ou recusadas", async () => {
+    const pend = { ...mk(5, "Eva", "eva@x.pt"), estado_conta: "pendente" as const };
+    vi.mocked(api.funcionarios).mockResolvedValue([mk(1, "João", "j@x.pt"), pend]);
+    vi.mocked(api.aprovarConta).mockResolvedValue({ ...pend, estado_conta: "aprovado" });
+    vi.mocked(api.recusarConta).mockResolvedValue({ ...pend, estado_conta: "recusado" });
+    render(<FuncionariosPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Autorizar" }));
+    await waitFor(() => expect(api.aprovarConta).toHaveBeenCalledWith(5));
+    fireEvent.click(screen.getByRole("button", { name: "Recusar" }));
+    await waitFor(() => expect(api.recusarConta).toHaveBeenCalledWith(5));
+    expect(screen.getAllByText("Eva")).toHaveLength(1);
   });
 });

@@ -40,10 +40,11 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,almoco_inicio:string|null,almoco_fim:string|null} */
+    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,almoco_inicio:string|null,almoco_fim:string|null,estado_conta:string} */
     public function toContrato(): array
     {
         return $this->only(['id', 'nome', 'email', 'papel', 'empresa_id']) + [
+            'estado_conta' => $this->estado_conta ?? 'aprovado',
             'avatar_url' => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
             'data_nascimento' => $this->data_nascimento?->format('Y-m-d'),
             'estagio_inicio' => $this->estagio_inicio?->format('Y-m-d'),

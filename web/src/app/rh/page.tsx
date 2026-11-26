@@ -2,21 +2,17 @@
 
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { pastasRh as pastas, type PastaRh } from "@/lib/rh";
 
-// Pastas da secção de RH (ainda sem conteúdo). Cores: tokens existentes de globals.css.
 // TODO: token em falta — a referência usa uma fonte monoespaçada para os títulos; aqui fica `font-mono` do sistema.
-const pastas = [
-  { nome: "Gestão salarial", de: "from-violeta/45", ate: "to-violeta/20", aba: "bg-violeta/45" },
-  { nome: "Gestão de estagiários", de: "from-primaria-suave", ate: "to-primaria-suave/60", aba: "bg-primaria-suave" },
-  { nome: "Contratos", de: "from-pessego/55", ate: "to-pessego/25", aba: "bg-pessego/55" },
-  { nome: "Documentos", de: "from-creme", ate: "to-laranja/20", aba: "bg-creme" },
-] as const;
 
-function Pasta({ nome, de, ate, aba }: (typeof pastas)[number]) {
+function Pasta({ slug, nome, de, ate, aba }: PastaRh) {
   const { user } = useAuth();
   return (
     <li className="relative mt-5">
+      <Link href={`/rh/${slug}`} className="group block rounded-cartao rounded-tl-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2">
       <div aria-hidden className={`absolute -top-5 left-0 h-8 w-[42%] rounded-t-[2rem] ${aba}`} />
       <div
         className={`relative flex min-h-40 flex-col justify-between gap-8 rounded-barra rounded-tl-none bg-gradient-to-br p-6 ring-1 ring-linha ${de} ${ate}`}
@@ -30,6 +26,7 @@ function Pasta({ nome, de, ate, aba }: (typeof pastas)[number]) {
           <span className="tabular-nums">0 itens</span>
         </div>
       </div>
+      </Link>
     </li>
   );
 }
