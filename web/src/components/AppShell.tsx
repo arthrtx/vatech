@@ -109,9 +109,7 @@ export default function AppShell({
   if (user.papel === "admin") {
     links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
   }
-  if (user.papel === "admin" || user.papel === "estagiario") {
-    links.push({ href: "/presencas", texto: "Estágio", Icone: IconeUtilizador });
-  }
+  links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });
   const definicoes = { href: "/definicoes", texto: "Definições" };
   const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa text-white" : itemInativo}`;
 

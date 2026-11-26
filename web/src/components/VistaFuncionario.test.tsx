@@ -29,6 +29,7 @@ const ped = (id: number, o: Partial<Pedido>): Pedido =>
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-23T12:00:00"));
+  vi.mocked(api.presencas).mockResolvedValue([]);
 });
 afterEach(() => {
   cleanup();
@@ -55,7 +56,7 @@ describe("VistaFuncionario", () => {
     expect(await screen.findAllByText("22/12/2026 a 24/12/2026")).toHaveLength(3); // 1 próxima + pedidos 1 e 2
     expect(await screen.findByText("Ponte da Imaculada")).toBeTruthy();
     expect(screen.queryByText("Ponte antiga")).toBeNull(); // já passou
-    expect(api.presencas).not.toHaveBeenCalled(); // só para estagiários
+    expect(api.presencas).toHaveBeenCalledWith("2026-10-24", "2026-11-23", 2); // qualquer papel
   });
 
   it("fecha com o botão e com Escape", () => {

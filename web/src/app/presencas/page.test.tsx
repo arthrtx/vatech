@@ -43,10 +43,10 @@ function preencher(d = "2026-02-03", e = "09:00", s = "17:00") {
 }
 
 describe("Estágio: esqueci de marcar", () => {
-  it("o botão só aparece ao estagiário", () => {
+  it("o botão também aparece ao admin", () => {
     papel = "admin";
     render(<PresencasPage />);
-    expect(screen.queryByRole("button", { name: "Esqueci de marcar presença" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Esqueci de marcar presença" })).toBeTruthy();
   });
 
   it("a etiqueta Atrasada só aparece quando atrasada=true", async () => {

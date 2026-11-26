@@ -12,6 +12,7 @@ import { acao, acaoDestaque } from "../ui";
 import AvisoFerias from "./AvisoFerias";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
+import { CartaoPresenca } from "./DashboardEstagiario";
 import CalendarioMes from "./CalendarioMes";
 import WidgetContagem from "./WidgetContagem";
 import WidgetFeriados from "./WidgetFeriados";
@@ -58,6 +59,7 @@ export default function DashboardFuncionario({ user }: { user: User }) {
             }
           />
       </div>
+      <CartaoPresenca />
       <AvisoFerias comTransitadas />
       <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
       <WidgetContagem pedidos={pedidos.dados} hoje={hoje} className="lg:min-w-0 lg:flex-[2]" />

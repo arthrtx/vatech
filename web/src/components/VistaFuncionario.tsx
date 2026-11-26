@@ -17,7 +17,7 @@ const corEstado: Record<Pedido["estado"], string> = {
 
 const hora = (h: string | null) => (h ? h.slice(0, 5) : "-");
 
-/** Janela com a vista geral de uma pessoa: dados, férias, pedidos, próximas pontes e, nos estagiários, presenças. */
+/** Janela com a vista geral de uma pessoa: dados, férias, pedidos, próximas pontes e presenças. */
 export default function VistaFuncionario({
   user,
   ferias,
@@ -33,7 +33,6 @@ export default function VistaFuncionario({
   const [pontes, setPontes] = useState<Ponte[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const fechar = useRef<HTMLButtonElement>(null);
-  const estagiario = user.papel === "estagiario";
 
   useEffect(() => {
     const antes = document.activeElement as HTMLElement | null;
@@ -58,16 +57,14 @@ export default function VistaFuncionario({
       (r) => ativo && setPontes(r.filter((p) => p.data_fim >= hoje).sort((a, b) => a.data_inicio.localeCompare(b.data_inicio))),
       () => ativo && setPontes([]),
     );
-    if (estagiario) {
-      api.presencas(maisDias(hoje, -30), hoje, user.id).then(
-        (r) => ativo && setPresencas(r),
-        (e) => ativo && setErro(mensagemDeErro(e)),
-      );
-    }
+    api.presencas(maisDias(hoje, -30), hoje, user.id).then(
+      (r) => ativo && setPresencas(r),
+      (e) => ativo && setErro(mensagemDeErro(e)),
+    );
     return () => {
       ativo = false;
     };
-  }, [user.id, estagiario, hoje]);
+  }, [user.id, hoje]);
 
   const conta = (estado: Pedido["estado"]) => pedidos?.filter((p) => p.estado === estado).length ?? 0;
   const proximas = (pedidos ?? [])
@@ -193,31 +190,29 @@ export default function VistaFuncionario({
           )}
         </section>
 
-        {estagiario && (
-          <section aria-labelledby={`${tituloId}-pres`} className="flex flex-col gap-2">
-            <h3 id={`${tituloId}-pres`} className="font-semibold">
-              Presenças nos últimos 30 dias
-              {presencas !== null && <span className="ml-2 text-sm font-normal text-texto-suave">({presencas.length} dias)</span>}
-            </h3>
-            {presencas === null ? (
-              <p className="text-sm text-texto-suave">A carregar...</p>
-            ) : presencas.length === 0 ? (
-              <p className="text-sm text-texto-suave">Sem presenças registadas.</p>
-            ) : (
-              <ul className="flex flex-col gap-1.5">
-                {presencas.slice(0, 5).map((p) => (
-                  <li key={p.id} className="flex items-center justify-between gap-3 rounded-controlo bg-campo/70 px-3 py-2 text-sm">
-                    <span className="font-medium">{formatarData(p.data)}</span>
-                    <span className="tabular-nums text-texto-suave">
-                      {hora(p.entrada)} - {hora(p.saida)}
-                      {p.atrasada && " (marcada depois)"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
+        <section aria-labelledby={`${tituloId}-pres`} className="flex flex-col gap-2">
+          <h3 id={`${tituloId}-pres`} className="font-semibold">
+            Presenças nos últimos 30 dias
+            {presencas !== null && <span className="ml-2 text-sm font-normal text-texto-suave">({presencas.length} dias)</span>}
+          </h3>
+          {presencas === null ? (
+            <p className="text-sm text-texto-suave">A carregar...</p>
+          ) : presencas.length === 0 ? (
+            <p className="text-sm text-texto-suave">Sem presenças registadas.</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {presencas.slice(0, 5).map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 rounded-controlo bg-campo/70 px-3 py-2 text-sm">
+                  <span className="font-medium">{formatarData(p.data)}</span>
+                  <span className="tabular-nums text-texto-suave">
+                    {hora(p.entrada)} - {hora(p.saida)}
+                    {p.atrasada && " (marcada depois)"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );
