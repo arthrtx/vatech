@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\UpdatePerfilRequest;
 use App\Models\User;
+use App\Services\RegistoAtividade;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,8 @@ class AuthController extends Controller
         if (! $user->hasVerifiedEmail()) {
             throw ValidationException::withMessages(['email' => ['Confirme o seu email para entrar. Enviámos-lhe um link; se não o encontra, peça um novo.']]);
         }
+
+        RegistoAtividade::registar('sessao', "{$user->nome} iniciou sessão", $user);
 
         return response()->json([
             'token' => $user->createToken('api')->plainTextToken,
@@ -105,6 +108,7 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        RegistoAtividade::registar('sessao', "{$request->user()->nome} terminou a sessão", $request->user());
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(null, 204);

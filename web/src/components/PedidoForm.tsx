@@ -217,6 +217,7 @@ export default function PedidoForm({
           {tipos[tipo]}: {usados} de {total} dias úteis usados em {ano} (
           {limite.transitados > 0 ? `${limite.dias_ano} do ano + ${limite.transitados} transitados; ` : ""}restam {restam}
           {maximo !== null && maximo !== total ? `; pode pedir até ${maximo}` : ""})
+          {!!limite.pontes && ` Pontes: ${limite.pontes} ${limite.pontes === 1 ? "dia" : "dias"}, já contadas.`}
         </p>
       )}
       {tipo === "ausencia" && (

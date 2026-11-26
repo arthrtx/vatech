@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, mensagemDeErro, type Aniversario, type CorFerias, type PedidoAgenda, type Ponte } from "@/lib/api";
+import { api, mensagemDeErro, type Aniversario, type CorFerias, type Estagio, type PedidoAgenda, type Ponte } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { temPermissao } from "@/lib/permissoes";
 import { hojeIso, mesesPt, nomeDoDia, quemE, visiveis } from "@/lib/agenda";
@@ -10,7 +10,7 @@ import { diasUteis } from "@/lib/diasUteis";
 import { useFeriadosDoAno } from "@/lib/useFeriados";
 import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
-import { tipos } from "@/lib/rotulos";
+import { formatarData, tipos } from "@/lib/rotulos";
 import { filtrar } from "@/lib/busca";
 import CampoBusca from "./CampoBusca";
 import { IconeDescarregar, IconeSeta } from "./Icones";
@@ -68,6 +68,8 @@ interface Props {
   pedidos: PedidoAgenda[];
   aniversarios: Aniversario[];
   pontes: Ponte[];
+  /** Períodos de estágio (opcional; sem a instituição). */
+  estagios?: Estagio[];
   /** Mostra o botão "Novo pedido" (como na Agenda). */
   podeCriar?: boolean;
   aoCriar?: () => void;
@@ -82,7 +84,7 @@ interface Props {
  * Mapa do ano, como a folha de férias da equipa: um quadro por mês, os dias em colunas, uma linha por pessoa,
  * fins de semana a cinzento e feriados e pontes em coluna rosa. À direita, a legenda com a cor e os dias de férias de cada um.
  */
-export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, podeCriar = false, aoCriar, simulacao = null, diaDestaque = null, aoDestacarDia }: Props) {
+export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, estagios = [], podeCriar = false, aoCriar, simulacao = null, diaDestaque = null, aoDestacarDia }: Props) {
   const [localidade] = useLocalidade();
   const hoje = hojeIso();
   const anoHoje = Number(hoje.slice(0, 4));
@@ -142,11 +144,21 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
         const c = corDaChave(p.cor);
         if (id !== undefined && c && !primeiraCor.has(id)) primeiraCor.set(id, c);
       });
+    // Estagiários com período de estágio no ano também têm linha, mesmo sem pedidos.
+    estagios
+      .filter((e) => (e.inicio ?? `${ano}-01-01`) <= `${ano}-12-31` && (e.fim ?? `${ano}-12-31`) >= `${ano}-01-01`)
+      .forEach((e) => {
+        if (!m.has(e.user.id)) m.set(e.user.id, e.user.nome);
+      });
     return [...m]
       .sort((a, b) => a[1].localeCompare(b[1], "pt"))
       .map(([id, nome], i) => ({ id, nome, cor: primeiraCor.get(id) ?? cores[i % cores.length] }));
-  }, [pedidos, meuId, user]);
-  const visiveisNaPesquisa = useMemo(() => new Set(filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]).map((p) => quemE(p))), [pedidos, busca]);
+  }, [pedidos, meuId, user, estagios, ano]);
+  const visiveisNaPesquisa = useMemo(() => {
+    const ids = new Set(filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]).map((p) => quemE(p)));
+    filtrar(estagios, busca, (e) => [e.user.nome, "estagio"]).forEach((e) => ids.add(e.user.id));
+    return ids;
+  }, [pedidos, estagios, busca]);
   const linhas = pessoas.filter((p) => visiveisNaPesquisa.has(p.id));
 
   // Aniversário marcado na linha da própria pessoa; quem não tem linha ganha uma só para o aniversário, com o seu nome.
@@ -162,6 +174,16 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
       });
     return { anivNaLinha: naLinha, anivSemLinha: semLinha };
   }, [aniversarios, busca, ano, linhas]);
+
+  const estagiosDoAno = useMemo(
+    () =>
+      filtrar(estagios, busca, (e) => [e.user.nome, "estagio"])
+        .filter((e) => (e.inicio ?? `${ano}-01-01`) <= `${ano}-12-31` && (e.fim ?? `${ano}-12-31`) >= `${ano}-01-01`)
+        .sort((a, b) => a.user.nome.localeCompare(b.user.nome, "pt")),
+    [estagios, busca, ano],
+  );
+  const emEstagio = (id: number, iso: string) =>
+    estagios.some((e) => e.user.id === id && (!e.inicio || e.inicio <= iso) && (!e.fim || e.fim >= iso));
 
   // Dias úteis de férias de cada pessoa neste ano (aprovadas e pendentes).
   const diasDeFerias = useMemo(() => {
@@ -448,7 +470,8 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                               <td
                                 key={iso}
                                 {...arrastar}
-                                className={`relative h-7 border border-linha-forte/30 ${realce ? `${corDaChave(corEscolhida)?.cheia} opacity-80` : fundo} ${propria ? "cursor-crosshair touch-none" : ""}`}
+                                title={emEstagio(pessoa.id, iso) ? `${pessoa.nome}: em estágio` : undefined}
+                                className={`relative h-7 border border-linha-forte/30 ${realce ? `${corDaChave(corEscolhida)?.cheia} opacity-80` : emEstagio(pessoa.id, iso) && !fundo.trim() ? "bg-positivo/15" : fundo} ${propria ? "cursor-crosshair touch-none" : ""}`}
                               >
                                 {marcaAniv}
                               </td>
@@ -594,6 +617,17 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                   </td>
                   <td />
                 </tr>
+                {estagios.length > 0 && (
+                  <tr className="border-t border-linha/60">
+                    <th scope="row" className="px-3 py-1.5 text-left font-normal">
+                      Estágio
+                    </th>
+                    <td className="px-3 py-1.5">
+                      <span aria-hidden="true" className="block h-5 w-10 rounded-sm bg-positivo/15" />
+                    </td>
+                    <td />
+                  </tr>
+                )}
                 <tr className="border-t border-linha/60">
                   <th scope="row" className="px-3 py-1.5 text-left font-normal">
                     Aniversário
@@ -714,6 +748,24 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
             </button>
           )}
         </div>
+      )}
+
+      {estagiosDoAno.length > 0 && (
+        <section aria-labelledby="estagios-titulo" className="rounded-cartao border border-linha bg-painel p-4">
+          <h2 id="estagios-titulo" className="text-base font-semibold">
+            Estágios
+          </h2>
+          <ul className="mt-2 flex flex-col gap-1 text-sm">
+            {estagiosDoAno.map((e) => (
+              <li key={e.user.id} className="flex flex-wrap justify-between gap-x-3">
+                <span className="font-medium">{e.user.nome}</span>
+                <span className="text-texto-suave">
+                  {e.inicio ? `de ${formatarData(e.inicio)}` : "início por definir"} {e.fim ? `a ${formatarData(e.fim)}` : "sem data de fim"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {novo && (

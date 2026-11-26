@@ -13,7 +13,7 @@ import Avatar from "./Avatar";
 import AnexosDoPedido from "./AnexosDoPedido";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos, filtrosIniciais } from "./FiltrosPedidosCampos";
-import { areaTexto, botao, botaoSec, label, vidro } from "./ui";
+import { areaTexto, botao, botaoPerigo, botaoSec, label, vidro } from "./ui";
 
 interface Props {
   pedidos: Pedido[];
@@ -25,9 +25,12 @@ interface Props {
   semBusca?: boolean;
   /** Texto do estado vazio (sem nenhum pedido); por omissão depende de `semBusca`. */
   textoVazio?: string;
+  /** Só com a permissão «apagar pedidos»: apaga o pedido em qualquer estado. */
+  onApagar?: (p: Pedido) => void | Promise<void>;
 }
 
-export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando = false, semBusca = false, textoVazio }: Props) {
+export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando = false, semBusca = false, textoVazio, onApagar }: Props) {
+  const [aApagar, setAApagar] = useState<number | null>(null);
   const [recusando, setRecusando] = useState<number | null>(null);
   const [motivo, setMotivo] = useState("");
   const [busca, setBusca] = useState("");
@@ -153,6 +156,29 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando
                           Recusar
                         </button>
                       </>
+                    ))}
+                  {onApagar &&
+                    (aApagar === p.id ? (
+                      <>
+                        <span className="text-sm font-medium">Apagar este pedido?</span>
+                        <button
+                          type="button"
+                          className={botaoPerigo}
+                          onClick={async () => {
+                            await onApagar(p);
+                            setAApagar(null);
+                          }}
+                        >
+                          Sim, apagar
+                        </button>
+                        <button type="button" className={botaoSec} onClick={() => setAApagar(null)}>
+                          Voltar
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" className={botaoPerigo} onClick={() => setAApagar(p.id)}>
+                        Apagar
+                      </button>
                     ))}
                 </div>
               </li>

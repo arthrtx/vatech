@@ -16,6 +16,7 @@ import {
   IconeLua,
   IconePedidos,
   IconePesquisa,
+  IconeRelogio,
   IconeSair,
   IconeSol,
   IconeUtilizador,
@@ -106,6 +107,9 @@ export default function AppShell({
     links.push({ href: "/rh", texto: "RH", Icone: IconeFuncionarios });
   }
   links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });
+  if (user.papel === "admin") {
+    links.push({ href: "/historico", texto: "Histórico", Icone: IconeRelogio });
+  }
   const definicoes = { href: "/definicoes", texto: "Definições", Icone: IconeDefinicoes };
 
   const hora = agora ? new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" }).format(agora) : "";

@@ -7,6 +7,7 @@ use App\Http\Requests\StorePedidoRequest;
 use App\Models\Pedido;
 use App\Models\User;
 use App\Services\LimitesPedidoService;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -15,7 +16,25 @@ use Illuminate\Validation\ValidationException;
 
 class PedidoController extends Controller
 {
+    private const TIPOS = ['ferias' => 'férias', 'ausencia' => 'ausência', 'licenca' => 'licença'];
+
     public function __construct(private LimitesPedidoService $limites) {}
+
+    private function periodo(Pedido $p): string
+    {
+        $i = $p->data_inicio->format('d/m');
+        $f = $p->data_fim->format('d/m');
+
+        return $i === $f ? $i : "{$i} a {$f}";
+    }
+
+    /** Só tipo e datas: nunca subtipo, observação nem motivos. */
+    private function descreverPedido(User $autor, Pedido $p, ?User $paraOutro): string
+    {
+        $quem = $paraOutro ? " para {$paraOutro->nome}" : '';
+
+        return "{$autor->nome} pediu ".self::TIPOS[$p->tipo]."{$quem}: {$this->periodo($p)}";
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -71,6 +90,8 @@ class PedidoController extends Controller
             $licenca = [];
         }
         $pedido = Pedido::create([...$dados, ...$licenca, 'user_id' => $user->id, 'empresa_id' => $user->empresa_id, 'criado_por' => $autor->id]);
+
+        RegistoAtividade::registar('pedido', $this->descreverPedido($autor, $pedido, $porOutro ? $user : null), $autor, $porOutro ? $user : null);
 
         $resposta = ['data' => $pedido->refresh()->load('anexos', 'autor:id,nome')];
         if ($sobrepoe) {
@@ -137,9 +158,15 @@ class PedidoController extends Controller
     /** O funcionario apaga um pedido seu enquanto esta pendente, ou cancela uma licença que ainda não começou. */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $pedido = $this->pedidoPendenteDoUtilizador($request, $id, licencaPorComecar: true);
+        $user = $request->user();
+        // Com «apagar_pedidos» apaga-se qualquer pedido da empresa, em qualquer estado.
+        $pedido = $user->temPermissao('apagar_pedidos')
+            ? Pedido::where('empresa_id', $user->empresa_id)->findOrFail($id)
+            : $this->pedidoPendenteDoUtilizador($request, $id, licencaPorComecar: true);
+        $dono = $pedido->user_id === $user->id ? null : User::find($pedido->user_id);
         // Os anexos (e os seus bytes) saem em cascata.
         $pedido->delete();
+        RegistoAtividade::registar('pedido', "{$user->nome} apagou o pedido de ".self::TIPOS[$pedido->tipo].($dono ? " de {$dono->nome}" : '').' de '.$this->periodo($pedido), $user, $dono);
 
         return response()->json(null, 204);
     }
@@ -153,6 +180,7 @@ class PedidoController extends Controller
         abort_if($pedido->tipo !== 'ferias' || $pedido->estado !== 'aprovado', 409, 'Só é possível cancelar férias aprovadas.');
 
         $pedido->update(['estado' => 'cancelado']);
+        RegistoAtividade::registar('pedido', "{$user->nome} cancelou as férias de {$this->periodo($pedido)}", $user);
 
         return response()->json(['data' => $pedido->refresh()]);
     }
@@ -206,6 +234,9 @@ class PedidoController extends Controller
         abort_if($pedido->estado !== 'pendente', 409, 'O pedido já foi decidido.');
 
         $pedido->update([...$campos, 'decidido_por' => $user->id, 'decidido_em' => now()]);
+        $dono = User::withTrashed()->find($pedido->user_id);
+        $verbo = $campos['estado'] === 'aprovado' ? 'aprovou' : 'recusou';
+        RegistoAtividade::registar('pedido', "{$user->nome} {$verbo} o pedido de ".self::TIPOS[$pedido->tipo]." de {$dono?->nome}", $user, $dono);
 
         return response()->json(['data' => $pedido->refresh()->load('autor:id,nome')]);
     }

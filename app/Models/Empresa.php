@@ -29,6 +29,8 @@ class Empresa extends Model
         ['convidar_pessoas', 'Convidar pessoas (convites)', 'gestao'],
         ['gerir_rh', 'Gerir fichas de RH', 'gestao'],
         ['pedir_por_outros', 'Fazer pedidos em nome de outras pessoas', 'gestao'],
+        ['apagar_pedidos', 'Apagar pedidos da equipa', 'gestao'],
+        ['apagar_pessoas', 'Apagar pessoas', 'gestao'],
     ];
 
     public const PAPEIS_EDITAVEIS = ['funcionario', 'estagiario'];

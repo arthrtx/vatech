@@ -7,7 +7,7 @@ use Carbon\CarbonImmutable;
 
 /**
  * Calendario de dias uteis (segunda a sexta, sem feriados nacionais) usado na contagem dos limites.
- * Nao conta feriados municipais nem pontes (a localidade so existe no navegador).
+ * Nao conta feriados municipais (a localidade so existe no navegador); as pontes descontam em LimitesPedidoService (D21).
  */
 class LimiteFerias
 {

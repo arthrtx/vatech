@@ -81,6 +81,8 @@ export interface User {
   /** Só estagiários: datas do estágio (Y-m-d). */
   estagio_inicio?: string | null;
   estagio_fim?: string | null;
+  /** Só estagiários. */
+  instituicao_ensino?: string | null;
 }
 
 /** Horário de um dia de trabalho (HH:MM, hora de Lisboa); almoço = início + duração em minutos. */
@@ -153,18 +155,49 @@ export interface InfoRh {
   criado_em: string;
 }
 
+export type CategoriaFicheiroRh = "declaracao" | "documentos_estagio" | "contrato" | "recibo" | "outro" | "personalizado";
+
 export interface FicheiroRh {
   id: number;
   nome: string;
   tamanho: number;
   mime: string;
   criado_em: string;
+  categoria?: CategoriaFicheiroRh;
+  categoria_nome?: string | null;
 }
 
 export interface FichaRhDetalhe {
   user: User;
   infos: InfoRh[];
   ficheiros: FicheiroRh[];
+}
+
+/** Resumo completo de uma pessoa para exportar (GET /rh/fichas/{id}/resumo). */
+export interface ResumoRh {
+  gerado_em: string;
+  pessoa: Pick<User, "id" | "nome" | "email" | "papel" | "estado_conta" | "permissoes" | "tipo" | "avatar_url" | "data_nascimento" | "estagio_inicio" | "estagio_fim" | "instituicao_ensino">;
+  ferias: { ano: number; dias_ano: number; transitados: number; usados: number; restantes: number; pontes?: number };
+  pedidos: {
+    id: number;
+    tipo: TipoPedido;
+    tipo_rotulo: string;
+    subtipo: string | null;
+    estado: "pendente" | "aprovado" | "recusado" | "cancelado";
+    data_inicio: string;
+    data_fim: string;
+    hora_inicio: string | null;
+    hora_fim: string | null;
+    dias_uteis: number | null;
+    motivo: string | null;
+    motivo_recusa: string | null;
+    decidido_por: string | null;
+    decidido_em: string | null;
+    criado_em: string;
+  }[];
+  presencas: { ano: number; dias_com_registo: number; horas_total: number };
+  infos: InfoRh[];
+  ficheiros: { nome: string; categoria: CategoriaFicheiroRh; categoria_nome: string | null; tamanho: number; criado_em: string }[];
 }
 
 export type TipoCompromisso = "reuniao" | "chamada" | "lembrete" | "outro";
@@ -227,6 +260,13 @@ export interface PessoaPedido {
   tipo_nome: string | null;
 }
 
+/** Período de estágio de um estagiário (sem a instituição de ensino). */
+export interface Estagio {
+  user: { id: number; nome: string };
+  inicio: string | null;
+  fim: string | null;
+}
+
 /** Aniversário de alguém da empresa num dia do intervalo pedido (a API não revela o ano de nascimento). */
 export interface Aniversario {
   user: { id: number; nome: string };
@@ -278,6 +318,8 @@ export interface Limite {
   /** Férias não gozadas do ano anterior (só > 0 em «ferias»); somam ao limite do ano. */
   transitados: number;
   usados: number;
+  /** Dias úteis de pontes da empresa já incluídos em «usados» (só férias); em falta = 0. */
+  pontes?: number;
 }
 
 /** Admin: cúmulo de férias por pessoa; por_marcar = dias_ano + transitados - usados (>= 0). */
@@ -288,6 +330,8 @@ export interface FeriasResumo {
   dias_max: number | null;
   transitados: number;
   usados: number;
+  /** Dias úteis de pontes da empresa já incluídos em «usados» (só férias); em falta = 0. */
+  pontes?: number;
   por_marcar: number;
 }
 
@@ -326,6 +370,31 @@ export function getToken(): string | null {
 
 export function setUnauthorizedHandler(fn: (() => void) | null) {
   onUnauthorized = fn;
+}
+
+export type TipoRegisto =
+  | "convite"
+  | "pedido"
+  | "conta"
+  | "rh"
+  | "estagio"
+  | "ponte"
+  | "presenca"
+  | "definicoes"
+  | "sessao";
+
+export interface RegistoAtividade {
+  id: number;
+  tipo: TipoRegisto;
+  descricao: string;
+  actor: { id: number; nome: string } | null;
+  alvo: { id: number; nome: string } | null;
+  criado_em: string;
+}
+
+export interface PaginaHistorico {
+  data: RegistoAtividade[];
+  meta: { pagina_atual: number; ultima_pagina: number; total: number };
 }
 
 export function mensagemDeErro(err: unknown): string {
@@ -470,6 +539,15 @@ export const api = {
     const r = await request<{ data: FeriasResumo[]; prazo_ferias: string }>("GET", "/ferias-resumo");
     return { resumo: r.data, prazo_ferias: r.prazo_ferias };
   },
+  historico: (f: { tipo?: TipoRegisto; q?: string; pagina?: number } = {}) => {
+    const p = new URLSearchParams();
+    if (f.tipo) p.set("tipo", f.tipo);
+    if (f.q) p.set("q", f.q);
+    if (f.pagina && f.pagina > 1) p.set("pagina", String(f.pagina));
+    const qs = p.toString();
+    return request<PaginaHistorico>("GET", `/historico${qs ? `?${qs}` : ""}`);
+  },
+  apagarHistorico: async () => (await request<{ data: { apagados: number } }>("DELETE", "/historico")).data,
   getPermissoes: async () => (await request<{ data: Permissoes }>("GET", "/definicoes/permissoes")).data,
   putPermissoes: async (papeis: MatrizPermissoes) =>
     (await request<{ data: Permissoes }>("PUT", "/definicoes/permissoes", { papeis })).data,
@@ -481,10 +559,15 @@ export const api = {
   apagarTipo: (id: number) => request<void>("DELETE", `/definicoes/tipos/${id}`),
   definirTipoPessoa: async (id: number, tipo_id: number | null, papel?: PapelComPermissoes) =>
     (await request<{ data: User }>("PUT", `/funcionarios/${id}/tipo`, papel ? { tipo_id, papel } : { tipo_id })).data,
+  definirEstagio: async (id: number, b: { estagio_inicio: string | null; estagio_fim: string | null; instituicao_ensino: string | null }) =>
+    (await request<{ data: User }>("PUT", `/funcionarios/${id}/estagio`, b)).data,
+  estagios: async (de: string, ate: string) =>
+    (await request<{ data: Estagio[] }>("GET", `/estagios?de=${de}&ate=${ate}`)).data,
   textoConvite: async () => (await request<{ data: TextoConvite }>("GET", "/definicoes/convite")).data,
   guardarTextoConvite: async (texto: string | null) =>
     (await request<{ data: TextoConvite }>("PUT", "/definicoes/convite", { texto })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
+  apagarFuncionario: (id: number) => request<void>("DELETE", `/funcionarios/${id}`),
   cancelarPedido: (id: number) => request<{ data: Pedido }>("POST", `/pedidos/${id}/cancelar`),
   melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
   enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {
@@ -504,14 +587,17 @@ export const api = {
   },
   fichasRh: async () => (await request<{ data: FichaRh[] }>("GET", "/rh/fichas")).data,
   fichaRh: async (userId: number) => (await request<{ data: FichaRhDetalhe }>("GET", `/rh/fichas/${userId}`)).data,
+  resumoRh: async (userId: number) => (await request<{ data: ResumoRh }>("GET", `/rh/fichas/${userId}/resumo`)).data,
   criarInfoRh: async (userId: number, b: { titulo: string; valor: string }) =>
     (await request<{ data: InfoRh }>("POST", `/rh/fichas/${userId}/infos`, b)).data,
   editarInfoRh: async (id: number, b: { titulo: string; valor: string }) =>
     (await request<{ data: InfoRh }>("PUT", `/rh/infos/${id}`, b)).data,
   apagarInfoRh: (id: number) => request<void>("DELETE", `/rh/infos/${id}`),
-  enviarFicheiroRh: async (userId: number, ficheiro: File) => {
+  enviarFicheiroRh: async (userId: number, ficheiro: File, categoria: CategoriaFicheiroRh = "outro", categoriaNome?: string) => {
     const f = new FormData();
     f.append("ficheiro", ficheiro);
+    f.append("categoria", categoria);
+    if (categoria === "personalizado" && categoriaNome) f.append("categoria_nome", categoriaNome);
     return (await request<{ data: FicheiroRh }>("POST", `/rh/fichas/${userId}/ficheiros`, f)).data;
   },
   apagarFicheiroRh: (id: number) => request<void>("DELETE", `/rh/ficheiros/${id}`),

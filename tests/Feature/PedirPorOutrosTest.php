@@ -28,7 +28,7 @@ function corpoPedido(array $extra = []): array
 }
 
 it('a permissao pedir_por_outros esta no catalogo, no grupo gestao, fora das predefinicoes', function () {
-    expect(Empresa::chavesPermissoes())->toContain('pedir_por_outros')->toHaveCount(14);
+    expect(Empresa::chavesPermissoes())->toContain('pedir_por_outros')->toHaveCount(16);
     $linha = collect(Empresa::PERMISSOES_CATALOGO)->firstWhere(0, 'pedir_por_outros');
     expect($linha[1])->toBe('Fazer pedidos em nome de outras pessoas')->and($linha[2])->toBe('gestao');
     foreach (['funcionario', 'estagiario'] as $papel) {
@@ -215,13 +215,13 @@ it('o autor edita e cancela enquanto pendente; so quem tem a permissao; aprovado
     $this->deleteJson("/api/pedidos/{$aprovado->id}")->assertStatus(409);
 });
 
-it('o admin nao apaga pedidos aprovados que criou por outros (so os seus)', function () {
+it('o admin apaga tambem pedidos aprovados que criou por outros', function () {
     $admin = User::factory()->admin()->create();
     $alvo = User::factory()->create(['empresa_id' => $admin->empresa_id]);
     $p = Pedido::factory()->create(['empresa_id' => $admin->empresa_id, 'user_id' => $alvo->id, 'criado_por' => $admin->id, 'estado' => 'aprovado']);
     Sanctum::actingAs($admin);
 
-    $this->deleteJson("/api/pedidos/{$p->id}")->assertStatus(409);
+    $this->deleteJson("/api/pedidos/{$p->id}")->assertNoContent();
 });
 
 it('criado_por so vem preenchido quando o autor e outra pessoa; a lista traz-o', function () {

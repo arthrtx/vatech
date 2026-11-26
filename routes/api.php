@@ -7,14 +7,17 @@ use App\Http\Controllers\CompromissoController;
 use App\Http\Controllers\ConviteController;
 use App\Http\Controllers\DefinicoesConviteController;
 use App\Http\Controllers\DefinicoesPermissoesController;
+use App\Http\Controllers\EstagioController;
 use App\Http\Controllers\FichaRhController;
 use App\Http\Controllers\FuncionarioController;
+use App\Http\Controllers\HistoricoController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\LimiteController;
 use App\Http\Controllers\OcorrenciaController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PonteController;
 use App\Http\Controllers\PresencaController;
+use App\Http\Controllers\RhResumoController;
 use App\Http\Controllers\TextoController;
 use App\Http\Controllers\TipoController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/limites', [LimiteController::class, 'index']);
     Route::get('/agenda', [AgendaController::class, 'index']);
     Route::get('/aniversarios', [AgendaController::class, 'aniversarios']);
+    Route::get('/estagios', [EstagioController::class, 'index']);
     Route::get('/pontes', [PonteController::class, 'index']);
     Route::get('/horario', [HorarioController::class, 'show']);
     Route::get('/compromissos', [CompromissoController::class, 'index']);
@@ -61,6 +65,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/definicoes/tipos/{id}', [TipoController::class, 'update']);
         Route::delete('/definicoes/tipos/{id}', [TipoController::class, 'destroy']);
         Route::put('/funcionarios/{id}/tipo', [TipoController::class, 'definirDaPessoa']);
+        Route::put('/funcionarios/{id}/estagio', [EstagioController::class, 'update'])->whereNumber('id');
+        Route::get('/historico', [HistoricoController::class, 'index']);
+        Route::delete('/historico', [HistoricoController::class, 'destroy']);
         Route::get('/definicoes/permissoes', [DefinicoesPermissoesController::class, 'show']);
         Route::put('/definicoes/permissoes', [DefinicoesPermissoesController::class, 'update']);
     });
@@ -78,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/pedidos/{id}/visto', [PedidoController::class, 'visto']);
             Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
         });
+        Route::delete('/funcionarios/{id}', [FuncionarioController::class, 'destroy'])->whereNumber('id')->middleware('permissao:apagar_pessoas');
         Route::middleware('permissao:gerir_pontes')->group(function () {
             Route::post('/pontes', [PonteController::class, 'store']);
             Route::delete('/pontes/{id}', [PonteController::class, 'destroy']);
@@ -88,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('permissao:gerir_rh')->group(function () {
         Route::get('/rh/fichas', [FichaRhController::class, 'index']);
         Route::get('/rh/fichas/{userId}', [FichaRhController::class, 'show']);
+        Route::get('/rh/fichas/{userId}/resumo', RhResumoController::class)->whereNumber('userId');
         Route::post('/rh/fichas/{userId}/infos', [FichaRhController::class, 'storeInfo']);
         Route::put('/rh/infos/{id}', [FichaRhController::class, 'updateInfo']);
         Route::delete('/rh/infos/{id}', [FichaRhController::class, 'destroyInfo']);
