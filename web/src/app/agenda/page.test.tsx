@@ -18,13 +18,13 @@ afterEach(() => {
 });
 
 describe("pagina da agenda", () => {
-  it("pede o grid do mes visivel e volta a pedir ao mudar de mes", async () => {
+  it("pede o grid do mes visivel e volta a pedir ao mudar de mes (pelas setas da semana)", async () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-12-10T12:00:00") });
     agenda.mockResolvedValue([]);
     render(<AgendaPage />);
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2026-11-30", "2027-01-03"));
     expect(agenda).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByLabelText("Mês seguinte"));
+    for (let i = 0; i < 4; i++) fireEvent.click(screen.getByLabelText("Semana seguinte"));
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2026-12-28", "2027-01-31"));
   });
 

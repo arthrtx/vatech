@@ -11,11 +11,8 @@ import {
   hojeIso,
   horasDoPedido,
   inicioSemana,
-  isoDe,
-  mesAnterior,
   mesDe,
   mesesPt,
-  mesSeguinte,
   nomeDoDia,
   presencasDoDia,
   quemE,
@@ -169,13 +166,6 @@ export default function Agenda({
   const aoTecla = (e: KeyboardEvent) => {
     if (e.key === "Escape") fechar();
   };
-  const mudarMes = (m: Mes) => {
-    setMes(m);
-    const mh = mesDe(hoje);
-    const iso = mh.ano === m.ano && mh.mes === m.mes ? hoje : isoDe(m.ano, m.mes, 1);
-    setFoco(iso);
-    if (sel) setSel({ iso });
-  };
 
   const pessoas = useMemo(() => {
     const m = new Map<number, string>();
@@ -259,14 +249,6 @@ export default function Agenda({
           <h2 className="text-lg font-semibold" aria-live="polite">
             {mesesPt[mes.mes - 1]} {mes.ano}
           </h2>
-          <div className="flex items-center gap-2">
-            <button type="button" className={botaoSeta} aria-label="Mês anterior" title="Mês anterior" onClick={() => mudarMes(mesAnterior(mes))}>
-              <IconeSeta direcao="esquerda" className="h-4 w-4" />
-            </button>
-            <button type="button" className={botaoSeta} aria-label="Mês seguinte" title="Mês seguinte" onClick={() => mudarMes(mesSeguinte(mes))}>
-              <IconeSeta direcao="direita" className="h-4 w-4" />
-            </button>
-          </div>
         </div>
 
         {!aCarregar && !comErro && admin && (totalMes > 0 || ativos > 0) && (

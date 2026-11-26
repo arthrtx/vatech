@@ -46,11 +46,6 @@ describe("Agenda", () => {
     expect(screen.getByText("Dezembro 2026")).toBeTruthy();
     expect(screen.getByText("Sobreposição: mais de uma pessoa fora neste dia.")).toBeTruthy();
     expect(screen.queryByText(/Ana · Licença/)).toBeNull();
-    fireEvent.click(screen.getByLabelText("Mês anterior"));
-    expect(screen.getByText("Novembro 2026")).toBeTruthy();
-    fireEvent.click(screen.getByLabelText("Mês anterior"));
-    expect(screen.getByText("Outubro 2026")).toBeTruthy();
-    expect(screen.queryByText(/Sobreposição: mais de uma pessoa/)).toBeNull();
   });
 
   it("setas da semana andam sete dias e acompanham o mês", () => {
@@ -164,7 +159,7 @@ describe("Agenda", () => {
     expect(painel.textContent).toContain("2026-11-20");
     expect(screen.queryByRole("region", { name: /^Pedidos de 2026/ })).toBeNull();
     fireEvent.click(screen.getByText("Fechar"));
-    fireEvent.click(screen.getByLabelText("Mês seguinte"));
+    fireEvent.click(screen.getByLabelText("Semana seguinte"));
     fireEvent.click(screen.getAllByRole("button", { name: /^Rui · Férias/ })[0]);
     const pend = screen.getByRole("region", { name: "Pedido de Rui" });
     expect(pend.textContent).toContain("Pendente");
