@@ -33,6 +33,7 @@ class ConviteController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'papel' => ['sometimes', Rule::in(['funcionario', 'estagiario'])],
             'tipo_id' => ['sometimes', 'nullable', 'integer'],
+            'cargo' => ['sometimes', 'nullable', Rule::in(array_values(array_diff(User::CARGOS, ['CEO'])))],
         ]);
 
         $admin = $request->user();
@@ -54,6 +55,7 @@ class ConviteController extends Controller
                 'email' => $dados['email'],
                 'papel' => $tipo?->base ?? $dados['papel'] ?? 'funcionario',
                 'tipo_id' => $tipo?->id,
+                'cargo' => $dados['cargo'] ?? null,
                 'token' => Str::random(48),
                 'convidado_por' => $admin->id,
                 'expira_em' => now()->addDays(7),
@@ -120,6 +122,7 @@ class ConviteController extends Controller
                 'empresa_id' => $convite->empresa_id,
                 'papel' => $convite->papel,
                 'tipo_id' => $convite->tipo_id,
+                'cargo' => $convite->cargo,
                 'termos_aceites_em' => now(),
                 'email_verified_at' => now(), // o clique no convite prova o email
             ]);

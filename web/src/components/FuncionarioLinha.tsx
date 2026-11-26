@@ -33,6 +33,7 @@ export default function FuncionarioLinha({ user, ferias, onVer, tipos = [], onMu
         <div className="min-w-0">
           <p className="font-semibold">{user.nome}</p>
           <p className="break-all text-sm text-texto-suave">{user.email}</p>
+          {user.cargo && <p className="text-sm text-texto-suave">{user.cargo}</p>}
           <p className="mt-1 inline-flex rounded-full bg-campo px-3 py-0.5 text-xs font-semibold text-texto ring-1 ring-linha-forte">{rotuloPapel(user)}</p>
           {ferias?.dias_ano != null && (
             <p className="text-sm text-texto-suave">

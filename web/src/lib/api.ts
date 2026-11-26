@@ -18,6 +18,7 @@ export interface Convite {
   /** Tipo personalizado (ausente em respostas antigas). */
   tipo_id?: number | null;
   tipo_nome?: string | null;
+  cargo?: string | null;
   /** Link de aceitação (em produção sem SMTP é o admin que o partilha). */
   link: string;
 }
@@ -65,6 +66,7 @@ export interface User {
   email: string;
   papel: Papel;
   empresa_id: number;
+  cargo?: string | null;
   /** Chaves de permissão concedidas (o admin tem todas). Ausente em respostas antigas: tratar como []. */
   permissoes?: string[];
   /** Tipo personalizado, se tiver. Ausente em respostas antigas: tratar como null. */
@@ -412,7 +414,7 @@ export const api = {
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   convites: {
     listar: async () => (await request<{ data: Convite[] }>("GET", "/funcionarios/convites")).data,
-    criar: async (b: { nome: string; email: string; papel?: Convite["papel"]; tipo_id?: number | null }) =>
+    criar: async (b: { nome: string; email: string; papel?: Convite["papel"]; tipo_id?: number | null; cargo?: string }) =>
       (await request<{ data: Convite }>("POST", "/funcionarios/convites", b)).data,
     reenviar: async (id: number) => (await request<{ data: Convite }>("POST", `/funcionarios/convites/${id}/reenviar`)).data,
     revogar: (id: number) => request<void>("DELETE", `/funcionarios/convites/${id}`),

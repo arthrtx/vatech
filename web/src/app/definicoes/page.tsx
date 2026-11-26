@@ -320,6 +320,7 @@ function FotoPerfil({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
             <p className="truncate text-sm text-texto-suave">
               {user.email} · {rotuloPapel(user)}
             </p>
+            {user.cargo && <p className="truncate text-sm text-texto-suave">{user.cargo}</p>}
           </div>
           <div className="flex flex-wrap gap-3">
             <input ref={campo} type="file" accept={TIPOS_FOTO.join(",")} className="sr-only" aria-label="Escolher foto de perfil" onChange={escolher} />

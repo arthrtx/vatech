@@ -143,6 +143,7 @@ export default function FichaRhPainel({ userId, onFechar, onAlterada }: { userId
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-semibold">{tituloJanela}</h2>
             {user && <p className="break-all text-sm text-texto-suave">{user.email}</p>}
+            {user?.cargo && <p className="text-sm text-texto-suave">{user.cargo}</p>}
           </div>
           <button type="button" className={botaoSec} onClick={onFechar}>
             Fechar

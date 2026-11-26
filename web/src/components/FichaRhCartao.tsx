@@ -16,6 +16,7 @@ export default function FichaRhCartao({ ficha, onVista, onAbrir }: { ficha: Fich
         <div className="min-w-0">
           <h3 className="truncate font-semibold">{ficha.nome}</h3>
           <p className="break-all text-sm text-texto-suave">{ficha.email}</p>
+          {ficha.cargo && <p className="text-sm text-texto-suave">{ficha.cargo}</p>}
         </div>
       </div>
       <div className="flex flex-wrap gap-2 text-xs font-semibold">

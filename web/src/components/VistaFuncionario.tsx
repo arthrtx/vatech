@@ -90,6 +90,7 @@ export default function VistaFuncionario({
               {user.nome}
             </h2>
             <p className="break-all text-sm text-texto-suave">{user.email}</p>
+            {user.cargo && <p className="text-sm text-texto-suave">{user.cargo}</p>}
             <p className="mt-1 inline-flex rounded-full bg-primaria-suave px-3 py-0.5 text-xs font-semibold">{rotuloPapel(user)}</p>
           </div>
           <button type="button" ref={fechar} className={botaoSec} onClick={onFechar}>

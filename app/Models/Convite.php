@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['empresa_id', 'nome', 'email', 'papel', 'token', 'convidado_por', 'expira_em', 'usado_em', 'tipo_id'])]
+#[Fillable(['empresa_id', 'nome', 'email', 'papel', 'token', 'convidado_por', 'expira_em', 'usado_em', 'tipo_id', 'cargo'])]
 class Convite extends Model
 {
     protected function casts(): array
@@ -31,7 +31,7 @@ class Convite extends Model
         return rtrim((string) config('app.frontend_url'), '/').'/convite/'.$this->token;
     }
 
-    /** @return array{id:int,nome:string,email:string,papel:string,tipo_id:int|null,tipo_nome:string|null,expira_em:string,link:string} */
+    /** @return array{id:int,nome:string,email:string,papel:string,tipo_id:int|null,tipo_nome:string|null,cargo:string|null,expira_em:string,link:string} */
     public function toContrato(): array
     {
         return [
@@ -41,6 +41,7 @@ class Convite extends Model
             'papel' => $this->papel,
             'tipo_id' => $this->tipo_id,
             'tipo_nome' => $this->tipo?->nome,
+            'cargo' => $this->cargo,
             'expira_em' => $this->expira_em->toIso8601String(),
             'link' => $this->link(),
         ];

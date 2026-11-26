@@ -15,12 +15,15 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim', 'horario_entrada', 'horario_saida', 'horario_almoco_inicio', 'almoco_minutos', 'email_verified_at', 'termos_aceites_em', 'tipo_id'])]
+#[Fillable(['nome', 'email', 'password', 'empresa_id', 'papel', 'avatar_path', 'data_nascimento', 'estagio_inicio', 'estagio_fim', 'horario_entrada', 'horario_saida', 'horario_almoco_inicio', 'almoco_minutos', 'email_verified_at', 'termos_aceites_em', 'tipo_id', 'cargo'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+
+    /** Cargos válidos; "CEO" é reservado ao admin. */
+    public const CARGOS = ['Designer gráfico', 'RH', 'Desenvolvedor', 'Diretora comercial', 'Marketing', 'Programador', 'CEO'];
 
     public function isAdmin(): bool
     {
@@ -115,11 +118,12 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,estado_conta:string,permissoes:list<string>,tipo:array{id:int,nome:string}|null} */
+    /** @return array{id:int,nome:string,email:string,papel:string,empresa_id:int|null,avatar_url:string|null,data_nascimento:string|null,estagio_inicio:string|null,estagio_fim:string|null,estado_conta:string,cargo:string|null,permissoes:list<string>,tipo:array{id:int,nome:string}|null} */
     public function toContrato(): array
     {
         return $this->only(['id', 'nome', 'email', 'papel', 'empresa_id']) + [
             'estado_conta' => $this->estado_conta ?? 'aprovado',
+            'cargo' => $this->cargo ?? ($this->isAdmin() ? 'CEO' : null),
             'permissoes' => $this->permissoes(),
             'tipo' => $this->tipo_id && $this->tipo ? ['id' => $this->tipo->id, 'nome' => $this->tipo->nome] : null,
             'avatar_url' => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,

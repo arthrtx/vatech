@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, mensagemDeErro, type Convite, type TipoPessoa, type User } from "@/lib/api";
+import { CARGOS_CONVITE } from "@/lib/cargos";
 import { formatarData, papeis, rotuloPapel } from "@/lib/rotulos";
 import { botao, botaoPerigo, botaoSec, erro as erroCls, input, label } from "./ui";
 
@@ -12,6 +13,7 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
   const [aberto, setAberto] = useState(false);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [cargo, setCargo] = useState("");
   // «funcionario» | «estagiario» | «t<id>» (tipo personalizado)
   const [papel, setPapel] = useState<string>("funcionario");
   const [tipos, setTipos] = useState<TipoPessoa[]>([]);
@@ -59,12 +61,12 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
     setErro(null);
     setEnviando(true);
     try {
-      const c = await api.convites.criar(
-        papel.startsWith("t") ? { nome, email, tipo_id: Number(papel.slice(1)) } : { nome, email, papel: papel as Convite["papel"] },
-      );
+      const base = papel.startsWith("t") ? { nome, email, tipo_id: Number(papel.slice(1)) } : { nome, email, papel: papel as Convite["papel"] };
+      const c = await api.convites.criar(cargo ? { ...base, cargo } : base);
       setNovo(c);
       setNome("");
       setEmail("");
+      setCargo("");
       setPapel("funcionario");
       await carregar();
     } catch (err) {
@@ -133,6 +135,19 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
                 ))}
               </select>
             </div>
+            <div>
+              <label htmlFor="convite-cargo" className={label}>
+                Cargo
+              </label>
+              <select id="convite-cargo" className={input} value={cargo} onChange={(e) => setCargo(e.target.value)}>
+                <option value="">Escolher cargo</option>
+                {CARGOS_CONVITE.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={enviando} className={botao}>
@@ -159,7 +174,7 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
               <div className="min-w-0">
                 <p className="truncate font-medium text-texto">{c.nome}</p>
                 <p className="truncate text-sm text-texto-suave">
-                  {c.email} · {c.tipo_nome ?? papeis[c.papel]} · expira a {formatarData(c.expira_em)}
+                  {c.email} · {c.tipo_nome ?? papeis[c.papel]}{c.cargo ? ` · ${c.cargo}` : ""} · expira a {formatarData(c.expira_em)}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -184,7 +199,7 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
               <div className="min-w-0">
                 <p className="truncate font-medium text-texto">{u.nome}</p>
                 <p className="truncate text-sm text-texto-suave">
-                  {u.email} · {rotuloPapel(u)}
+                  {u.email} · {rotuloPapel(u)}{u.cargo ? ` · ${u.cargo}` : ""}
                 </p>
               </div>
               <div className="flex gap-2">

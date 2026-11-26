@@ -43,4 +43,18 @@ describe("ConvitesAdmin: tipos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Criar convite" }));
     await waitFor(() => expect(api.convites.criar).toHaveBeenCalledWith({ nome: "Ana", email: "ana@x.pt", papel: "estagiario" }));
   });
+
+  it("envia o cargo escolhido e não oferece CEO", async () => {
+    vi.mocked(api.convites.criar).mockResolvedValue(convite);
+    render(<ConvitesAdmin pendentes={[]} onDecidida={() => {}} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Convidar funcionário" }));
+    expect(screen.queryByRole("option", { name: "CEO" })).toBeNull();
+    fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Ana" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "ana@x.pt" } });
+    fireEvent.change(screen.getByLabelText("Cargo"), { target: { value: "Marketing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Criar convite" }));
+    await waitFor(() =>
+      expect(api.convites.criar).toHaveBeenCalledWith({ nome: "Ana", email: "ana@x.pt", papel: "funcionario", cargo: "Marketing" }),
+    );
+  });
 });
