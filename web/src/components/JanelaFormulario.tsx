@@ -15,10 +15,10 @@ export default function JanelaFormulario({ children, aoFechar, titulo }: { child
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/40 p-3 sm:items-center sm:p-6"
+      className="fixed inset-0 z-40 flex justify-center overflow-y-auto bg-black/40 p-3 pt-8 sm:p-6 sm:pt-10"
       onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}
     >
-      <div ref={caixa} role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} className="w-full max-w-xl focus:outline-none">
+      <div ref={caixa} role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} className="m-auto w-full max-w-xl focus:outline-none">
         {children}
       </div>
     </div>
