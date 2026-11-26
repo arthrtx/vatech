@@ -24,7 +24,7 @@ browser -> site (Vercel) -> API (Render) -> base de dados (TiDB)
 | `DB_HOST` | host do TiDB |
 | `DB_USERNAME` | utilizador do TiDB |
 | `DB_PASSWORD` | palavra-passe do TiDB |
-| `FRONTEND_URL` | endereço do site no Vercel (destino do link de verificação e de recuperação) |
+| `FRONTEND_URL` | endereço do site no Vercel (destino dos links do convite, de verificação e de recuperação; se ficar vazio os links saem com `http://localhost:3000`) |
 | `APP_URL` | endereço do serviço no Render, ex. `https://vatech-api.onrender.com` |
 | `CORS_ALLOWED_ORIGINS` | endereço do site no Vercel, ex. `https://vatech.vercel.app` |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOME` | a primeira conta de admin |
