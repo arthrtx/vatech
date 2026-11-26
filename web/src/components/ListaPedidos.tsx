@@ -60,8 +60,8 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
       )}
       <div className="contents">
         <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 max-w-md flex-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0 max-w-md flex-1 basis-48">
               <CampoBusca id="busca-meus-pedidos" rotulo="Pesquisar pedidos" valor={busca} onChange={setBusca} />
             </div>
             {formulario && (
