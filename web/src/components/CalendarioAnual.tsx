@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
-import type { Aniversario, PedidoAgenda, Ponte } from "@/lib/api";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { api, mensagemDeErro, type Aniversario, type CorFerias, type PedidoAgenda, type Ponte } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { hojeIso, mesesPt, nomeDoDia, quemE, visiveis } from "@/lib/agenda";
 import { marcasDoAno } from "@/lib/calendario";
 import { diasUteis } from "@/lib/diasUteis";
@@ -11,9 +12,10 @@ import { tipos } from "@/lib/rotulos";
 import { filtrar } from "@/lib/busca";
 import CampoBusca from "./CampoBusca";
 import { IconeDescarregar, IconeSeta } from "./Icones";
+import EscolhaCorFerias, { corDaChave, paleta } from "./EscolhaCorFerias";
 import PedidoForm from "./PedidoForm";
 import { useBloquearScroll } from "@/lib/bloquearScroll";
-import { botao, botaoSec } from "./ui";
+import { botao, botaoSec, erro as erroCls } from "./ui";
 
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
 const botaoAno = `${botaoSec} min-h-9 px-3 py-1`;
@@ -27,14 +29,8 @@ const rotulosData: Record<TipoData, string> = {
   ponte: "Ponte",
 };
 
-// Uma cor por pessoa (tokens da plataforma). Férias: cor cheia; ausência e licença: cor suave; pendente: só contorno tracejado.
-const cores = [
-  { cheia: "bg-positivo", suave: "bg-positivo/40", anel: "border-positivo", texto: "text-texto" },
-  { cheia: "bg-violeta", suave: "bg-violeta/40", anel: "border-violeta", texto: "text-texto" },
-  { cheia: "bg-laranja", suave: "bg-laranja/40", anel: "border-laranja", texto: "text-texto" },
-  { cheia: "bg-pessego", suave: "bg-pessego/40", anel: "border-pessego", texto: "text-texto" },
-  { cheia: "bg-primaria", suave: "bg-primaria/30", anel: "border-primaria", texto: "text-white" },
-] as const;
+// Uma cor por pessoa (tokens da plataforma, em EscolhaCorFerias). Um pedido com cor própria usa essa cor.
+const cores = paleta;
 
 const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 const dois = (n: number) => String(n).padStart(2, "0");
@@ -45,6 +41,12 @@ const fimDeSemana = (iso: string) => {
 };
 const letraDoDia = (iso: string) => ["D", "S", "T", "Q", "Q", "S", "S"][new Date(`${iso}T00:00:00Z`).getUTCDay()];
 const inicial = (nome: string | undefined) => (nome ?? "?").trim().charAt(0).toUpperCase();
+
+/** Dia (ISO) da célula da linha própria que está sob o ponteiro, se houver. */
+function diaSob(x: number, y: number): string | null {
+  const el = typeof document.elementFromPoint === "function" ? document.elementFromPoint(x, y) : null;
+  return el?.closest<HTMLElement>("[data-dia-propria]")?.dataset.diaPropria ?? null;
+}
 
 // Ao imprimir, só o mapa do ano aparece (o resto da página fica escondido), em A4 deitado e com as cores.
 const IMPRESSAO = `@media print {
@@ -82,6 +84,20 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
   const [novo, setNovo] = useState(false);
   useBloquearScroll(novo);
   const [enviado, setEnviado] = useState(false);
+  const { user } = useAuth();
+  // Arrasto para marcar férias: só na linha da própria pessoa (e nunca estagiário).
+  const meuId = podeCriar && user && user.papel !== "estagiario" ? user.id : undefined;
+  const [corEscolhida, setCorEscolhida] = useState<CorFerias>("verde");
+  const [arrasto, setArrasto] = useState<{ de: string; ate: string; vazia: boolean } | null>(null);
+  const [caixa, setCaixa] = useState<{ de: string; ate: string } | null>(null);
+  const [aEnviar, setAEnviar] = useState(false);
+  const [erroCaixa, setErroCaixa] = useState<string | null>(null);
+  const [avisosCaixa, setAvisosCaixa] = useState<string[]>([]);
+  const arrastou = useRef(false);
+  const arrastoRef = useRef(arrasto);
+  useEffect(() => {
+    arrastoRef.current = arrasto;
+  }, [arrasto]);
 
   // A pesquisa filtra datas, aniversários e pedidos; vazia, mostra tudo.
   const marcas = useMemo(() => {
@@ -106,8 +122,21 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
       // A conta "Estagiário" não aparece neste calendário (pedido do dono).
       if (id !== undefined && nome.trim().toLowerCase() !== "estagiário") m.set(id, nome);
     });
-    return [...m].sort((a, b) => a[1].localeCompare(b[1], "pt")).map(([id, nome], i) => ({ id, nome, cor: cores[i % cores.length] }));
-  }, [pedidos]);
+    // A própria pessoa tem sempre linha (mesmo sem pedidos), para poder marcar férias arrastando.
+    if (meuId !== undefined && !m.has(meuId) && user) m.set(meuId, user.nome);
+    // Legenda: cor do primeiro pedido (por data) que tenha cor própria; sem nenhum, a cor automática por pessoa.
+    const primeiraCor = new Map<number, (typeof cores)[number]>();
+    [...visiveis(pedidos)]
+      .sort((a, b) => a.data_inicio.localeCompare(b.data_inicio))
+      .forEach((p) => {
+        const id = quemE(p);
+        const c = corDaChave(p.cor);
+        if (id !== undefined && c && !primeiraCor.has(id)) primeiraCor.set(id, c);
+      });
+    return [...m]
+      .sort((a, b) => a[1].localeCompare(b[1], "pt"))
+      .map(([id, nome], i) => ({ id, nome, cor: primeiraCor.get(id) ?? cores[i % cores.length] }));
+  }, [pedidos, meuId, user]);
   const visiveisNaPesquisa = useMemo(() => new Set(filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]).map((p) => quemE(p))), [pedidos, busca]);
   const linhas = pessoas.filter((p) => visiveisNaPesquisa.has(p.id));
 
@@ -146,6 +175,74 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
     document.title = `Calendario-${ano}`; // nome sugerido para o ficheiro
     window.print();
     document.title = titulo;
+  }
+
+  // Arrasto: o pointermove/pointerup vão para a janela, para funcionar com rato e com toque (o toque fica preso à 1.ª célula).
+  const arrastando = arrasto !== null;
+  // Intervalo realçado: o do arrasto em curso ou, depois de largar, o da caixa aberta.
+  const sel = arrasto ?? caixa;
+  const [selDe, selAte] = sel ? (sel.de <= sel.ate ? [sel.de, sel.ate] : [sel.ate, sel.de]) : ["", ""];
+  const naSelecao = (iso: string) => !!sel && iso >= selDe && iso <= selAte;
+  useEffect(() => {
+    if (!arrastando) return;
+    const mover = (e: PointerEvent) => {
+      const iso = diaSob(e.clientX, e.clientY);
+      if (iso) setArrasto((a) => (a && a.ate !== iso ? { ...a, ate: iso } : a));
+    };
+    const largar = () => {
+      const a = arrastoRef.current;
+      setArrasto(null);
+      if (!a) return;
+      const [de, ate] = a.de <= a.ate ? [a.de, a.ate] : [a.ate, a.de];
+      // Clique simples numa célula com pedido continua a abrir o dia (ver onClick); numa célula vazia, abre a caixa com 1 dia.
+      if (de !== ate) arrastou.current = true;
+      if (de !== ate || a.vazia) {
+        setErroCaixa(null);
+        setAvisosCaixa([]);
+        setCaixa({ de, ate });
+      }
+    };
+    const cancelar = () => setArrasto(null);
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", largar);
+    window.addEventListener("pointercancel", cancelar);
+    return () => {
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", largar);
+      window.removeEventListener("pointercancel", cancelar);
+    };
+  }, [arrastando]);
+
+  const fecharCaixa = useCallback(() => {
+    setCaixa(null);
+    setErroCaixa(null);
+    setAvisosCaixa([]);
+  }, []);
+  const caixaAberta = caixa !== null;
+  useEffect(() => {
+    if (!caixaAberta) return;
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && fecharCaixa();
+    window.addEventListener("keydown", tecla);
+    return () => window.removeEventListener("keydown", tecla);
+  }, [caixaAberta, fecharCaixa]);
+
+  async function marcarFerias() {
+    if (!caixa) return;
+    setErroCaixa(null);
+    setAEnviar(true);
+    try {
+      const r = await api.criarPedido({ tipo: "ferias", data_inicio: caixa.de, data_fim: caixa.ate, cor: corEscolhida });
+      aoCriar?.();
+      if ((r.avisos ?? []).length > 0) setAvisosCaixa(r.avisos ?? []);
+      else {
+        fecharCaixa();
+        setEnviado(true);
+      }
+    } catch (err) {
+      setErroCaixa(mensagemDeErro(err));
+    } finally {
+      setAEnviar(false);
+    }
   }
 
   const totalFeriados = listaDatas.filter((d) => d.tipo === "feriado" || d.tipo === "municipal").length;
@@ -194,6 +291,15 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
         </div>
       </div>
 
+      {meuId !== undefined && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 print:hidden">
+          <p id="instrucao-arrasto" className="text-sm text-texto-suave">
+            Arraste sobre os seus dias para marcar férias
+          </p>
+          <EscolhaCorFerias valor={corEscolhida} onChange={setCorEscolhida} />
+        </div>
+      )}
+
       <style>{IMPRESSAO}</style>
       <div id="calendario-imprimir" className="flex flex-col gap-2">
         <h2 className="hidden text-lg font-semibold print:block">Mapa de férias {ano}</h2>
@@ -203,7 +309,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
           aria-busy={aCarregar}
         >
           <div className="overflow-x-auto scroll-fino print:overflow-visible">
-            <table aria-label={`Calendário ${ano}`} className="w-full min-w-[60rem] table-fixed border-collapse text-xs">
+            <table aria-label={`Calendário ${ano}`} className="w-full min-w-[60rem] table-fixed select-none border-collapse text-xs">
               <colgroup>
                 <col className="w-28" />
                 <col className="w-28" />
@@ -298,6 +404,20 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                           if (!iso) return foraDoMes(k);
                           const { m, fundo } = celulaDia(iso);
                           const p = m?.pedidos.find((x) => quemE(x) === pessoa.id);
+                          const propria = pessoa.id === meuId;
+                          const cp = corDaChave(p?.cor) ?? pessoa.cor;
+                          const realce = propria && naSelecao(iso);
+                          const arrastar = propria
+                            ? {
+                                "data-dia-propria": iso,
+                                onPointerDown: (e: React.PointerEvent) => {
+                                  if (e.button !== 0) return;
+                                  arrastou.current = false;
+                                  fecharCaixa();
+                                  setArrasto({ de: iso, ate: iso, vazia: !p });
+                                },
+                              }
+                            : {};
                           const aniv = anivNaLinha.has(`${pessoa.id}|${iso}`);
                           const marcaAniv = aniv ? (
                             <span
@@ -309,7 +429,11 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                           ) : null;
                           if (!p) {
                             return (
-                              <td key={iso} className={`relative h-7 border border-linha-forte/30 ${fundo}`}>
+                              <td
+                                key={iso}
+                                {...arrastar}
+                                className={`relative h-7 border border-linha-forte/30 ${realce ? `${corDaChave(corEscolhida)?.cheia} opacity-80` : fundo} ${propria ? "cursor-crosshair touch-none" : ""}`}
+                              >
                                 {marcaAniv}
                               </td>
                             );
@@ -317,17 +441,21 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                           const pendente = p.estado === "pendente";
                           const rotulo = `${pessoa.nome}: ${tipos[p.tipo].toLowerCase()}${pendente ? " (pendente)" : ""}, ${nomeDoDia(iso)}`;
                           return (
-                            <td key={iso} className={`relative h-7 border border-linha-forte/30 p-0 ${fundo}`}>
+                            <td key={iso} {...arrastar} className={`relative h-7 border border-linha-forte/30 p-0 ${fundo} ${propria ? "touch-none" : ""} ${realce ? "ring-2 ring-inset ring-texto" : ""}`}>
                               {marcaAniv}
                               <button
                                 type="button"
                                 aria-label={rotulo}
                                 title={rotulo}
-                                onClick={() => setAberto(iso)}
+                                onClick={() => {
+                                  // O fim de um arrasto não conta como clique no dia.
+                                  if (arrastou.current) arrastou.current = false;
+                                  else setAberto(iso);
+                                }}
                                 className={`flex h-full min-h-7 w-full items-center justify-center text-[0.625rem] font-semibold ${foco} ${
                                   pendente
-                                    ? `border-2 border-dashed bg-painel/60 ${pessoa.cor.anel} text-texto`
-                                    : `${p.tipo === "ferias" ? pessoa.cor.cheia : pessoa.cor.suave} ${p.tipo === "ferias" ? pessoa.cor.texto : "text-texto"}`
+                                    ? `border-2 border-dashed bg-painel/60 ${cp.anel} text-texto`
+                                    : `${p.tipo === "ferias" ? cp.cheia : cp.suave} ${p.tipo === "ferias" ? cp.texto : "text-texto"}`
                                 }`}
                               >
                                 {inicial(pessoa.nome)}
@@ -506,6 +634,55 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
           </ul>
         )}
       </section>
+
+      {caixa && (
+        <div
+          role="dialog"
+          aria-labelledby="caixa-ferias"
+          className="fixed inset-x-4 bottom-6 z-20 mx-auto flex w-full max-w-sm flex-col gap-3 rounded-cartao bg-painel p-4 shadow-suave ring-1 ring-linha-forte print:hidden"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 id="caixa-ferias" className="text-base font-semibold">
+                Marcar férias
+              </h2>
+              <p className="text-sm tabular-nums text-texto-suave">
+                {dataCurta(caixa.de)} a {dataCurta(caixa.ate)}
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Fechar"
+              title="Fechar"
+              onClick={fecharCaixa}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg leading-none text-texto hover:bg-primaria-suave ${foco}`}
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <EscolhaCorFerias valor={corEscolhida} onChange={setCorEscolhida} />
+          {erroCaixa && (
+            <p role="alert" className={erroCls}>
+              {erroCaixa}
+            </p>
+          )}
+          {avisosCaixa.length > 0 && (
+            <div role="status" className={erroCls}>
+              <p className="font-medium">Pedido criado, com avisos:</p>
+              <ul className="list-disc pl-5">
+                {avisosCaixa.map((a) => (
+                  <li key={a}>{a}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {avisosCaixa.length === 0 && (
+            <button type="button" disabled={aEnviar} onClick={marcarFerias} className={botao} autoFocus>
+              {aEnviar ? "A enviar..." : "Marcar férias"}
+            </button>
+          )}
+        </div>
+      )}
 
       {novo && (
         <div className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto scroll-fino bg-barra/50 p-4 pt-16" onClick={() => setNovo(false)}>

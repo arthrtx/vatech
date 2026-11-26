@@ -4,6 +4,7 @@ import CampoHora from "./CampoHora";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, mensagemDeErro } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
+import { IconeFechar } from "./Icones";
 import FormaCanto from "../app/definicoes/FormaCanto";
 import { botao, botaoSec, erro as erroCls, input, label, vidro } from "./ui";
 
@@ -52,7 +53,15 @@ export default function PresencaAtrasada({ min, onRegistado, onCancelar }: Props
       className={`${vidro} relative isolate grid gap-4 p-5 md:p-6 sm:grid-cols-3`}
     >
       <FormaCanto tom="rosa" />
-      <h2 id="pres_atr_titulo" className="text-xl font-bold tracking-tight sm:col-span-3">
+      <button
+        type="button"
+        onClick={onCancelar}
+        aria-label="Fechar"
+        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-painel text-texto ring-1 ring-linha-forte hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
+      >
+        <IconeFechar className="h-4 w-4" />
+      </button>
+      <h2 id="pres_atr_titulo" className="pr-12 text-xl font-bold tracking-tight sm:col-span-3">
         Registar presença esquecida
       </h2>
       <div>

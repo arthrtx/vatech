@@ -6,7 +6,7 @@ Base: `/api`. Auth: Sanctum, token Bearer. Respostas JSON. Erros de validacao: 4
 ## Modelos
 - `empresas`: id, nome
 - `users`: id, empresa_id, nome, email (unico), email_verified_at (nullable), termos_aceites_em (nullable), password, papel (`admin` | `funcionario` | `estagiario`)
-- `pedidos`: id, empresa_id, user_id, tipo (`ferias` | `ausencia` | `licenca`), subtipo (nullable; ausencia: `medica` | `documentacao` | `falta_justificada`), data_inicio, data_fim (date, `data_fim >= data_inicio`), observacao (nullable), estado (`pendente` | `aprovado` | `recusado`, default `pendente`), decidido_por (nullable), decidido_em (nullable), motivo_recusa (nullable)
+- `pedidos`: id, empresa_id, user_id, tipo (`ferias` | `ausencia` | `licenca`), subtipo (nullable; ausencia: `medica` | `documentacao` | `falta_justificada`), data_inicio, data_fim (date, `data_fim >= data_inicio`), observacao (nullable), estado (`pendente` | `aprovado` | `recusado`, default `pendente`), decidido_por (nullable), decidido_em (nullable), motivo_recusa (nullable), cor (nullable; `verde` | `violeta` | `laranja` | `pessego` | `escuro`)
 - Tudo filtrado pela `empresa_id` do utilizador autenticado (multi-empresa). Nunca devolver dados de outra empresa.
 
 ## Endpoints
@@ -24,11 +24,11 @@ Base: `/api`. Auth: Sanctum, token Bearer. Respostas JSON. Erros de validacao: 4
 | POST `/api/funcionarios/{id}/aprovar` e `/recusar` | admin | - | 200 `{data: user}` com `estado_conta` `aprovado`\|`recusado`; recusar revoga os tokens; 422 se o admin recusa a propria conta |
 | GET/PUT `/api/definicoes/convite` | admin | `{texto: string\|null}` (max 1000; vazio repoe o predefinido) | 200 `{data:{texto,predefinido}}` |
 | GET `/api/pedidos` | autenticado | query `?estado=` opcional | 200 `{data: [pedido]}`; admin ve todos da empresa (com `user: {id, nome}`), funcionario so os seus; pedidos de funcionarios apagados ficam ocultos |
-| GET `/api/agenda` | autenticado | query `?de=AAAA-MM-DD&ate=AAAA-MM-DD` obrigatorios (`ate >= de`) | 200 `{data: [...]}` dos pedidos da empresa pendentes/aprovados que intersectam o intervalo (`data_inicio <= ate` e `data_fim >= de`, limites inclusivos); admin: pedidos completos com `user: {id, nome}`; funcionario: os seus completos + aprovados dos colegas so com `{id, user: {id, nome}, tipo, data_inicio, data_fim, estado}`; exclui recusados, apagados e outras empresas; 422 se parametros invalidos |
+| GET `/api/agenda` | autenticado | query `?de=AAAA-MM-DD&ate=AAAA-MM-DD` obrigatorios (`ate >= de`) | 200 `{data: [...]}` dos pedidos da empresa pendentes/aprovados que intersectam o intervalo (`data_inicio <= ate` e `data_fim >= de`, limites inclusivos); admin: pedidos completos com `user: {id, nome}`; funcionario: os seus completos + aprovados dos colegas so com `{id, user: {id, nome}, tipo, data_inicio, data_fim, estado, cor}`; exclui recusados, apagados e outras empresas; 422 se parametros invalidos |
 | GET `/api/compromissos` | autenticado | query `?de=AAAA-MM-DD&ate=AAAA-MM-DD` obrigatorios | 200 `{data: [{id, data, hora_inicio, hora_fim, titulo, tipo, descricao}]}` so dos compromissos de quem pede (agenda pessoal, privada), por dia e hora |
 | POST `/api/compromissos` | autenticado | `{data, hora_inicio?, hora_fim?, titulo, tipo (reuniao, chamada, lembrete ou outro), descricao?}`; `data` >= hoje (Lisboa); `hora_fim` obrigatoria com `hora_inicio` e depois dela | 201 `{data: compromisso}`; 422 validacao |
 | DELETE `/api/compromissos/{id}` | autenticado | - | 204; 404 se for de outra pessoa |
-| POST `/api/pedidos` | funcionario | `{tipo, subtipo?, data_inicio, data_fim, observacao?}` | 201 `{data: pedido}` (estado pendente) |
+| POST `/api/pedidos` | funcionario | `{tipo, subtipo?, data_inicio, data_fim, observacao?, cor?}` (`cor` opcional: verde, violeta, laranja, pessego ou escuro, senao 422; em falta fica null; visivel aos colegas na agenda) | 201 `{data: pedido}` (estado pendente) |
 | POST `/api/pedidos/{id}/aprovar` | admin | - | 200 `{data: pedido}`; so se pendente, senao 409; 404 se for de outra empresa ou de funcionario apagado |
 | POST `/api/pedidos/{id}/recusar` | admin | `{motivo_recusa}` obrigatorio | 200 `{data: pedido}`; so se pendente, senao 409; 404 se for de outra empresa ou de funcionario apagado |
 

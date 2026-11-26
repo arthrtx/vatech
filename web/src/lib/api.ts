@@ -98,6 +98,9 @@ export interface Compromisso {
   descricao: string | null;
 }
 
+/** Cor escolhida para as férias (valores exactos do servidor). */
+export type CorFerias = "verde" | "violeta" | "laranja" | "pessego" | "escuro";
+
 export interface Ponte {
   id: number;
   nome: string;
@@ -119,6 +122,7 @@ export interface Pedido {
   hora_fim?: string | null;
   observacao: string | null;
   urgente?: boolean;
+  cor?: string | null;
   estado: EstadoPedido;
   decidido_por: number | null;
   decidido_em: string | null;
@@ -149,6 +153,7 @@ export interface PedidoAgenda {
   hora_fim?: string | null;
   observacao?: string | null;
   urgente?: boolean;
+  cor?: string | null;
   decidido_por?: number | null;
   decidido_em?: string | null;
   motivo_recusa?: string | null;
@@ -163,6 +168,8 @@ export interface NovoPedido {
   hora_fim?: string;
   observacao?: string;
   urgente?: boolean;
+  /** Só férias: cor no mapa do ano. */
+  cor?: CorFerias;
 }
 
 /** Limite anual de dias por tipo de pedido; dias_ano null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */
