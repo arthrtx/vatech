@@ -108,6 +108,7 @@ export default function AppShell({
   ];
   if (user.papel === "admin") {
     links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
+    links.push({ href: "/rh", texto: "RH", Icone: IconeFuncionarios });
   }
   links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });
   const definicoes = { href: "/definicoes", texto: "Definições" };
