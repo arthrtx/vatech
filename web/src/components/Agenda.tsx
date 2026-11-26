@@ -483,9 +483,6 @@ export default function Agenda({
                       ]}
                     />
                   )}
-                  <button type="button" className={botaoSec} onClick={fechar}>
-                    Fechar
-                  </button>
                 </div>
               </div>
               {pedidoSel ? (

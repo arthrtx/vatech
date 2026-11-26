@@ -158,7 +158,7 @@ describe("Agenda", () => {
     expect(painel.textContent).toContain("Praia");
     expect(painel.textContent).toContain("2026-11-20");
     expect(screen.queryByRole("region", { name: /^Pedidos de 2026/ })).toBeNull();
-    fireEvent.click(screen.getByText("Fechar"));
+    fireEvent.keyDown(painel, { key: "Escape" });
     fireEvent.click(screen.getByLabelText("Semana seguinte"));
     fireEvent.click(screen.getAllByRole("button", { name: /^Rui · Férias/ })[0]);
     const pend = screen.getByRole("region", { name: "Pedido de Rui" });
