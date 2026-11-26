@@ -2,6 +2,7 @@
 
 import { horasDoPedido } from "@/lib/agenda";
 import EtiquetaEstado from "./EtiquetaEstado";
+import SimulacaoLigacao from "./SimulacaoLigacao";
 import PontoUrgente from "./PontoUrgente";
 import { useState } from "react";
 import type { Pedido } from "@/lib/api";
@@ -102,6 +103,9 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando
                     </p>
                   )}
                 </div>
+              </div>
+              <div>
+                <SimulacaoLigacao pedido={p} />
               </div>
               {p.estado !== "pendente" ? null : recusando === p.id ? (
                 <div className="flex flex-col gap-2">
