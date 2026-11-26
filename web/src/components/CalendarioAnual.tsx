@@ -13,6 +13,7 @@ import { filtrar } from "@/lib/busca";
 import CampoBusca from "./CampoBusca";
 import { IconeDescarregar, IconeSeta } from "./Icones";
 import PedidoForm from "./PedidoForm";
+import { useBloquearScroll } from "@/lib/bloquearScroll";
 import { botao, botaoSec } from "./ui";
 
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
@@ -80,6 +81,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
   const [aberto, setAberto] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [novo, setNovo] = useState(false);
+  useBloquearScroll(novo);
   const [enviado, setEnviado] = useState(false);
 
   // A pesquisa filtra datas, aniversários e pedidos; vazia, mostra tudo.
