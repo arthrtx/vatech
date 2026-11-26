@@ -31,7 +31,10 @@ class PedidoController extends Controller
             $query->where('tipo', 'licenca')->whereNull('visto_em');
         }
 
-        return response()->json(['data' => $query->get()]);
+        $pedidos = $query->get();
+        $this->limites->anexarExcedentes($pedidos);
+
+        return response()->json(['data' => $pedidos]);
     }
 
     public function store(StorePedidoRequest $request): JsonResponse

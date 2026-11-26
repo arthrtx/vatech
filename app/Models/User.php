@@ -37,6 +37,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return (bool) ($this->permissoesEfectivas()[$chave] ?? false);
     }
 
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class);
+    }
+
     public function tipo(): BelongsTo
     {
         return $this->belongsTo(Tipo::class);
@@ -63,7 +68,9 @@ class User extends Authenticatable implements MustVerifyEmail
             return $tipo->permissoesEfectivas();
         }
 
-        return Empresa::find($this->empresa_id)?->permissoesDoPapel((string) $this->papel) ?? [];
+        $empresa = $this->relationLoaded('empresa') ? $this->empresa : Empresa::find($this->empresa_id);
+
+        return $empresa?->permissoesDoPapel((string) $this->papel) ?? [];
     }
 
     /** @return list<string> */

@@ -18,7 +18,7 @@ class FichaRhController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $users = User::with('tipo')
+        $users = User::with(['tipo', 'empresa'])
             ->withCount(['rhFicheiros as n_ficheiros', 'rhInfos as n_infos'])
             ->where('empresa_id', $request->user()->empresa_id)
             ->orderBy('nome')
