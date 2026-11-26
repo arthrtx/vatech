@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { api, type Aniversario, type PedidoAgenda, type Ponte, type TipoPedido } from "@/lib/api";
 import { celulasDoMes, intervaloDoMes, mesAnterior, mesDe, mesSeguinte, mesesPt, nomeDoDia } from "@/lib/agenda";
 import { barrasDaSemana, marcasDoAno } from "@/lib/calendario";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { tipos } from "@/lib/rotulos";
@@ -52,9 +53,11 @@ export default function CalendarioMes({ hoje, className = "" }: { hoje: string; 
   const pont = useFonte(useCallback((): Promise<Ponte[]> => Promise.resolve().then(() => api.pontes(de, ate)).catch(() => []), [de, ate]));
 
   const pedidos: PedidoAgenda[] = useMemo(() => agenda.dados ?? [], [agenda.dados]);
+  const feriadosV = useFeriadosDoAno(mes.ano);
   const marcas = useMemo(
     () => marcasDoAno(mes.ano, [...datasDoAno(mes.ano, localidade), ...datasDasPontes(pont.dados ?? [])], anivs.dados ?? [], pedidos),
-    [mes.ano, localidade, pont.dados, anivs.dados, pedidos],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- feriadosV: re-calcula quando chegam feriados da API
+    [mes.ano, localidade, pont.dados, anivs.dados, pedidos, feriadosV],
   );
   const semanas = useMemo(() => {
     const c = celulasDoMes(mes);

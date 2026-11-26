@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import AvisoLicencas from "./AvisoLicencas";
 import type { Papel } from "@/lib/api";
+import { temPermissao, type Permissao } from "@/lib/permissoes";
 import { primeiroNome } from "@/lib/saudacao";
 import {
   IconeAgendaMenu,
@@ -47,12 +48,15 @@ export default function AppShell({
   children,
   soAdmin = false,
   papeis,
+  permissao,
   ecraInteiro = false,
 }: {
   children: React.ReactNode;
   soAdmin?: boolean;
   /** Papéis com acesso à página; os outros são redirecionados para «/». */
   papeis?: Papel[];
+  /** Com `soAdmin`, também deixa entrar quem tem esta permissão. */
+  permissao?: Permissao;
   /** Em ecrã grande (lg+) a página cabe na janela, sem scroll; o conteúdo gere o próprio espaço. */
   ecraInteiro?: boolean;
 }) {
@@ -63,7 +67,7 @@ export default function AppShell({
   const [aSair, setASair] = useState(false);
   const { escuro, definir: definirTema } = useTema();
   const [agora, setAgora] = useState<Date | null>(null);
-  const semAcesso = !!user && ((soAdmin && user.papel !== "admin") || (!!papeis && !papeis.includes(user.papel)));
+  const semAcesso = !!user && ((soAdmin && user.papel !== "admin" && !(permissao && temPermissao(user, permissao))) || (!!papeis && !papeis.includes(user.papel)));
   const fecharPesquisa = useCallback(() => setPesquisaAberta(false), []);
 
   useEffect(() => {
@@ -107,8 +111,10 @@ export default function AppShell({
     { href: "/agenda", texto: "Agenda", Icone: IconeAgendaMenu },
     { href: "/calendario", texto: "Calendário", Icone: IconeCalendario },
   ];
-  if (user.papel === "admin") {
+  if (temPermissao(user, "convidar_pessoas")) {
     links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
+  }
+  if (temPermissao(user, "gerir_rh")) {
     links.push({ href: "/rh", texto: "RH", Icone: IconeFuncionarios });
   }
   links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });
@@ -131,12 +137,12 @@ export default function AppShell({
         className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip bg-creme p-3 max-[360px]:p-2 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:border-2 md:border-texto md:p-3 ${ecraInteiro ? "lg:[@media(min-height:820px)]:h-full lg:[@media(min-height:820px)]:min-h-0" : ""}`}
       >
         <aside className="relative z-30 flex max-md:flex-wrap items-center gap-3 max-[360px]:gap-1 max-[360px]:px-1.5 rounded-barra bg-barra px-3 py-2 text-white md:sticky md:top-9 md:h-[calc(100vh-5.5rem)] md:w-56 md:shrink-0 md:self-start md:flex-col md:items-stretch md:gap-4 md:overflow-y-auto md:px-3 md:pb-8 md:pt-5">
-          <p className="flex shrink-0 items-center gap-3 md:ml-1">
-            <span className="flex h-10 w-10 shrink-0 max-[360px]:h-8 max-[360px]:w-8 items-center justify-center rounded-controlo overflow-hidden bg-barra">
+          <div className="flex shrink-0 items-center gap-2.5 md:ml-1">
+            <p className="flex h-10 w-10 shrink-0 max-[360px]:h-8 max-[360px]:w-8 items-center justify-center rounded-controlo overflow-hidden bg-barra">
               <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
-            </span>
-            <span className="text-xl font-bold tracking-tight max-md:sr-only">Vatech</span>
-          </p>
+            </p>
+            <span className="text-lg font-bold tracking-tight max-[360px]:hidden">FuryNick</span>
+          </div>
           <nav aria-label="Principal" className="flex shrink-0 items-center gap-1 max-[360px]:gap-0.5 md:flex-col md:items-stretch md:gap-1">
             <p className={rotuloSecao}>Geral</p>
             {links.map(({ href, texto, Icone }) => (

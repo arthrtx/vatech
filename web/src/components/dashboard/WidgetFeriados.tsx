@@ -2,6 +2,7 @@
 
 import { mesesPt } from "@/lib/agenda";
 import { datasDoAno } from "@/lib/feriados";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import { maisDias } from "@/lib/dashboard";
 import { useLocalidade } from "@/lib/localidade";
 import Forma from "./Forma";
@@ -18,10 +19,11 @@ const quandoFalta = (n: number) => (n === 0 ? "É hoje" : n === 1 ? "É amanhã"
 
 const pilula = "rounded-full bg-painel px-3 py-1 text-sm font-semibold text-texto";
 
-/** Próximos feriados nacionais (calculados localmente, não precisam da API), como linha do tempo no painel lateral. */
+/** Próximos feriados nacionais (da API de feriados; sem resposta, calculados localmente), como linha do tempo no painel lateral. */
 export default function WidgetFeriados({ hoje, quantos = 3, className = "" }: { hoje: string; quantos?: number; className?: string }) {
   const [localidade] = useLocalidade();
   const ano = Number(hoje.slice(0, 4));
+  useFeriadosDoAno(ano, ano + 1);
   const limite = maisDias(hoje, 366);
   const proximos = [...datasDoAno(ano, localidade), ...datasDoAno(ano + 1, localidade)]
     .filter((d) => d.tipo !== "comemorativa" && d.iso >= hoje && d.iso <= limite)

@@ -1,20 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api, mensagemDeErro, type Presenca, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
-import { dataPt, horaDe } from "@/lib/presencas";
+import { dataPt, duracaoTexto, horaDe, textoPeriodo, totalMinutos } from "@/lib/presencas";
+import { podePedir, temPermissao } from "@/lib/permissoes";
 import { IconeAgenda, IconePedidos } from "../Icones";
 import { acao, acaoDestaque, botaoSec, erro as erroCls } from "../ui";
 import Cabecalho from "./Cabecalho";
 import ConfirmarPresenca from "./ConfirmarPresenca";
 import Forma from "./Forma";
 
-type Estado = { fase: "a-carregar" } | { fase: "erro"; msg: string } | { fase: "ok"; presenca: Presenca | null };
+type Estado = { fase: "a-carregar" } | { fase: "erro"; msg: string } | { fase: "ok"; presenca: Presenca | null; periodos: Presenca[] };
 
 const botaoPresenca =
   "inline-flex min-h-12 items-center justify-center rounded-full bg-primaria px-8 text-base font-semibold text-white hover:bg-primaria-forte focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2 disabled:opacity-50";
+
+/** Insere ou substitui um período (por id), por ordem de entrada. */
+function juntar(lista: Presenca[], p: Presenca): Presenca[] {
+  return [...lista.filter((x) => x.id !== p.id), p].sort((a, b) => Date.parse(a.entrada) - Date.parse(b.entrada));
+}
 
 export function CartaoPresenca() {
   const [estado, setEstado] = useState<Estado>({ fase: "a-carregar" });
@@ -22,11 +28,37 @@ export function CartaoPresenca() {
   const [pergunta, setPergunta] = useState<"entrada" | "saida" | null>(null);
   const [erroMarcar, setErroMarcar] = useState<string | null>(null);
   const [volta, setVolta] = useState(0);
+  const botaoRef = useRef<HTMLButtonElement>(null);
+  const devolverFoco = useRef(false);
+
+  // O botão só aceita foco depois de deixar de estar disabled: espera pelo fim do diálogo e do pedido.
+  useEffect(() => {
+    if (aMarcar || pergunta || !devolverFoco.current) return;
+    devolverFoco.current = false;
+    botaoRef.current?.focus();
+  }, [aMarcar, pergunta]);
+
+  const fecharPergunta = useCallback(() => {
+    devolverFoco.current = true;
+    setPergunta(null);
+  }, []);
 
   useEffect(() => {
     let vivo = true;
     api.presencaHoje().then(
-      (presenca) => vivo && setEstado({ fase: "ok", presenca }),
+      async (presenca) => {
+        // A lista de períodos é um extra: se falhar, mostra-se pelo menos o último.
+        let periodos = presenca ? [presenca] : [];
+        if (presenca) {
+          try {
+            const dia = hojeIso();
+            const todos = await api.presencas(dia, dia);
+            const meus = todos.filter((x) => x.user_id === presenca.user_id && x.data === presenca.data);
+            periodos = juntar(meus, presenca);
+          } catch {}
+        }
+        if (vivo) setEstado({ fase: "ok", presenca, periodos });
+      },
       (e) => vivo && setEstado({ fase: "erro", msg: mensagemDeErro(e) }),
     );
     return () => {
@@ -40,12 +72,13 @@ export function CartaoPresenca() {
   }, []);
 
   async function marcar(saida: boolean) {
-    setPergunta(null);
+    if (aMarcar) return;
+    fecharPergunta();
     setErroMarcar(null);
     setAMarcar(true);
     try {
       const presenca = await (saida ? api.marcarSaida() : api.marcarEntrada());
-      setEstado({ fase: "ok", presenca });
+      setEstado((a) => ({ fase: "ok", presenca, periodos: juntar(a.fase === "ok" ? a.periodos : [], presenca) }));
     } catch (e) {
       setErroMarcar(mensagemDeErro(e));
     } finally {
@@ -69,35 +102,44 @@ export function CartaoPresenca() {
         </button>
       </div>
     );
-  } else if (!estado.presenca) {
-    corpo = (
-      <>
-        <p>Ainda não marcaste a entrada de hoje.</p>
-        <div>
-          <button type="button" disabled={aMarcar} className={botaoPresenca} onClick={() => setPergunta("entrada")}>
-            {aMarcar ? "A marcar..." : "Marcar entrada"}
-          </button>
-        </div>
-      </>
-    );
-  } else if (!estado.presenca.saida) {
+  } else {
+    const { presenca, periodos } = estado;
+    const dentro = !!presenca && !presenca.saida;
     corpo = (
       <>
         <p>
-          Em curso. Entraste às <strong>{horaDe(estado.presenca.entrada)}</strong>.
+          {presenca && dentro ? (
+            <>
+              Em trabalho desde <strong>{horaDe(presenca.entrada)}</strong>.
+            </>
+          ) : presenca ? (
+            "Fora."
+          ) : (
+            "Ainda não marcaste a entrada de hoje."
+          )}
         </p>
+        {periodos.length > 0 && (
+          <div>
+            <ul className="flex flex-col gap-1 text-sm tabular-nums">
+              {periodos.map((p) => (
+                <li key={p.id}>{textoPeriodo(p)}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-sm font-semibold">Total de hoje: {duracaoTexto(totalMinutos(periodos))}</p>
+          </div>
+        )}
         <div>
-          <button type="button" disabled={aMarcar} className={botaoPresenca} onClick={() => setPergunta("saida")}>
-            {aMarcar ? "A marcar..." : "Marcar saída"}
+          <button
+            ref={botaoRef}
+            type="button"
+            disabled={aMarcar}
+            className={botaoPresenca}
+            onClick={() => setPergunta(dentro ? "saida" : "entrada")}
+          >
+            {aMarcar ? "A marcar..." : dentro ? "Marcar saída" : "Marcar entrada"}
           </button>
         </div>
       </>
-    );
-  } else {
-    corpo = (
-      <p>
-        Concluído. Entrada às <strong>{horaDe(estado.presenca.entrada)}</strong>, saída às <strong>{horaDe(estado.presenca.saida)}</strong>.
-      </p>
     );
   }
 
@@ -116,7 +158,7 @@ export function CartaoPresenca() {
         <ConfirmarPresenca
           saida={pergunta === "saida"}
           onConfirmar={() => void marcar(pergunta === "saida")}
-          onCancelar={() => setPergunta(null)}
+          onCancelar={fecharPergunta}
         />
       )}
       {erroMarcar && (
@@ -153,14 +195,16 @@ export default function DashboardEstagiario({ user }: { user: User }) {
               <IconeAgenda className="h-4 w-4" />
               Agenda
             </Link>
-            <Link href="/" className={acaoDestaque}>
-              <IconePedidos className="h-4 w-4" />
-              Novo pedido
-            </Link>
+            {podePedir(user) && (
+              <Link href="/" className={acaoDestaque}>
+                <IconePedidos className="h-4 w-4" />
+                Novo pedido
+              </Link>
+            )}
           </>
         }
       />
-      <CartaoPresenca />
+      {temPermissao(user, "marcar_presenca") && <CartaoPresenca />}
       {!inicio && !fim && (
         <p className="text-sm text-texto-suave">
           Define as datas do teu estágio nas{" "}

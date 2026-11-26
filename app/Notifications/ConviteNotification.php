@@ -19,13 +19,13 @@ class ConviteNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Convite — vatech')
+            ->subject('Convite — FuryNick')
             ->greeting('Olá, '.$this->convite->nome.'!')
-            ->line('Foi convidado(a) para aceder ao vatech. Defina a sua palavra-passe e aceite os termos para criar a conta.')
+            ->line('Foi convidado(a) para aceder ao FuryNick. Defina a sua palavra-passe e aceite os termos para criar a conta.')
             ->action('Aceitar convite', $this->convite->link())
             ->line('O convite expira a '.$this->convite->expira_em->format('d/m/Y').'.')
             ->line('Depois de criar a conta, o administrador tem de a autorizar antes de poder entrar.')
             ->line('Se não esperava este convite, ignore este email.')
-            ->salutation('vatech');
+            ->salutation('FuryNick');
     }
 }

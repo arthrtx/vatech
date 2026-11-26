@@ -41,7 +41,7 @@ it('estagiario pede ausencia e licenca mas nao ferias', function () {
     $this->postJson('/api/pedidos', ['tipo' => 'ausencia', ...$base])->assertCreated();
     $this->postJson('/api/pedidos', ['tipo' => 'licenca', ...$base])->assertCreated();
     $this->postJson('/api/pedidos', ['tipo' => 'ferias', ...$base])
-        ->assertStatus(422)->assertJsonValidationErrors(['tipo' => 'Estagiários não podem pedir férias.']);
+        ->assertForbidden()->assertJsonPath('message', 'Sem permissão.');
 });
 
 it('marca entrada e saida com hora do servidor e valida os estados', function () {
@@ -55,9 +55,9 @@ it('marca entrada e saida com hora do servidor e valida os estados', function ()
         ->assertCreated()->assertJsonPath('data.user.id', $e->id)->assertJsonPath('data.data', now()->toDateString())->assertJsonPath('data.atrasada', false);
     expect(Presenca::first()->entrada->isToday())->toBeTrue();
 
-    $this->postJson('/api/presencas/entrada')->assertStatus(422);
+    $this->postJson('/api/presencas/entrada')->assertStatus(422)->assertJsonPath('message', 'Já tem uma entrada aberta. Marque primeiro a saída.');
     $this->postJson('/api/presencas/saida')->assertOk()->assertJsonStructure(['data' => ['id', 'user_id', 'user', 'data', 'entrada', 'saida', 'atrasada']]);
-    $this->postJson('/api/presencas/saida')->assertStatus(422);
+    $this->postJson('/api/presencas/saida')->assertStatus(422)->assertJsonPath('message', 'Marque primeiro a entrada.');
     $this->getJson('/api/presencas/hoje')->assertJsonPath('data.user_id', $e->id);
 });
 
@@ -121,7 +121,7 @@ it('regista presenca atrasada com horas de Lisboa gravadas em UTC', function () 
     $this->getJson('/api/presencas')->assertOk()->assertJsonPath('data.0.atrasada', true);
 });
 
-it('presenca atrasada rejeita futura, anterior ao estagio, duplicada e horas invalidas', function () {
+it('presenca atrasada rejeita futura, anterior ao estagio, sobreposta e horas invalidas', function () {
     $this->travelTo(now()->setDate(2026, 7, 10)->setTime(12, 0)->utc()); // 13:00 em Lisboa
     $e = estagiario(['estagio_inicio' => '2026-07-01']);
     Sanctum::actingAs($e);
@@ -134,8 +134,9 @@ it('presenca atrasada rejeita futura, anterior ao estagio, duplicada e horas inv
     $post(['data' => '2026-07-10', 'entrada' => '09:00', 'saida' => '14:00'])->assertStatus(422)->assertJsonValidationErrors('saida');
 
     $post(['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'])->assertCreated();
-    $post(['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'])
-        ->assertStatus(422)->assertJsonValidationErrors(['data' => 'Já existe presença nesse dia.']);
+    $post(['data' => '2026-07-08', 'entrada' => '09:30', 'saida' => '10:30'])
+        ->assertStatus(422)->assertJsonValidationErrors(['entrada' => 'Esse intervalo sobrepõe-se a outra presença do mesmo dia.']);
+    $post(['data' => '2026-07-08', 'entrada' => '10:00', 'saida' => '11:00'])->assertCreated(); // encosta, não sobrepõe
 });
 
 it('presenca atrasada vale para todos os papeis', function () {
@@ -144,38 +145,6 @@ it('presenca atrasada vale para todos os papeis', function () {
     $this->postJson('/api/presencas/atrasada', $body)->assertCreated();
     Sanctum::actingAs(User::factory()->admin()->create());
     $this->postJson('/api/presencas/atrasada', $body)->assertCreated();
-});
-
-it('estagiario define o horario de almoco e o contrato devolve-o', function () {
-    Sanctum::actingAs(estagiario());
-
-    $this->putJson('/api/me/almoco', ['almoco_inicio' => '12:30', 'almoco_fim' => '13:30'])
-        ->assertOk()
-        ->assertJsonPath('user.almoco_inicio', '12:30')
-        ->assertJsonPath('user.almoco_fim', '13:30');
-
-    $this->putJson('/api/me/almoco', ['almoco_inicio' => '13:30', 'almoco_fim' => '12:30'])
-        ->assertStatus(422)->assertJsonValidationErrors('almoco_fim');
-
-    $this->putJson('/api/me/almoco', ['almoco_inicio' => null, 'almoco_fim' => null])
-        ->assertOk()->assertJsonPath('user.almoco_inicio', null);
-});
-
-it('funcionario tambem define horario de almoco', function () {
-    Sanctum::actingAs(User::factory()->create());
-    $this->putJson('/api/me/almoco', ['almoco_inicio' => '12:30', 'almoco_fim' => '13:30'])->assertOk();
-});
-
-it('desconta o almoco que cai entre a entrada e a saida', function () {
-    // Novembro: Lisboa está em UTC, por isso 12:30 de Lisboa = 12:30 UTC.
-    $e = estagiario(['almoco_inicio' => '12:30', 'almoco_fim' => '13:30']);
-    $todo = Presenca::create(['user_id' => $e->id, 'data' => '2026-11-23', 'entrada' => '2026-11-23 09:00:00', 'saida' => '2026-11-23 18:00:00']);
-    $parte = Presenca::create(['user_id' => $e->id, 'data' => '2026-11-24', 'entrada' => '2026-11-24 09:00:00', 'saida' => '2026-11-24 13:00:00']);
-    $manha = Presenca::create(['user_id' => $e->id, 'data' => '2026-11-25', 'entrada' => '2026-11-25 08:00:00', 'saida' => '2026-11-25 12:00:00']);
-
-    expect($todo->fresh()->toContrato()['almoco_min'])->toBe(60)
-        ->and($parte->fresh()->toContrato()['almoco_min'])->toBe(30)
-        ->and($manha->fresh()->toContrato()['almoco_min'])->toBe(0);
 });
 
 it('estagiario comunica uma falta com motivo e descricao, e o admin ve-a', function () {

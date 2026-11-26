@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, mensagemDeErro, type Convite, type User } from "@/lib/api";
-import { formatarData, papeis } from "@/lib/rotulos";
+import { api, mensagemDeErro, type Convite, type TipoPessoa, type User } from "@/lib/api";
+import { CARGOS_CONVITE } from "@/lib/cargos";
+import { formatarData, papeis, rotuloPapel } from "@/lib/rotulos";
 import { botao, botaoPerigo, botaoSec, erro as erroCls, input, label } from "./ui";
 
 /** Convites (criar, reenviar, revogar) e contas por autorizar. `onDecidida` recarrega a lista de pessoas. */
@@ -12,7 +13,10 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
   const [aberto, setAberto] = useState(false);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [papel, setPapel] = useState<Convite["papel"]>("funcionario");
+  const [cargo, setCargo] = useState("");
+  // «funcionario» | «estagiario» | «t<id>» (tipo personalizado)
+  const [papel, setPapel] = useState<string>("funcionario");
+  const [tipos, setTipos] = useState<TipoPessoa[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [novo, setNovo] = useState<Convite | null>(null);
 
@@ -29,6 +33,19 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
     carregar();
   }, [carregar]);
 
+  useEffect(() => {
+    let ativo = true;
+    api.getTipos().then(
+      (t) => ativo && setTipos(t),
+      () => {
+        // Sem tipos (ou sem acesso: só o admin os lista), ficam os papéis base.
+      },
+    );
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
   async function acao(fn: () => Promise<unknown>, depois?: () => void) {
     setErro(null);
     try {
@@ -44,10 +61,12 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
     setErro(null);
     setEnviando(true);
     try {
-      const c = await api.convites.criar({ nome, email, papel });
+      const base = papel.startsWith("t") ? { nome, email, tipo_id: Number(papel.slice(1)) } : { nome, email, papel: papel as Convite["papel"] };
+      const c = await api.convites.criar(cargo ? { ...base, cargo } : base);
       setNovo(c);
       setNome("");
       setEmail("");
+      setCargo("");
       setPapel("funcionario");
       await carregar();
     } catch (err) {
@@ -105,10 +124,28 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
                 id="convite-papel"
                 className={input}
                 value={papel}
-                onChange={(e) => setPapel(e.target.value as Convite["papel"])}
+                onChange={(e) => setPapel(e.target.value)}
               >
                 <option value="funcionario">{papeis.funcionario}</option>
                 <option value="estagiario">{papeis.estagiario}</option>
+                {tipos.map((t) => (
+                  <option key={t.id} value={`t${t.id}`}>
+                    {t.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="convite-cargo" className={label}>
+                Cargo
+              </label>
+              <select id="convite-cargo" className={input} value={cargo} onChange={(e) => setCargo(e.target.value)}>
+                <option value="">Escolher cargo</option>
+                {CARGOS_CONVITE.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -137,7 +174,7 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
               <div className="min-w-0">
                 <p className="truncate font-medium text-texto">{c.nome}</p>
                 <p className="truncate text-sm text-texto-suave">
-                  {c.email} · {papeis[c.papel]} · expira a {formatarData(c.expira_em)}
+                  {c.email} · {c.tipo_nome ?? papeis[c.papel]}{c.cargo ? ` · ${c.cargo}` : ""} · expira a {formatarData(c.expira_em)}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -162,7 +199,7 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
               <div className="min-w-0">
                 <p className="truncate font-medium text-texto">{u.nome}</p>
                 <p className="truncate text-sm text-texto-suave">
-                  {u.email} · {papeis[u.papel]}
+                  {u.email} · {rotuloPapel(u)}{u.cargo ? ` · ${u.cargo}` : ""}
                 </p>
               </div>
               <div className="flex gap-2">

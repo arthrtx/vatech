@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import FuncionariosPage from "./page";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1 } }) }));
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, papel: "admin" } }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
   return { ...real, api: {
       funcionarios: vi.fn(),
+      getTipos: vi.fn(),
+      definirTipoPessoa: vi.fn(),
       feriasResumo: vi.fn(),
       convites: { listar: vi.fn(), criar: vi.fn(), reenviar: vi.fn(), revogar: vi.fn() },
       aprovarConta: vi.fn(),
@@ -19,6 +21,7 @@ vi.mock("@/lib/api", async (orig) => {
 beforeEach(() => {
   vi.mocked(api.feriasResumo).mockResolvedValue({ resumo: [], prazo_ferias: "2026-04-30" });
   vi.mocked(api.convites.listar).mockResolvedValue([]);
+  vi.mocked(api.getTipos).mockResolvedValue([{ id: 7, nome: "Responsável de RH", base: "funcionario", permissoes: {}, em_uso: 0 }]);
 });
 afterEach(cleanup);
 
@@ -76,7 +79,7 @@ describe("Funcionários: tipo", () => {
     vi.mocked(api.funcionarios).mockResolvedValue([{ ...mk(2, "Ana", "ana@y.pt"), papel: "estagiario" as const }]);
     render(<FuncionariosPage />);
     await screen.findByText("Ana");
-    expect(screen.getByText("Estagiário")).toBeTruthy();
+    expect(screen.getByText("Estagiário", { selector: "p" })).toBeTruthy();
     expect(screen.queryByText("Novo utilizador")).toBeNull();
     expect(screen.queryByRole("button", { name: /Criar|Editar|Apagar/ })).toBeNull();
   });
@@ -87,9 +90,9 @@ describe("Funcionários: férias por pessoa", () => {
     vi.mocked(api.funcionarios).mockResolvedValue([mk(1, "João", "j@x.pt"), mk(2, "Ana", "ana@y.pt"), mk(3, "Rui", "r@z.pt")]);
     vi.mocked(api.feriasResumo).mockResolvedValue({
       resumo: [
-        { user_id: 1, nome: "João", dias_ano: 22, transitados: 8, usados: 8, por_marcar: 22 },
-        { user_id: 2, nome: "Ana", dias_ano: 22, transitados: 0, usados: 5, por_marcar: 17 },
-        { user_id: 3, nome: "Rui", dias_ano: null, transitados: 0, usados: 0, por_marcar: 0 },
+        { user_id: 1, nome: "João", dias_ano: 22, dias_max: 25, transitados: 8, usados: 8, por_marcar: 22 },
+        { user_id: 2, nome: "Ana", dias_ano: 22, dias_max: 25, transitados: 0, usados: 5, por_marcar: 17 },
+        { user_id: 3, nome: "Rui", dias_ano: null, dias_max: null, transitados: 0, usados: 0, por_marcar: 0 },
       ],
       prazo_ferias: "2026-04-30",
     });
@@ -148,5 +151,29 @@ describe("Funcionários: convites e contas por autorizar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Recusar" }));
     await waitFor(() => expect(api.recusarConta).toHaveBeenCalledWith(5));
     expect(screen.getAllByText("Eva")).toHaveLength(1);
+  });
+});
+
+describe("Funcionários: tipo da pessoa", () => {
+  it("mostra o tipo e o select muda-o com tipo_id (null para papéis base)", async () => {
+    vi.mocked(api.funcionarios).mockResolvedValue([{ ...mk(1, "Rui", "rui@x.pt"), tipo_id: null, tipo_nome: null }]);
+    vi.mocked(api.definirTipoPessoa).mockResolvedValue({ ...mk(1, "Rui", "rui@x.pt"), tipo_id: 7, tipo_nome: "Responsável de RH" });
+    render(<FuncionariosPage />);
+    const select = (await screen.findByLabelText("Tipo")) as HTMLSelectElement;
+    await screen.findByRole("option", { name: "Responsável de RH" });
+    fireEvent.change(select, { target: { value: "t7" } });
+    await waitFor(() => expect(api.definirTipoPessoa).toHaveBeenCalledWith(1, 7, undefined));
+    expect(await screen.findByText("Responsável de RH", { selector: "p" })).toBeTruthy();
+    fireEvent.change(select, { target: { value: "estagiario" } });
+    await waitFor(() => expect(api.definirTipoPessoa).toHaveBeenLastCalledWith(1, null, "estagiario"));
+  });
+
+  it("mostra o erro do servidor ao mudar o tipo", async () => {
+    vi.mocked(api.funcionarios).mockResolvedValue([mk(1, "Rui", "rui@x.pt")]);
+    vi.mocked(api.definirTipoPessoa).mockRejectedValue(new ApiError(422, "Tipo inválido."));
+    render(<FuncionariosPage />);
+    await screen.findByRole("option", { name: "Responsável de RH" });
+    fireEvent.change(screen.getByLabelText("Tipo"), { target: { value: "t7" } });
+    expect((await screen.findByRole("alert")).textContent).toContain("Tipo inválido.");
   });
 });

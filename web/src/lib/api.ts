@@ -15,6 +15,10 @@ export interface Convite {
   email: string;
   papel: Exclude<Papel, "admin">;
   expira_em: string;
+  /** Tipo personalizado (ausente em respostas antigas). */
+  tipo_id?: number | null;
+  tipo_nome?: string | null;
+  cargo?: string | null;
   /** Link de aceitação (em produção sem SMTP é o admin que o partilha). */
   link: string;
 }
@@ -31,12 +35,44 @@ export interface TextoConvite {
   predefinido: boolean;
 }
 
+export type GrupoPermissao = "dia_a_dia" | "gestao";
+export type PapelComPermissoes = "funcionario" | "estagiario";
+
+export interface PermissaoCatalogo {
+  chave: string;
+  rotulo: string;
+  grupo: GrupoPermissao;
+}
+
+export type MatrizPermissoes = Record<PapelComPermissoes, Record<string, boolean>>;
+
+export interface Permissoes {
+  catalogo: PermissaoCatalogo[];
+  papeis: MatrizPermissoes;
+}
+
+/** Tipo personalizado de pessoa: herda o papel `base` e tem permissões próprias. */
+export interface TipoPessoa {
+  id: number;
+  nome: string;
+  base: PapelComPermissoes;
+  permissoes: Record<string, boolean>;
+  em_uso: number;
+}
+
 export interface User {
   id: number;
   nome: string;
   email: string;
   papel: Papel;
   empresa_id: number;
+  cargo?: string | null;
+  /** Chaves de permissão concedidas (o admin tem todas). Ausente em respostas antigas: tratar como []. */
+  permissoes?: string[];
+  /** Tipo personalizado, se tiver. Ausente em respostas antigas: tratar como null. */
+  tipo?: { id: number; nome: string } | null;
+  tipo_id?: number | null;
+  tipo_nome?: string | null;
   /** Ausente em respostas antigas: tratar como «aprovado». */
   estado_conta?: EstadoConta;
   avatar_url?: string | null;
@@ -45,9 +81,25 @@ export interface User {
   /** Só estagiários: datas do estágio (Y-m-d). */
   estagio_inicio?: string | null;
   estagio_fim?: string | null;
-  /** Só estagiários: horário de almoço (HH:MM, hora de Lisboa). */
-  almoco_inicio?: string | null;
-  almoco_fim?: string | null;
+}
+
+/** Horário de um dia de trabalho (HH:MM, hora de Lisboa); almoço = início + duração em minutos. */
+export interface Horario {
+  entrada: string;
+  saida: string;
+  almoco_inicio: string;
+  almoco_min: number;
+}
+
+/** Horário de uma pessoa: campos null seguem a empresa; `efectivo` é o que vale. */
+export interface HorarioPessoa {
+  user_id: number;
+  nome: string;
+  entrada: string | null;
+  saida: string | null;
+  almoco_inicio: string | null;
+  almoco_min: number | null;
+  efectivo: Horario;
 }
 
 /** Marcação de presença do dia; entrada/saida em ISO8601, hora do servidor. */
@@ -83,6 +135,34 @@ export interface Anexo {
   nome: string;
   mime: string;
   tamanho: number;
+}
+
+export interface FichaRh extends User {
+  tipo_id?: number | null;
+  tipo_nome?: string | null;
+  n_ficheiros: number;
+  n_infos: number;
+}
+
+export interface InfoRh {
+  id: number;
+  titulo: string;
+  valor: string;
+  criado_em: string;
+}
+
+export interface FicheiroRh {
+  id: number;
+  nome: string;
+  tamanho: number;
+  mime: string;
+  criado_em: string;
+}
+
+export interface FichaRhDetalhe {
+  user: User;
+  infos: InfoRh[];
+  ficheiros: FicheiroRh[];
 }
 
 export type TipoCompromisso = "reuniao" | "chamada" | "lembrete" | "outro";
@@ -129,7 +209,20 @@ export interface Pedido {
   /** Só licenças: quando o admin viu o aviso. */
   visto_em?: string | null;
   motivo_recusa: string | null;
+  /** Só férias: dias úteis acima dos 22 do ano (0 se nenhum). */
+  dias_excedentes?: number;
   user?: { id: number; nome: string };
+  /** Preenchido só quando o pedido foi criado por outra pessoa. */
+  criado_por?: { id: number; nome: string } | null;
+}
+
+/** Pessoa em nome de quem se pode pedir (GET /pedidos/pessoas). */
+export interface PessoaPedido {
+  id: number;
+  nome: string;
+  avatar_url: string | null;
+  papel: Papel;
+  tipo_nome: string | null;
 }
 
 /** Aniversário de alguém da empresa num dia do intervalo pedido (a API não revela o ano de nascimento). */
@@ -168,14 +261,18 @@ export interface NovoPedido {
   hora_fim?: string;
   observacao?: string;
   urgente?: boolean;
+  /** Pedir em nome de outra pessoa (precisa de «pedir_por_outros»). */
+  user_id?: number;
   /** Só férias: cor no mapa do ano. */
   cor?: CorFerias;
 }
 
-/** Limite anual de dias por tipo de pedido; dias_ano null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */
+/** Dias por tipo de pedido (fixos): férias 22 por ano, até dias_max (25); null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */
 export interface Limite {
   tipo: TipoPedido;
   dias_ano: number | null;
+  /** Máximo que se pode pedir (férias: 25); os dias acima de dias_ano são excedente. */
+  dias_max: number | null;
   /** Férias não gozadas do ano anterior (só > 0 em «ferias»); somam ao limite do ano. */
   transitados: number;
   usados: number;
@@ -186,6 +283,7 @@ export interface FeriasResumo {
   user_id: number;
   nome: string;
   dias_ano: number | null;
+  dias_max: number | null;
   transitados: number;
   usados: number;
   por_marcar: number;
@@ -230,6 +328,7 @@ export function setUnauthorizedHandler(fn: (() => void) | null) {
 
 export function mensagemDeErro(err: unknown): string {
   if (err instanceof ApiError) {
+    if (err.status === 403 && /^(Ocorreu um erro\.|This action is unauthorized\.|)$/.test(err.message)) return "Não tem permissão para esta ação. Peça a um administrador.";
     return err.errors ? Object.values(err.errors).flat().join(" ") : err.message;
   }
   return "Não foi possível contactar o servidor.";
@@ -305,12 +404,17 @@ export const api = {
     f.append("avatar", ficheiro);
     return (await request<{ user: User }>("POST", "/me/avatar", f)).user;
   },
-  definirAlmoco: async (b: { almoco_inicio: string | null; almoco_fim: string | null }) =>
-    (await request<{ user: User }>("PUT", "/me/almoco", b)).user,
+  getHorario: async () => (await request<{ data: { empresa: Horario; meu: Horario } }>("GET", "/horario")).data,
+  definirHorarioEmpresa: async (b: Horario) => (await request<{ data: Horario }>("PUT", "/definicoes/horario", b)).data,
+  horarios: async () => (await request<{ data: HorarioPessoa[] }>("GET", "/definicoes/horarios")).data,
+  definirHorarioPessoa: async (
+    id: number,
+    b: { entrada: string | null; saida: string | null; almoco_inicio: string | null; almoco_min: number | null },
+  ) => (await request<{ data: HorarioPessoa }>("PUT", `/definicoes/horarios/${id}`, b)).data,
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   convites: {
     listar: async () => (await request<{ data: Convite[] }>("GET", "/funcionarios/convites")).data,
-    criar: async (b: { nome: string; email: string; papel: Convite["papel"] }) =>
+    criar: async (b: { nome: string; email: string; papel?: Convite["papel"]; tipo_id?: number | null; cargo?: string }) =>
       (await request<{ data: Convite }>("POST", "/funcionarios/convites", b)).data,
     reenviar: async (id: number) => (await request<{ data: Convite }>("POST", `/funcionarios/convites/${id}/reenviar`)).data,
     revogar: (id: number) => request<void>("DELETE", `/funcionarios/convites/${id}`),
@@ -351,6 +455,7 @@ export const api = {
   apagarCompromisso: (id: number) => request<void>("DELETE", `/compromissos/${id}`),
   aniversarios: async (de: string, ate: string) =>
     (await request<{ data: Aniversario[] }>("GET", `/aniversarios?de=${de}&ate=${ate}`)).data,
+  pessoasParaPedido: async () => (await request<{ data: PessoaPedido[] }>("GET", "/pedidos/pessoas")).data,
   criarPedido: (b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
   editarPedido: (id: number, b: NovoPedido) =>
@@ -363,11 +468,20 @@ export const api = {
     const r = await request<{ data: FeriasResumo[]; prazo_ferias: string }>("GET", "/ferias-resumo");
     return { resumo: r.data, prazo_ferias: r.prazo_ferias };
   },
+  getPermissoes: async () => (await request<{ data: Permissoes }>("GET", "/definicoes/permissoes")).data,
+  putPermissoes: async (papeis: MatrizPermissoes) =>
+    (await request<{ data: Permissoes }>("PUT", "/definicoes/permissoes", { papeis })).data,
+  getTipos: async () => (await request<{ data: TipoPessoa[] }>("GET", "/definicoes/tipos")).data,
+  criarTipo: async (b: { nome: string; base: PapelComPermissoes; permissoes?: Record<string, boolean> }) =>
+    (await request<{ data: TipoPessoa }>("POST", "/definicoes/tipos", b)).data,
+  editarTipo: async (id: number, b: { nome?: string; permissoes?: Record<string, boolean> }) =>
+    (await request<{ data: TipoPessoa }>("PUT", `/definicoes/tipos/${id}`, b)).data,
+  apagarTipo: (id: number) => request<void>("DELETE", `/definicoes/tipos/${id}`),
+  definirTipoPessoa: async (id: number, tipo_id: number | null, papel?: PapelComPermissoes) =>
+    (await request<{ data: User }>("PUT", `/funcionarios/${id}/tipo`, papel ? { tipo_id, papel } : { tipo_id })).data,
   textoConvite: async () => (await request<{ data: TextoConvite }>("GET", "/definicoes/convite")).data,
   guardarTextoConvite: async (texto: string | null) =>
     (await request<{ data: TextoConvite }>("PUT", "/definicoes/convite", { texto })).data,
-  guardarLimites: async (limites: { tipo: TipoPedido; dias_ano: number | null }[]) =>
-    (await request<{ data: Limite[] }>("PUT", "/limites", { limites })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
   cancelarPedido: (id: number) => request<{ data: Pedido }>("POST", `/pedidos/${id}/cancelar`),
   melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
@@ -381,6 +495,28 @@ export const api = {
   urlDoAnexo: async (pedidoId: number, anexoId: number) => {
     const token = getToken();
     const res = await fetch(`${API_URL}/pedidos/${pedidoId}/anexos/${anexoId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new ApiError(res.status, "Não foi possível abrir o ficheiro.");
+    return URL.createObjectURL(await res.blob());
+  },
+  fichasRh: async () => (await request<{ data: FichaRh[] }>("GET", "/rh/fichas")).data,
+  fichaRh: async (userId: number) => (await request<{ data: FichaRhDetalhe }>("GET", `/rh/fichas/${userId}`)).data,
+  criarInfoRh: async (userId: number, b: { titulo: string; valor: string }) =>
+    (await request<{ data: InfoRh }>("POST", `/rh/fichas/${userId}/infos`, b)).data,
+  editarInfoRh: async (id: number, b: { titulo: string; valor: string }) =>
+    (await request<{ data: InfoRh }>("PUT", `/rh/infos/${id}`, b)).data,
+  apagarInfoRh: (id: number) => request<void>("DELETE", `/rh/infos/${id}`),
+  enviarFicheiroRh: async (userId: number, ficheiro: File) => {
+    const f = new FormData();
+    f.append("ficheiro", ficheiro);
+    return (await request<{ data: FicheiroRh }>("POST", `/rh/fichas/${userId}/ficheiros`, f)).data;
+  },
+  apagarFicheiroRh: (id: number) => request<void>("DELETE", `/rh/ficheiros/${id}`),
+  /** Descarrega com o token e devolve um URL temporário (libertar com URL.revokeObjectURL). */
+  urlDoFicheiroRh: async (id: number) => {
+    const token = getToken();
+    const res = await fetch(`${API_URL}/rh/ficheiros/${id}/download`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!res.ok) throw new ApiError(res.status, "Não foi possível abrir o ficheiro.");

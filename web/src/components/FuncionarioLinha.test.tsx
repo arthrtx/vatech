@@ -19,4 +19,19 @@ describe("FuncionarioLinha", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ver Rui" }));
     expect(onVer).toHaveBeenCalled();
   });
+
+  it("mostra o cargo por baixo do email só quando existe", () => {
+    const { rerender } = render(
+      <ul>
+        <FuncionarioLinha user={{ ...user, cargo: "Programador" }} onVer={() => {}} />
+      </ul>,
+    );
+    expect(screen.getByText("Programador")).toBeTruthy();
+    rerender(
+      <ul>
+        <FuncionarioLinha user={{ ...user, cargo: null }} onVer={() => {}} />
+      </ul>,
+    );
+    expect(screen.queryByText("Programador")).toBeNull();
+  });
 });

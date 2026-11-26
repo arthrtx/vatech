@@ -68,15 +68,11 @@ function domingo(ano: number, mes: number, n: number): string {
   return isoDe(ano, mes, 1 + ((7 - primeiro) % 7) + (n - 1) * 7);
 }
 
-/**
- * Feriados nacionais obrigatórios de Portugal (Código do Trabalho, art. 234.º), algumas datas
- * comemorativas e, se houver localidade escolhida, o feriado municipal desse concelho.
- */
-export function datasDoAno(ano: number, localidade?: string | null): DataEspecial[] {
+/** Feriados nacionais obrigatórios de Portugal (Código do Trabalho, art. 234.º), calculados localmente: fallback da API. */
+function nacionaisLocais(ano: number): DataEspecial[] {
   const p = pascoa(ano);
   const f = (mes: number, dia: number, nome: string): DataEspecial => ({ iso: isoDe(ano, mes, dia), nome, tipo: "feriado" });
-  const c = (iso: string, nome: string): DataEspecial => ({ iso, nome, tipo: "comemorativa" });
-  const lista: DataEspecial[] = [
+  return [
     f(1, 1, "Ano Novo"),
     { iso: somaDias(p, -2), nome: "Sexta-feira Santa", tipo: "feriado" },
     { iso: p, nome: "Páscoa", tipo: "feriado" },
@@ -90,6 +86,139 @@ export function datasDoAno(ano: number, localidade?: string | null): DataEspecia
     f(12, 1, "Restauração da Independência"),
     f(12, 8, "Imaculada Conceição"),
     f(12, 25, "Natal"),
+  ];
+}
+
+/* ---- Feriados nacionais vindos da API (Nager.Date), com cache em memória + localStorage ---- */
+
+const API = "https://date.nager.at/api/v3/PublicHolidays";
+const TIMEOUT_MS = 5000;
+const CHAVE = (ano: number) => `vatech:feriados:v1:${ano}`;
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+const daApi = new Map<number, DataEspecial[]>();
+const emCurso = new Map<number, Promise<void>>();
+const falhados = new Set<number>();
+const ouvintes = new Set<() => void>();
+let versao = 0;
+
+function avisar() {
+  versao++;
+  cache.clear();
+  ouvintes.forEach((o) => o());
+}
+
+/** Subscrição e versão (useSyncExternalStore): muda sempre que chegam feriados novos. */
+export function subscreverFeriados(fn: () => void): () => void {
+  ouvintes.add(fn);
+  return () => void ouvintes.delete(fn);
+}
+export const versaoFeriados = () => versao;
+
+/** Resposta da API -> feriados nacionais (global + Public); null se a resposta não for fiável. */
+function mapear(ano: number, json: unknown): DataEspecial[] | null {
+  if (!Array.isArray(json)) return null;
+  // Os nomes da API variam ("Domingo de Páscoa", "Todos-os-Santos"): usa-se o do cálculo local para a mesma data.
+  const locais = new Map(nacionaisLocais(ano).map((d) => [d.iso, d.nome]));
+  const r: DataEspecial[] = [];
+  for (const h of json as Record<string, unknown>[]) {
+    if (!h || typeof h.date !== "string" || !ISO.test(h.date) || !h.date.startsWith(`${ano}-`)) return null;
+    if (h.global !== true || !Array.isArray(h.types) || !h.types.includes("Public")) continue;
+    const bruto = typeof h.localName === "string" && h.localName ? h.localName : h.name;
+    const nome = locais.get(h.date) ?? bruto;
+    if (typeof nome !== "string" || !nome) return null;
+    if (!r.some((x) => x.iso === h.date)) r.push({ iso: h.date, nome, tipo: "feriado" });
+  }
+  return r.length >= 8 ? r : null;
+}
+
+function lerLocal(ano: number): DataEspecial[] | null {
+  try {
+    const bruto = localStorage.getItem(CHAVE(ano));
+    if (!bruto) return null;
+    const v = JSON.parse(bruto) as unknown;
+    if (!Array.isArray(v) || v.length < 8) return null;
+    const ok = v.every((d) => d && typeof d.iso === "string" && ISO.test(d.iso) && d.iso.startsWith(`${ano}-`) && typeof d.nome === "string");
+    return ok ? v.map((d) => ({ iso: d.iso as string, nome: d.nome as string, tipo: "feriado" as const })) : null;
+  } catch {
+    return null;
+  }
+}
+
+function guardarLocal(ano: number, lista: DataEspecial[]) {
+  try {
+    localStorage.setItem(CHAVE(ano), JSON.stringify(lista));
+  } catch {
+    /* sem armazenamento: fica só em memória */
+  }
+}
+
+async function buscar(ano: number): Promise<DataEspecial[] | null> {
+  const ctl = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limite = new Promise<never>((_, rej) => {
+    timer = setTimeout(() => {
+      ctl.abort();
+      rej(new Error("timeout"));
+    }, TIMEOUT_MS);
+  });
+  try {
+    const resp = await Promise.race([fetch(`${API}/${ano}/PT`, { signal: ctl.signal }), limite]);
+    if (!resp.ok) return null;
+    return mapear(ano, await Promise.race([resp.json(), limite]));
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Carrega os feriados nacionais de um ano (memória, depois localStorage, depois API) e avisa
+ * quem subscreve. Nunca rejeita; em erro, timeout ou resposta inválida fica o cálculo local.
+ */
+export function carregarFeriados(ano: number): Promise<void> {
+  if (!Number.isInteger(ano) || daApi.has(ano) || falhados.has(ano)) return Promise.resolve();
+  const pendente = emCurso.get(ano);
+  if (pendente) return pendente;
+  const guardado = lerLocal(ano);
+  if (guardado) {
+    daApi.set(ano, guardado);
+    avisar();
+    return Promise.resolve();
+  }
+  const p = buscar(ano).then((lista) => {
+    emCurso.delete(ano);
+    if (!lista) {
+      falhados.add(ano);
+      return;
+    }
+    daApi.set(ano, lista);
+    guardarLocal(ano, lista);
+    avisar();
+  });
+  emCurso.set(ano, p);
+  return p;
+}
+
+/** Só para testes: esquece tudo o que foi carregado. */
+export function reiniciarFeriados() {
+  daApi.clear();
+  emCurso.clear();
+  falhados.clear();
+  cache.clear();
+  versao = 0;
+}
+
+/**
+ * Feriados nacionais (da API quando já chegou; senão calculados localmente), Carnaval e outras
+ * datas comemorativas e, se houver localidade escolhida, o feriado municipal desse concelho.
+ */
+export function datasDoAno(ano: number, localidade?: string | null): DataEspecial[] {
+  const p = pascoa(ano);
+  const c = (iso: string, nome: string): DataEspecial => ({ iso, nome, tipo: "comemorativa" });
+  const lista: DataEspecial[] = [
+    ...(daApi.get(ano) ?? nacionaisLocais(ano)),
     c(somaDias(p, -47), "Carnaval (tolerância facultativa)"),
     c(isoDe(ano, 2, 14), "Dia dos Namorados"),
     c(isoDe(ano, 3, 8), "Dia da Mulher"),

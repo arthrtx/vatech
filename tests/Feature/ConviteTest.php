@@ -252,3 +252,38 @@ it('texto do convite: isolado por empresa e visivel no GET publico', function ()
     $this->getJson('/api/convites/'.$conviteB->token)->assertOk()
         ->assertJsonPath('data.texto', Empresa::TEXTO_CONVITE_PREDEFINIDO);
 });
+
+it('o cargo do convite guarda-se e passa ao utilizador ao aceitar', function () {
+    Notification::fake();
+    $admin = User::factory()->admin()->create();
+    Sanctum::actingAs($admin);
+    $this->postJson('/api/funcionarios/convites', ['nome' => 'Ana', 'email' => 'ana@x.test', 'cargo' => 'Designer gráfico'])
+        ->assertStatus(201)->assertJsonPath('data.cargo', 'Designer gráfico');
+    $convite = Convite::firstOrFail();
+    expect($convite->cargo)->toBe('Designer gráfico');
+    $this->app['auth']->forgetGuards();
+
+    $this->postJson("/api/convites/{$convite->token}/aceitar", dadosAceitar())->assertStatus(201);
+    $user = User::where('email', 'ana@x.test')->firstOrFail();
+    expect($user->cargo)->toBe('Designer gráfico')
+        ->and($user->toContrato()['cargo'])->toBe('Designer gráfico');
+});
+
+it('cargo invalido ou CEO no convite dao 422', function () {
+    $admin = User::factory()->admin()->create();
+    Sanctum::actingAs($admin);
+
+    $this->postJson('/api/funcionarios/convites', ['nome' => 'A', 'email' => 'a@x.test', 'cargo' => 'Astronauta'])
+        ->assertStatus(422)->assertJsonValidationErrors('cargo');
+    $this->postJson('/api/funcionarios/convites', ['nome' => 'A', 'email' => 'a@x.test', 'cargo' => 'CEO'])
+        ->assertStatus(422)->assertJsonValidationErrors('cargo');
+    expect(Convite::count())->toBe(0);
+});
+
+it('o contrato do admin sem cargo devolve CEO', function () {
+    $admin = User::factory()->admin()->create();
+    $func = User::factory()->create();
+
+    expect($admin->toContrato()['cargo'])->toBe('CEO')
+        ->and($func->toContrato()['cargo'])->toBeNull();
+});

@@ -7,13 +7,18 @@ import AvisoFerias from "@/components/dashboard/AvisoFerias";
 import ListaPedidos from "@/components/ListaPedidos";
 import PedidoForm from "@/components/PedidoForm";
 import PedidosAdmin from "@/components/PedidosAdmin";
+import PedidosSecao from "@/components/PedidosSecao";
 import { api, mensagemDeErro, type Pedido } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { podePedir, temPermissao } from "@/lib/permissoes";
 import { erro as erroCls } from "@/components/ui";
 
 function Conteudo() {
   const { user } = useAuth();
   const admin = user?.papel === "admin";
+  // Não-admin com «aprovar pedidos»: decide os pedidos dos outros e mantém a sua própria lista.
+  const gestor = !admin && temPermissao(user, "aprovar_pedidos");
+  const podeNovo = podePedir(user);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -73,23 +78,32 @@ function Conteudo() {
     if (falha) setErro(falha);
   }
 
+  // Quem aprova vê dois blocos: os seus pedidos e os dos outros. Os restantes só o primeiro.
+  const aprova = admin || gestor;
+  const meus = aprova ? pedidos.filter((p) => p.user_id === user?.id) : pedidos;
+  const equipa = pedidos.filter((p) => p.user_id !== user?.id);
+
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="titulo-bento">{admin ? "Pedidos" : "Os meus pedidos"}</h1>
+      <h1 className="titulo-bento">Pedidos</h1>
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}
         </p>
       )}
       {!admin && <AvisoFerias />}
-      {admin && (
-        <section aria-labelledby="meus_titulo" className="flex flex-col gap-3">
-          <h2 id="meus_titulo" className="text-lg font-semibold">
-            As minhas férias e ausências
-          </h2>
+      <PedidosSecao
+        id="meus"
+        titulo="Os meus pedidos"
+        descricao="Férias, ausências e licenças que pediu."
+        pedidos={meus}
+        carregando={carregando}
+      >
+        {admin ? (
           <ListaPedidos
-            pedidos={pedidos.filter((p) => p.user_id === user?.id)}
+            pedidos={meus}
             carregando={carregando}
+            textoVazio="Ainda não fez nenhum pedido."
             formulario={
               <PedidoForm
                 onCriado={(avisos) => {
@@ -111,68 +125,79 @@ function Conteudo() {
               }
             }}
           />
-        </section>
-      )}
-      {admin ? (
-        <PedidosAdmin
-          pedidos={pedidos.filter((p) => p.user_id !== user?.id)}
-          carregando={carregando}
-          onAprovar={(id) => decidir(() => api.aprovar(id))}
-          onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
-        />
-      ) : (
-        <ListaPedidos
-          pedidos={pedidos}
-          carregando={carregando}
-          formulario={
-            editando ? (
-              <PedidoForm
-                key={editando.id}
-                pedido={editando}
-                onCriado={async () => {
-                  setEditando(null);
-                  await carregar();
-                }}
-                onCancelar={() => setEditando(null)}
-              />
-            ) : (
-              <PedidoForm
-                onCriado={(avisos) => {
-                  carregar();
-                  if (avisos.length === 0) setNovoAberto(false);
-                }}
-              />
-            )
-          }
-          formAberto={novoAberto || !!editando}
-          aoAbrirForm={() => {
-            setEditando(null);
-            setNovoAberto(true);
-          }}
-          aoFecharForm={() => {
-            setEditando(null);
-            setNovoAberto(false);
-          }}
-          onEditar={(p) => setEditando(p)}
-          onCancelar={async (p) => {
-            try {
-              const r = await api.cancelarPedido(p.id);
-              setPedidos((ps) => ps.map((x) => (x.id === p.id ? { ...x, ...r.data } : x)));
-            } catch (e) {
-              setErro(mensagemDeErro(e));
+        ) : (
+          <ListaPedidos
+            pedidos={meus}
+            carregando={carregando}
+            textoVazio="Ainda não fez nenhum pedido."
+            formulario={
+              !podeNovo && !editando ? undefined : editando ? (
+                <PedidoForm
+                  key={editando.id}
+                  pedido={editando}
+                  onCriado={async () => {
+                    setEditando(null);
+                    await carregar();
+                  }}
+                  onCancelar={() => setEditando(null)}
+                />
+              ) : (
+                <PedidoForm
+                  onCriado={(avisos) => {
+                    carregar();
+                    if (avisos.length === 0) setNovoAberto(false);
+                  }}
+                />
+              )
             }
-          }}
-          onApagar={async (p) => {
-            if (editando?.id === p.id) setEditando(null);
-            try {
-              await api.apagarPedido(p.id);
-              // Sai da lista já; a atualização periódica confirma com o servidor.
-              setPedidos((ps) => ps.filter((x) => x.id !== p.id));
-            } catch (e) {
-              setErro(mensagemDeErro(e));
-            }
-          }}
-        />
+            formAberto={novoAberto || !!editando}
+            aoAbrirForm={() => {
+              setEditando(null);
+              setNovoAberto(true);
+            }}
+            aoFecharForm={() => {
+              setEditando(null);
+              setNovoAberto(false);
+            }}
+            onEditar={(p) => setEditando(p)}
+            onCancelar={async (p) => {
+              try {
+                const r = await api.cancelarPedido(p.id);
+                setPedidos((ps) => ps.map((x) => (x.id === p.id ? { ...x, ...r.data } : x)));
+              } catch (e) {
+                setErro(mensagemDeErro(e));
+              }
+            }}
+            onApagar={async (p) => {
+              if (editando?.id === p.id) setEditando(null);
+              try {
+                await api.apagarPedido(p.id);
+                // Sai da lista já; a atualização periódica confirma com o servidor.
+                setPedidos((ps) => ps.filter((x) => x.id !== p.id));
+              } catch (e) {
+                setErro(mensagemDeErro(e));
+              }
+            }}
+          />
+        )}
+      </PedidosSecao>
+      {aprova && (
+        <PedidosSecao
+          id="equipa"
+          titulo="Pedidos da equipa"
+          descricao="Pedidos de outras pessoas para aprovar ou recusar. O que precisa de decisão fica primeiro."
+          pedidos={equipa}
+          paraDecidir
+          carregando={carregando}
+        >
+          <PedidosAdmin
+            pedidos={equipa}
+            carregando={carregando}
+            textoVazio="Ainda ninguém da equipa fez pedidos."
+            onAprovar={(id) => decidir(() => api.aprovar(id))}
+            onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
+          />
+        </PedidosSecao>
       )}
     </div>
   );
