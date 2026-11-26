@@ -14,6 +14,7 @@ use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PonteController;
 use App\Http\Controllers\PresencaController;
 use App\Http\Controllers\TextoController;
+use App\Http\Controllers\TipoController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -49,6 +50,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
         Route::post('/funcionarios/{id}/aprovar', [FuncionarioController::class, 'aprovar']);
         Route::post('/funcionarios/{id}/recusar', [FuncionarioController::class, 'recusar']);
+        Route::get('/definicoes/tipos', [TipoController::class, 'index']);
+        Route::post('/definicoes/tipos', [TipoController::class, 'store']);
+        Route::put('/definicoes/tipos/{id}', [TipoController::class, 'update']);
+        Route::delete('/definicoes/tipos/{id}', [TipoController::class, 'destroy']);
+        Route::put('/funcionarios/{id}/tipo', [TipoController::class, 'definirDaPessoa']);
         Route::get('/definicoes/permissoes', [DefinicoesPermissoesController::class, 'show']);
         Route::put('/definicoes/permissoes', [DefinicoesPermissoesController::class, 'update']);
     });

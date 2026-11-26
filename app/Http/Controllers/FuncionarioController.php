@@ -10,9 +10,9 @@ class FuncionarioController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $users = User::where('empresa_id', $request->user()->empresa_id)->orderBy('nome')->get();
+        $users = User::with('tipo')->where('empresa_id', $request->user()->empresa_id)->orderBy('nome')->get();
 
-        return response()->json(['data' => $users->map->toContrato()]);
+        return response()->json(['data' => $users->map(fn (User $u) => $u->toContrato() + ['tipo_id' => $u->tipo_id, 'tipo_nome' => $u->tipo?->nome])]);
     }
 
     public function aprovar(Request $request, int $id): JsonResponse

@@ -129,3 +129,15 @@
 **Alternativas consideradas:** tabela de papéis e permissões (rejeitada: o catálogo é pequeno e fixo, e os papéis são só dois editáveis); manter regras fixas no código (rejeitada: o admin pediu controlo).
 
 **Consequências:** `aprovar_pedidos` alarga a leitura de pedidos e da agenda a todos os da empresa, e dos anexos deles; `ver_presencas_empresa` faz o mesmo com presenças e ocorrências. Sem permissão, a API responde 403 «Sem permissão.» (o pedido de férias do estagiário deixou de ser 422). Chaves novas no catálogo ficam com o predefinido até o admin as editar.
+
+## D11: Tipos personalizados de pessoa
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** só havia Funcionário e Estagiário; o admin quer perfis como «Responsável de RH» com permissões próprias.
+
+**Decisão:** tabela `tipos` por empresa (nome único sem distinguir maiusculas, `base` funcionario|estagiario fixa, `permissoes` JSON por cima dos predefinidos da base). `users.tipo_id` e `convites.tipo_id` nullable (restrict, nunca apagam pessoas). `users.papel` continua a ser o papel-base, por isso nenhuma regra que testa o papel muda. Pessoa com tipo usa as permissões do tipo; sem tipo, as do papel (D10). Apagar um tipo em uso: 409. O tipo muda por `PUT /funcionarios/{id}/tipo`, que também permite mudar o papel de quem fica sem tipo.
+
+**Alternativas consideradas:** tipos que substituem o papel (rejeitada: reescrevia as regras de estágio e férias); permissões em tabela pivô (rejeitada: catálogo fixo de 12).
+
+**Consequências:** mudar a base exige criar outro tipo. Admin não tem tipo.

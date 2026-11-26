@@ -11,7 +11,7 @@ import PermissoesAdmin from "@/components/PermissoesAdmin";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
 import { ApiError, api, mensagemDeErro, type TipoPedido, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { papeis, tipos } from "@/lib/rotulos";
+import { rotuloPapel, tipos } from "@/lib/rotulos";
 import { primeiroNome } from "@/lib/saudacao";
 
 const cartao = "relative isolate flex flex-col gap-4 rounded-barra border border-linha bg-painel p-5 md:p-7 has-[[role=dialog]]:z-20 has-[[role=combobox][aria-expanded=true]]:z-20";
@@ -176,7 +176,7 @@ function DadosConta({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
       )}
       <div>
         <p className={label}>Papel</p>
-        <p>{papeis[user.papel]}</p>
+        <p>{rotuloPapel(user)}</p>
         {user.papel !== "admin" && <p className="text-sm text-texto-suave">Só um administrador altera.</p>}
       </div>
       <Rodape erroGeral={erroGeral} ok={ok} enviando={enviando} sujo={sujo} />
@@ -309,7 +309,7 @@ function FotoPerfil({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold">{user.nome}</p>
             <p className="truncate text-sm text-texto-suave">
-              {user.email} · {papeis[user.papel]}
+              {user.email} · {rotuloPapel(user)}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

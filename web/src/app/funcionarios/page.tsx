@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { api, mensagemDeErro, type FeriasResumo, type User } from "@/lib/api";
+import { api, mensagemDeErro, type FeriasResumo, type TipoPessoa, type User } from "@/lib/api";
 import CampoBusca from "@/components/CampoBusca";
 import ConvitesAdmin from "@/components/ConvitesAdmin";
 import FuncionarioLinha from "@/components/FuncionarioLinha";
@@ -19,6 +19,8 @@ function Conteudo() {
   const [busca, setBusca] = useState("");
   const [ferias, setFerias] = useState<Map<number, FeriasResumo>>(new Map());
   const [aVer, setAVer] = useState<User | null>(null);
+  const [tipos, setTipos] = useState<TipoPessoa[]>([]);
+  const [errosTipo, setErrosTipo] = useState<Record<number, string>>({});
   const fecharVista = useCallback(() => setAVer(null), []);
 
   const carregar = useCallback(async () => {
@@ -47,6 +49,30 @@ function Conteudo() {
       ativo = false;
     };
   }, [admin]);
+
+  useEffect(() => {
+    if (!admin) return;
+    let ativo = true;
+    api.getTipos().then(
+      (t) => ativo && setTipos(t),
+      () => {
+        // Sem tipos, só ficam os papéis base no select.
+      },
+    );
+    return () => {
+      ativo = false;
+    };
+  }, [admin]);
+
+  async function mudarTipo(u: User, tipo_id: number | null, papel?: "funcionario" | "estagiario") {
+    setErrosTipo((e) => ({ ...e, [u.id]: "" }));
+    try {
+      const nova = await api.definirTipoPessoa(u.id, tipo_id, papel);
+      setLista((l) => (l ? l.map((x) => (x.id === u.id ? { ...x, ...nova } : x)) : l));
+    } catch (e) {
+      setErrosTipo((m) => ({ ...m, [u.id]: mensagemDeErro(e) }));
+    }
+  }
 
   const pendentes = (lista ?? []).filter((u) => u.estado_conta === "pendente");
   const ativos = (lista ?? []).filter((u) => u.estado_conta !== "pendente" && u.estado_conta !== "recusado");
@@ -86,6 +112,9 @@ function Conteudo() {
               user={u}
               ferias={ferias.get(u.id)}
               onVer={() => setAVer(u)}
+              tipos={tipos}
+              onMudarTipo={(id, papel) => mudarTipo(u, id, papel)}
+              erroTipo={errosTipo[u.id]}
             />
           ))}
         </ul>
