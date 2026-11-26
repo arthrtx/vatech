@@ -30,7 +30,7 @@ describe("AvisoFerias", () => {
     render(<AvisoFerias />);
     const aviso = await screen.findByRole("status");
     expect(aviso.textContent).toContain("Tem 20 dias úteis de férias por marcar. O prazo era 30 de abril.");
-    expect(screen.getByRole("link", { name: "Fazer pedido de férias" }).getAttribute("href")).toBe("/");
+    expect(screen.getByRole("link", { name: "Fazer pedido de férias" }).getAttribute("href")).toBe("/calendario");
   });
 
   it("o X fecha o aviso e ele fica fechado enquanto os dias por marcar forem os mesmos", async () => {

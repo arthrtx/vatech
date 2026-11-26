@@ -304,16 +304,16 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
       <style>{IMPRESSAO}</style>
       <div id="calendario-imprimir" className="flex flex-col gap-2">
         <h2 className="hidden text-lg font-semibold print:block">Mapa de férias {ano}</h2>
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div
           className={`min-w-0 overflow-hidden rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 ${aCarregar ? "opacity-60" : ""}`}
           aria-busy={aCarregar}
         >
           <div className="overflow-x-auto scroll-fino print:overflow-visible">
-            <table aria-label={`Calendário ${ano}`} className="w-full min-w-[60rem] table-fixed select-none border-collapse text-xs">
+            <table aria-label={`Calendário ${ano}`} className="w-full min-w-[48rem] table-fixed select-none border-collapse text-xs">
               <colgroup>
-                <col className="w-28" />
-                <col className="w-28" />
+                <col className="w-20" />
+                <col className="w-24" />
                 {Array.from({ length: 31 }, (_, k) => (
                   <col key={k} />
                 ))}
@@ -499,7 +499,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
           </div>
         </div>
 
-        <aside aria-label="Legenda" className="flex flex-col gap-4 xl:sticky xl:top-4">
+        <aside aria-label="Legenda" className="flex flex-col gap-4 2xl:sticky 2xl:top-4">
           <div className="overflow-hidden rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10">
             <table className="w-full border-collapse text-sm">
               <thead>
