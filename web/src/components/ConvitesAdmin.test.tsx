@@ -46,7 +46,7 @@ describe("ConvitesAdmin: tipos", () => {
 
   it("envia o cargo escolhido e não oferece CEO", async () => {
     vi.mocked(api.convites.criar).mockResolvedValue(convite);
-    render(<ConvitesAdmin pendentes={[]} onDecidida={() => {}} />);
+    render(<ConvitesAdmin pendentes={[]} onDecidida={() => {}} podeDefinirCargo />);
     fireEvent.click(await screen.findByRole("button", { name: "Convidar funcionário" }));
     expect(screen.queryByRole("option", { name: "CEO" })).toBeNull();
     fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Ana" } });
@@ -56,5 +56,11 @@ describe("ConvitesAdmin: tipos", () => {
     await waitFor(() =>
       expect(api.convites.criar).toHaveBeenCalledWith({ nome: "Ana", email: "ana@x.pt", papel: "funcionario", cargo: "Marketing" }),
     );
+  });
+
+  it("sem permissão de admin, o campo Cargo não aparece", async () => {
+    render(<ConvitesAdmin pendentes={[]} onDecidida={() => {}} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Convidar funcionário" }));
+    expect(screen.queryByLabelText("Cargo")).toBeNull();
   });
 });

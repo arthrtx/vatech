@@ -7,6 +7,7 @@ use App\Models\Presenca;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
@@ -205,6 +206,20 @@ it('convidar pessoas exige a permissao', function () {
     Sanctum::actingAs(comPermissoes('funcionario', ['convidar_pessoas']));
     $this->getJson('/api/funcionarios/convites')->assertOk();
     $this->postJson('/api/funcionarios/convites', [])->assertStatus(422);
+});
+
+it('quem convida por permissao delegada nao define o cargo; o admin define', function () {
+    Notification::fake();
+    $empresa = Empresa::factory()->create();
+    $delegado = comPermissoes('funcionario', ['convidar_pessoas'], $empresa);
+    Sanctum::actingAs($delegado);
+    $this->postJson('/api/funcionarios/convites', ['nome' => 'A', 'email' => 'a@x.test', 'cargo' => 'Marketing'])
+        ->assertStatus(422)->assertJsonValidationErrors('cargo');
+    $this->postJson('/api/funcionarios/convites', ['nome' => 'A', 'email' => 'a@x.test'])->assertStatus(201);
+
+    Sanctum::actingAs(User::factory()->admin()->create(['empresa_id' => $empresa->id]));
+    $this->postJson('/api/funcionarios/convites', ['nome' => 'B', 'email' => 'b@x.test', 'cargo' => 'Marketing'])
+        ->assertStatus(201)->assertJsonPath('data.cargo', 'Marketing');
 });
 
 it('aprovar pedidos exige a permissao e nunca o proprio pedido', function () {

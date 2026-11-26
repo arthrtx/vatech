@@ -7,7 +7,7 @@ import { formatarData, papeis, rotuloPapel } from "@/lib/rotulos";
 import { botao, botaoPerigo, botaoSec, erro as erroCls, input, label } from "./ui";
 
 /** Convites (criar, reenviar, revogar) e contas por autorizar. `onDecidida` recarrega a lista de pessoas. */
-export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: User[]; onDecidida: () => void }) {
+export default function ConvitesAdmin({ pendentes, onDecidida, podeDefinirCargo = false }: { pendentes: User[]; onDecidida: () => void; podeDefinirCargo?: boolean }) {
   const [convites, setConvites] = useState<Convite[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aberto, setAberto] = useState(false);
@@ -62,7 +62,7 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
     setEnviando(true);
     try {
       const base = papel.startsWith("t") ? { nome, email, tipo_id: Number(papel.slice(1)) } : { nome, email, papel: papel as Convite["papel"] };
-      const c = await api.convites.criar(cargo ? { ...base, cargo } : base);
+      const c = await api.convites.criar(podeDefinirCargo && cargo ? { ...base, cargo } : base);
       setNovo(c);
       setNome("");
       setEmail("");
@@ -135,19 +135,21 @@ export default function ConvitesAdmin({ pendentes, onDecidida }: { pendentes: Us
                 ))}
               </select>
             </div>
-            <div>
-              <label htmlFor="convite-cargo" className={label}>
-                Cargo
-              </label>
-              <select id="convite-cargo" className={input} value={cargo} onChange={(e) => setCargo(e.target.value)}>
-                <option value="">Escolher cargo</option>
-                {CARGOS_CONVITE.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {podeDefinirCargo && (
+              <div>
+                <label htmlFor="convite-cargo" className={label}>
+                  Cargo
+                </label>
+                <select id="convite-cargo" className={input} value={cargo} onChange={(e) => setCargo(e.target.value)}>
+                  <option value="">Escolher cargo</option>
+                  {CARGOS_CONVITE.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={enviando} className={botao}>

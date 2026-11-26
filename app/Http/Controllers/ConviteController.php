@@ -33,7 +33,8 @@ class ConviteController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'papel' => ['sometimes', Rule::in(['funcionario', 'estagiario'])],
             'tipo_id' => ['sometimes', 'nullable', 'integer'],
-            'cargo' => ['sometimes', 'nullable', Rule::in(array_values(array_diff(User::CARGOS, ['CEO'])))],
+            // O cargo é definido só pelo admin (quem tem a permissão delegada de convidar não o define).
+            'cargo' => [Rule::prohibitedIf(! $request->user()->isAdmin()), 'sometimes', 'nullable', Rule::in(array_values(array_diff(User::CARGOS, ['CEO'])))],
         ]);
 
         $admin = $request->user();
