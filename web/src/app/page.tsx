@@ -196,6 +196,18 @@ function Conteudo() {
             textoVazio="Ainda ninguém da equipa fez pedidos."
             onAprovar={(id) => decidir(() => api.aprovar(id))}
             onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
+            onApagar={
+              temPermissao(user, "apagar_pedidos")
+                ? async (p) => {
+                    try {
+                      await api.apagarPedido(p.id);
+                      setPedidos((ps) => ps.filter((x) => x.id !== p.id));
+                    } catch (e) {
+                      setErro(mensagemDeErro(e));
+                    }
+                  }
+                : undefined
+            }
           />
         </PedidosSecao>
       )}

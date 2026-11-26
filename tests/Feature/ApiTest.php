@@ -215,14 +215,14 @@ it('devolve 404 ao editar ou apagar pedidos de outro utilizador', function () {
     expect(Pedido::find($alheio->id))->not->toBeNull();
 });
 
-it('o admin nao edita nem apaga pedidos de outros', function () {
+it('o admin nao edita pedidos de outros mas pode apaga-los', function () {
     $func = User::factory()->create();
     $pedido = Pedido::factory()->create(['user_id' => $func->id, 'empresa_id' => $func->empresa_id, 'estado' => 'pendente']);
     Sanctum::actingAs(User::factory()->admin()->create(['empresa_id' => $func->empresa_id]));
 
     $this->putJson("/api/pedidos/{$pedido->id}", novoPedido())->assertStatus(404);
-    $this->deleteJson("/api/pedidos/{$pedido->id}")->assertStatus(404);
-    expect(Pedido::find($pedido->id))->not->toBeNull();
+    $this->deleteJson("/api/pedidos/{$pedido->id}")->assertNoContent();
+    expect(Pedido::find($pedido->id))->toBeNull();
 });
 
 it('devolve 404 ao aprovar ou recusar pedido de funcionario apagado', function () {

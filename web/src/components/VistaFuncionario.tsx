@@ -6,7 +6,7 @@ import { hojeIso } from "@/lib/agenda";
 import { maisDias } from "@/lib/dashboard";
 import { estados, formatarData, papeis, rotuloPapel, tipos as rotulosPedido } from "@/lib/rotulos";
 import Avatar from "./Avatar";
-import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
+import { botao, botaoPerigo, botaoSec, erro as erroCls, input, label } from "./ui";
 
 const corEstado: Record<Pedido["estado"], string> = {
   pendente: "bg-violeta/25",
@@ -26,6 +26,7 @@ export default function VistaFuncionario({
   onMudarTipo,
   erroTipo,
   onAtualizado,
+  onApagar,
 }: {
   user: User;
   ferias?: FeriasResumo;
@@ -36,7 +37,12 @@ export default function VistaFuncionario({
   erroTipo?: string | null;
   /** Chamado com a pessoa devolvida pela API depois de guardar o estágio. */
   onAtualizado?: (user: User) => void;
+  /** Só com a permissão «apagar pessoas» (nunca para admins nem para a própria conta). */
+  onApagar?: () => Promise<void>;
 }) {
+  const [aConfirmarApagar, setAConfirmarApagar] = useState(false);
+  const [aApagar, setAApagar] = useState(false);
+  const [erroApagar, setErroApagar] = useState<string | null>(null);
   const [inicio, setInicio] = useState(user.estagio_inicio?.slice(0, 10) ?? "");
   const [fim, setFim] = useState(user.estagio_fim?.slice(0, 10) ?? "");
   const [instituicao, setInstituicao] = useState(user.instituicao_ensino ?? "");
@@ -334,6 +340,48 @@ export default function VistaFuncionario({
             </ul>
           )}
         </section>
+
+        {onApagar && (
+          <section aria-label="Apagar pessoa" className="flex flex-col gap-2 border-t border-linha pt-4">
+            {erroApagar && (
+              <p role="alert" className={erroCls}>
+                {erroApagar}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {aConfirmarApagar ? (
+                <>
+                  <span className="text-sm font-medium">Apagar a conta de {user.nome}?</span>
+                  <button
+                    type="button"
+                    className={botaoPerigo}
+                    disabled={aApagar}
+                    onClick={async () => {
+                      setAApagar(true);
+                      setErroApagar(null);
+                      try {
+                        await onApagar();
+                      } catch (e) {
+                        setErroApagar(mensagemDeErro(e));
+                        setAApagar(false);
+                        setAConfirmarApagar(false);
+                      }
+                    }}
+                  >
+                    Sim, apagar
+                  </button>
+                  <button type="button" className={botaoSec} onClick={() => setAConfirmarApagar(false)}>
+                    Voltar
+                  </button>
+                </>
+              ) : (
+                <button type="button" className={botaoPerigo} onClick={() => setAConfirmarApagar(true)}>
+                  Apagar pessoa
+                </button>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

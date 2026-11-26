@@ -291,3 +291,7 @@
 **Alternativas consideradas:** observers nos modelos (rejeitada: sem o actor e sem descricao legivel); log em ficheiro (rejeitada: nao consultavel nem filtravel).
 
 **Consequencias:** presencas geram 1 a 2 linhas por pessoa e dia (as mais volumosas); a limpeza automatica limita o crescimento.
+
+## D23: Apagar pessoas e pedidos como permissoes delegaveis
+
+Acrescentadas `apagar_pedidos` e `apagar_pessoas` ao catalogo (grupo `gestao`, fora das predefinicoes; admin tem sempre). Apagar pessoa e soft delete (consistente com D-anteriores: historico e pedidos mantidos), nunca o proprio nem um admin. Apagar pedido vale em qualquer estado e pessoa da empresa. A lista de pessoas continua so para admin, logo o botao de apagar pessoa so aparece ao admin ate se abrir essa lista a outros.

@@ -26,6 +26,24 @@ class FuncionarioController extends Controller
         return $this->decidir($request, $id, 'recusado');
     }
 
+    /** Apaga uma pessoa da empresa e tudo o que é dela (pedidos, presenças, fichas de RH em cascata). */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $autor = $request->user();
+        abort_if($id === $autor->id, 422, 'Não pode apagar a sua própria conta.');
+
+        $user = User::where('empresa_id', $autor->empresa_id)->findOrFail($id);
+        abort_if($user->papel === 'admin', 422, 'Não é possível apagar um administrador.');
+
+        // Soft delete: o histórico e os pedidos ficam; só se fecham as sessões.
+        $user->tokens()->delete();
+        $user->delete();
+
+        RegistoAtividade::registar('conta', "{$autor->nome} apagou a conta de {$user->nome}", $autor);
+
+        return response()->json(null, 204);
+    }
+
     private function decidir(Request $request, int $id, string $estado): JsonResponse
     {
         abort_if($id === $request->user()->id, 422, 'Não pode alterar a sua própria conta.');

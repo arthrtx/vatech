@@ -79,12 +79,12 @@ it('sem gerir_rh: 401 anonimo, 403 funcionario comum', function () {
 });
 
 it('gerir_rh nao vem nas predefinicoes e o admin tem-na sempre', function () {
-    expect(Empresa::chavesPermissoes())->toContain('gerir_rh')->toHaveCount(14);
+    expect(Empresa::chavesPermissoes())->toContain('gerir_rh')->toHaveCount(16);
     expect(Empresa::permissoesPredefinidas('funcionario')['gerir_rh'])->toBeFalse()
         ->and(Empresa::permissoesPredefinidas('estagiario')['gerir_rh'])->toBeFalse();
 
     Sanctum::actingAs(rhAdmin());
-    $this->getJson('/api/me')->assertJsonCount(14, 'user.permissoes');
+    $this->getJson('/api/me')->assertJsonCount(16, 'user.permissoes');
 });
 
 it('um tipo com gerir_rh acede as fichas da sua empresa', function () {

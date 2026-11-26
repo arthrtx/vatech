@@ -158,10 +158,15 @@ class PedidoController extends Controller
     /** O funcionario apaga um pedido seu enquanto esta pendente, ou cancela uma licença que ainda não começou. */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $pedido = $this->pedidoPendenteDoUtilizador($request, $id, licencaPorComecar: true);
+        $user = $request->user();
+        // Com «apagar_pedidos» apaga-se qualquer pedido da empresa, em qualquer estado.
+        $pedido = $user->temPermissao('apagar_pedidos')
+            ? Pedido::where('empresa_id', $user->empresa_id)->findOrFail($id)
+            : $this->pedidoPendenteDoUtilizador($request, $id, licencaPorComecar: true);
+        $dono = $pedido->user_id === $user->id ? null : User::find($pedido->user_id);
         // Os anexos (e os seus bytes) saem em cascata.
         $pedido->delete();
-        RegistoAtividade::registar('pedido', "{$request->user()->nome} apagou o pedido de ".self::TIPOS[$pedido->tipo].' de '.$this->periodo($pedido), $request->user());
+        RegistoAtividade::registar('pedido', "{$user->nome} apagou o pedido de ".self::TIPOS[$pedido->tipo].($dono ? " de {$dono->nome}" : '').' de '.$this->periodo($pedido), $user, $dono);
 
         return response()->json(null, 204);
     }

@@ -146,6 +146,17 @@ describe("PedidoForm limites", () => {
 });
 
 describe("PedidosAdmin", () => {
+  it("só mostra Apagar com onApagar e pede confirmação", async () => {
+    const { rerender } = render(<PedidosAdmin pedidos={[pedido]} onAprovar={vi.fn()} onRecusar={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Apagar" })).toBeNull();
+    const apagar = vi.fn();
+    rerender(<PedidosAdmin pedidos={[pedido]} onAprovar={vi.fn()} onRecusar={vi.fn()} onApagar={apagar} />);
+    fireEvent.click(screen.getByRole("button", { name: "Apagar" }));
+    expect(apagar).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Sim, apagar" }));
+    await waitFor(() => expect(apagar).toHaveBeenCalledWith(expect.objectContaining({ id: 7 })));
+  });
+
   it("tem Aprovar e Recusar e exige motivo", () => {
     const aprovar = vi.fn();
     const recusar = vi.fn();
