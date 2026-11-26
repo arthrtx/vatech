@@ -141,7 +141,7 @@ export default function AppShell({
             <p className="flex h-10 w-10 shrink-0 max-[360px]:h-8 max-[360px]:w-8 items-center justify-center rounded-controlo overflow-hidden bg-barra">
               <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
             </p>
-            <span className="text-lg font-bold tracking-tight max-[360px]:hidden">FuryNick</span>
+            <span className="text-lg font-bold tracking-tight max-[360px]:hidden">Nick Fury</span>
           </div>
           <nav aria-label="Principal" className="flex shrink-0 items-center gap-1 max-[360px]:gap-0.5 md:flex-col md:items-stretch md:gap-1">
             <p className={rotuloSecao}>Geral</p>

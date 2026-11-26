@@ -5,7 +5,7 @@ import PrecargaFeriados from "@/components/PrecargaFeriados";
 import { scriptTema } from "@/lib/tema";
 
 export const metadata: Metadata = {
-  title: "FuryNick",
+  title: "Nick Fury",
   description: "Gestão de pedidos de férias, ausências e licenças",
 };
 

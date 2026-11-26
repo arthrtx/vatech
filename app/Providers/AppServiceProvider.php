@@ -23,12 +23,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         VerifyEmail::toMailUsing(fn ($user, string $url) => (new MailMessage)
-            ->subject('Confirme o seu email — FuryNick')
+            ->subject('Confirme o seu email — Nick Fury')
             ->greeting('Olá, '.$user->nome.'!')
             ->line('Para ativar a sua conta, confirme o seu endereço de email.')
             ->action('Confirmar email', $url)
             ->line('Se não criou esta conta, ignore este email.')
-            ->salutation('FuryNick'));
+            ->salutation('Nick Fury'));
 
         // O link do email abre o site (Next.js), não a API.
         ResetPassword::toMailUsing(function ($user, string $token) {
@@ -36,13 +36,13 @@ class AppServiceProvider extends ServiceProvider
                 .'/redefinir?token='.$token.'&email='.urlencode($user->getEmailForPasswordReset());
 
             return (new MailMessage)
-                ->subject('Recuperar palavra-passe — FuryNick')
+                ->subject('Recuperar palavra-passe — Nick Fury')
                 ->greeting('Olá, '.$user->nome.'!')
                 ->line('Recebemos um pedido para definir uma nova palavra-passe da sua conta.')
                 ->action('Definir nova palavra-passe', $url)
                 ->line('O link expira em '.config('auth.passwords.users.expire').' minutos.')
                 ->line('Se não pediu isto, ignore este email: a sua palavra-passe não muda.')
-                ->salutation('FuryNick');
+                ->salutation('Nick Fury');
         });
     }
 }

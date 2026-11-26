@@ -11,7 +11,7 @@ services:
     healthCheckPath: /up
     envVars:
       - key: APP_NAME
-        value: FuryNick
+        value: Nick Fury
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
