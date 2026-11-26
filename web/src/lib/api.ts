@@ -79,9 +79,25 @@ export interface User {
   /** Só estagiários: datas do estágio (Y-m-d). */
   estagio_inicio?: string | null;
   estagio_fim?: string | null;
-  /** Só estagiários: horário de almoço (HH:MM, hora de Lisboa). */
-  almoco_inicio?: string | null;
-  almoco_fim?: string | null;
+}
+
+/** Horário de um dia de trabalho (HH:MM, hora de Lisboa); almoço = início + duração em minutos. */
+export interface Horario {
+  entrada: string;
+  saida: string;
+  almoco_inicio: string;
+  almoco_min: number;
+}
+
+/** Horário de uma pessoa: campos null seguem a empresa; `efectivo` é o que vale. */
+export interface HorarioPessoa {
+  user_id: number;
+  nome: string;
+  entrada: string | null;
+  saida: string | null;
+  almoco_inicio: string | null;
+  almoco_min: number | null;
+  efectivo: Horario;
 }
 
 /** Marcação de presença do dia; entrada/saida em ISO8601, hora do servidor. */
@@ -194,6 +210,17 @@ export interface Pedido {
   /** Só férias: dias úteis acima dos 22 do ano (0 se nenhum). */
   dias_excedentes?: number;
   user?: { id: number; nome: string };
+  /** Preenchido só quando o pedido foi criado por outra pessoa. */
+  criado_por?: { id: number; nome: string } | null;
+}
+
+/** Pessoa em nome de quem se pode pedir (GET /pedidos/pessoas). */
+export interface PessoaPedido {
+  id: number;
+  nome: string;
+  avatar_url: string | null;
+  papel: Papel;
+  tipo_nome: string | null;
 }
 
 /** Aniversário de alguém da empresa num dia do intervalo pedido (a API não revela o ano de nascimento). */
@@ -232,6 +259,8 @@ export interface NovoPedido {
   hora_fim?: string;
   observacao?: string;
   urgente?: boolean;
+  /** Pedir em nome de outra pessoa (precisa de «pedir_por_outros»). */
+  user_id?: number;
   /** Só férias: cor no mapa do ano. */
   cor?: CorFerias;
 }
@@ -373,8 +402,13 @@ export const api = {
     f.append("avatar", ficheiro);
     return (await request<{ user: User }>("POST", "/me/avatar", f)).user;
   },
-  definirAlmoco: async (b: { almoco_inicio: string | null; almoco_fim: string | null }) =>
-    (await request<{ user: User }>("PUT", "/me/almoco", b)).user,
+  getHorario: async () => (await request<{ data: { empresa: Horario; meu: Horario } }>("GET", "/horario")).data,
+  definirHorarioEmpresa: async (b: Horario) => (await request<{ data: Horario }>("PUT", "/definicoes/horario", b)).data,
+  horarios: async () => (await request<{ data: HorarioPessoa[] }>("GET", "/definicoes/horarios")).data,
+  definirHorarioPessoa: async (
+    id: number,
+    b: { entrada: string | null; saida: string | null; almoco_inicio: string | null; almoco_min: number | null },
+  ) => (await request<{ data: HorarioPessoa }>("PUT", `/definicoes/horarios/${id}`, b)).data,
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   convites: {
     listar: async () => (await request<{ data: Convite[] }>("GET", "/funcionarios/convites")).data,
@@ -419,6 +453,7 @@ export const api = {
   apagarCompromisso: (id: number) => request<void>("DELETE", `/compromissos/${id}`),
   aniversarios: async (de: string, ate: string) =>
     (await request<{ data: Aniversario[] }>("GET", `/aniversarios?de=${de}&ate=${ate}`)).data,
+  pessoasParaPedido: async () => (await request<{ data: PessoaPedido[] }>("GET", "/pedidos/pessoas")).data,
   criarPedido: (b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
   editarPedido: (id: number, b: NovoPedido) =>

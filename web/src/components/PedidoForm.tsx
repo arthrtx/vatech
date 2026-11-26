@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { api, mensagemDeErro, type Anexo, type Limite, type Pedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
+import { api, mensagemDeErro, type Anexo, type Limite, type Pedido, type PessoaPedido, type SubtipoPedido, type TipoPedido } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import CampoHora from "./CampoHora";
 import { tipos } from "@/lib/rotulos";
 import { temPermissao } from "@/lib/permissoes";
 import CampoAnexos from "./CampoAnexos";
 import { diasUteis } from "@/lib/diasUteis";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import CampoData from "./CampoData";
+import PedidoPessoaCampo from "./PedidoPessoaCampo";
 import Seletor from "./Seletor";
 import { areaTexto, botao, botaoSec, erro as erroCls, label, vidro } from "./ui";
 
@@ -44,6 +46,8 @@ export default function PedidoForm({
   const podeAnexar = temPermissao(user, "anexar_documentos");
   const podeMelhorar = temPermissao(user, "melhorar_texto");
   const admin = user?.papel === "admin";
+  const podePorOutros = !edicao && temPermissao(user, "pedir_por_outros");
+  const [emNomeDe, setEmNomeDe] = useState<PessoaPedido | null>(null);
   const hoje = hojeIso();
   const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? permitidos[0] ?? "ausencia");
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
@@ -77,8 +81,11 @@ export default function PedidoForm({
     };
   }, []);
 
-  const limite = limites.find((l) => l.tipo === tipo);
+  // GET /limites só devolve o saldo de quem está autenticado: com outra pessoa escolhida
+  // não há saldo local fiável, a validação fica toda no servidor.
+  const limite = emNomeDe ? undefined : limites.find((l) => l.tipo === tipo);
   const ano = hoje.slice(0, 4);
+  useFeriadosDoAno(Number(ano), Number((inicio || hoje).slice(0, 4)), Number((fim || hoje).slice(0, 4)));
   // Ao editar um pedido do mesmo tipo, os seus dias já estão em «usados».
   const proprios = pedido && pedido.tipo === tipo && pedido.estado !== "recusado" ? diasUteis(pedido.data_inicio, pedido.data_fim) : 0;
   const usados = limite ? Math.max(0, limite.usados - proprios) : 0;
@@ -127,6 +134,7 @@ export default function PedidoForm({
         ...(horaInicio ? { hora_inicio: horaInicio, hora_fim: horaFim } : {}),
         ...(obs ? { observacao: obs } : {}),
         urgente,
+        ...(podePorOutros && emNomeDe ? { user_id: emNomeDe.id } : {}),
       };
       const r = pedido ? await api.editarPedido(pedido.id, corpo) : await api.criarPedido(corpo);
       setAvisos(r.avisos ?? []);
@@ -178,6 +186,7 @@ export default function PedidoForm({
           </button>
         </label>
       </div>
+      {podePorOutros && <PedidoPessoaCampo valor={emNomeDe} onChange={setEmNomeDe} />}
       <div>
         <label htmlFor="tipo" className={label}>
           Tipo
@@ -193,12 +202,12 @@ export default function PedidoForm({
           onChange={(v) => setTipo(v as TipoPedido)}
         />
       </div>
-      {admin && !edicao && (
+      {admin && !edicao && !emNomeDe && (
         <p role="note" className="rounded-cartao border border-linha-forte bg-painel px-4 py-2 text-sm">
           Fica marcado logo, sem pedido nem aprovação.
         </p>
       )}
-      {tipo === "licenca" && !edicao && !admin && (
+      {tipo === "licenca" && !edicao && !admin && !emNomeDe && (
         <p role="note" className="rounded-cartao border border-linha-forte bg-painel px-4 py-2 text-sm">
           A licença é um direito seu: não precisa de aprovação. O admin recebe um aviso.
         </p>
@@ -349,7 +358,7 @@ export default function PedidoForm({
       )}
       <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={enviando || excede} className={botao}>
-          {enviando ? "A enviar..." : edicao ? "Guardar alterações" : admin ? "Marcar" : tipo === "licenca" ? "Comunicar licença" : "Submeter pedido"}
+          {enviando ? "A enviar..." : edicao ? "Guardar alterações" : admin && !emNomeDe ? "Marcar" : tipo === "licenca" ? "Comunicar licença" : "Submeter pedido"}
         </button>
         {edicao && onCancelar && (
           <button type="button" onClick={onCancelar} className={botaoSec}>

@@ -13,7 +13,10 @@ class StorePedidoRequest extends FormRequest
     {
         $chave = ['ferias' => 'pedir_ferias', 'ausencia' => 'pedir_ausencia', 'licenca' => 'pedir_licenca'][$this->input('tipo')] ?? null;
 
-        return $chave === null || (bool) $this->user()?->temPermissao($chave);
+        $porOutro = $this->input('user_id') !== null && (int) $this->input('user_id') !== $this->user()?->id;
+
+        return ($chave === null || (bool) $this->user()?->temPermissao($chave))
+            && (! $porOutro || (bool) $this->user()?->temPermissao('pedir_por_outros'));
     }
 
     protected function failedAuthorization(): void
@@ -24,6 +27,8 @@ class StorePedidoRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Só tem efeito em POST: pedir em nome de outra pessoa (D14). No PUT o dono do pedido não muda.
+            'user_id' => ['nullable', 'integer'],
             'tipo' => ['required', Rule::in(['ferias', 'ausencia', 'licenca'])],
             'subtipo' => ['nullable', Rule::in(['medica', 'documentacao', 'falta_justificada'])],
             'data_inicio' => ['required', 'date_format:Y-m-d'],

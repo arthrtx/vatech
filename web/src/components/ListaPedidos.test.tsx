@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import ListaPedidos from "./ListaPedidos";
+import type { Pedido } from "@/lib/api";
 
 afterEach(cleanup);
 
@@ -32,5 +33,27 @@ describe("ListaPedidos com formulário em janela", () => {
   it("sem formulário não há botão (lista só de leitura)", () => {
     render(<ListaPedidos pedidos={[]} />);
     expect(screen.queryByRole("button", { name: "Novo pedido" })).toBeNull();
+  });
+});
+
+describe("ListaPedidos: Ver no calendário", () => {
+  it("cada pedido tem a ligação com os dados do próprio pedido", () => {
+    const p = { id: 7, user_id: 3, tipo: "ausencia", data_inicio: "2027-08-03", data_fim: "2027-08-05", estado: "pendente" } as unknown as Pedido;
+    render(<ListaPedidos pedidos={[p]} />);
+    expect(screen.getByRole("link", { name: "Ver no calendário" }).getAttribute("href")).toBe(
+      "/calendario?simular=7&de=2027-08-03&ate=2027-08-05&tipo=ausencia&user=3",
+    );
+  });
+});
+
+describe("ListaPedidos: Criado por", () => {
+  const base = { id: 8, user_id: 3, tipo: "ausencia", data_inicio: "2027-08-03", data_fim: "2027-08-05", estado: "pendente" };
+  it("mostra a etiqueta só quando criado por outra pessoa", () => {
+    const com = { ...base, criado_por: { id: 1, nome: "Rita Admin" } } as unknown as Pedido;
+    const { unmount } = render(<ListaPedidos pedidos={[com]} />);
+    expect(screen.getByText("Criado por Rita Admin")).toBeTruthy();
+    unmount();
+    render(<ListaPedidos pedidos={[{ ...base, criado_por: null } as unknown as Pedido]} />);
+    expect(screen.queryByText(/Criado por/)).toBeNull();
   });
 });
