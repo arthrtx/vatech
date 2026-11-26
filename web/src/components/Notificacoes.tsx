@@ -6,7 +6,6 @@ import { api, type User } from "@/lib/api";
 import { carregar, detetar, guardar, type EstadoNotificacoes } from "@/lib/notificacoes";
 import { IconeSino } from "./Icones";
 
-const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 const INTERVALO = 15000;
 
 const hora = (iso: string) => {
@@ -94,7 +93,7 @@ export default function Notificacoes({ user, className }: { user: Pick<User, "id
         {naoLidas > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rosa px-1 text-[0.6875rem] font-semibold leading-none text-white"
+            className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-pill bg-accent px-1 text-2xs font-semibold leading-none text-on-accent"
           >
             {naoLidas > 9 ? "9+" : naoLidas}
           </span>
@@ -104,21 +103,21 @@ export default function Notificacoes({ user, className }: { user: Pick<User, "id
         <div
           role="dialog"
           aria-label="Notificações"
-          className="absolute right-0 top-full z-50 mt-2 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2 rounded-cartao bg-painel p-3 shadow-suave ring-1 ring-linha"
+          className="absolute right-0 top-full z-[var(--ds-z-dropdown)] mt-2 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2 rounded-lg border border-line bg-surface-1 p-3 shadow-float"
         >
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold">Notificações</p>
+            <p className="text-sm font-semibold text-text-1">Notificações</p>
             <button
               type="button"
               disabled={estado.itens.length === 0}
               onClick={() => aplicar({ ...atual.current, itens: [] })}
-              className={`min-h-9 rounded-controlo px-3 text-sm font-medium text-texto hover:bg-primaria-suave disabled:opacity-40 ${foco}`}
+              className="min-h-touch rounded-md px-3 text-sm font-medium text-text-1 hover:bg-wash disabled:opacity-40"
             >
               Limpar histórico
             </button>
           </div>
           {estado.itens.length === 0 ? (
-            <p className="px-1 py-4 text-center text-sm text-texto-suave">Sem notificações.</p>
+            <p className="px-1 py-4 text-center text-sm text-text-2">Sem notificações.</p>
           ) : (
             <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto scroll-fino">
               {estado.itens.map((n) => (
@@ -126,20 +125,18 @@ export default function Notificacoes({ user, className }: { user: Pick<User, "id
                   <button
                     type="button"
                     onClick={() => abrirNotificacao(n.id, n.href)}
-                    className={`flex w-full items-start gap-2 rounded-controlo px-3 py-2 text-left hover:bg-primaria-suave ${foco} ${
-                      n.lida ? "" : "bg-campo"
-                    }`}
+                    className={`flex min-h-touch w-full items-start gap-2 rounded-md px-3 py-2 text-left hover:bg-wash ${n.lida ? "" : "bg-surface-2"}`}
                   >
                     <span
                       aria-hidden="true"
-                      className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.lida ? "bg-transparent" : "bg-rosa"}`}
+                      className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.lida ? "bg-transparent" : "bg-accent"}`}
                     />
                     <span className="min-w-0">
-                      <span className={`block break-words text-sm ${n.lida ? "text-texto-suave" : "font-medium text-texto"}`}>
+                      <span className={`block break-words text-sm ${n.lida ? "text-text-2" : "font-medium text-text-1"}`}>
                         {n.texto}
                         {!n.lida && <span className="sr-only"> (por ler)</span>}
                       </span>
-                      <span className="block text-xs text-texto-suave">{hora(n.quando)}</span>
+                      <span className="block text-xs text-text-3">{hora(n.quando)}</span>
                     </span>
                   </button>
                 </li>

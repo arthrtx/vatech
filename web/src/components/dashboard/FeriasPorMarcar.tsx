@@ -5,7 +5,8 @@ import Link from "next/link";
 import { api, type FeriasResumo } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { diasTxt, passouPrazo, prazoTxt } from "@/lib/ferias";
-import { vidro } from "../ui";
+import { Button } from "@/design-system/primitives";
+import { Panel } from "@/design-system/layout";
 
 const MAX = 3;
 
@@ -34,29 +35,28 @@ export default function FeriasPorMarcar() {
 
   if (depois ? pessoas.length === 0 : transitados === 0) return null;
   return (
-    <section aria-label="Férias por marcar" className={`${vidro} flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-sm lg:shrink-0`}>
-      {depois ? (
-        <>
-          <h3 className="font-semibold">Férias por marcar (prazo: {prazoTxt(dados.prazo)})</h3>
-          <ul className="flex flex-wrap gap-x-4 gap-y-1">
-            {pessoas.slice(0, MAX).map((p) => (
-              <li key={p.user_id}>
-                {p.nome}: {diasTxt(p.por_marcar)}
-              </li>
-            ))}
-          </ul>
-          {pessoas.length > MAX && (
-            <Link
-              href="/funcionarios"
-              className="inline-flex min-h-10 items-center underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
-            >
-              Ver pessoas ({pessoas.length - MAX} mais)
-            </Link>
-          )}
-        </>
-      ) : (
-        <p className="text-texto-suave">Férias transitadas na equipa: {diasTxt(transitados)}.</p>
-      )}
+    <section aria-label="Férias por marcar">
+      <Panel variant="muted" padding="sm" className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-2">
+        {depois ? (
+          <>
+            <h3 className="font-semibold text-text-1">Férias por marcar (prazo: {prazoTxt(dados.prazo)})</h3>
+            <ul className="flex flex-wrap gap-x-4 gap-y-1">
+              {pessoas.slice(0, MAX).map((p) => (
+                <li key={p.user_id} className="ds-tabular">
+                  {p.nome}: {diasTxt(p.por_marcar)}
+                </li>
+              ))}
+            </ul>
+            {pessoas.length > MAX && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/funcionarios">Ver pessoas ({pessoas.length - MAX} mais)</Link>
+              </Button>
+            )}
+          </>
+        ) : (
+          <p>Férias transitadas na equipa: {diasTxt(transitados)}.</p>
+        )}
+      </Panel>
     </section>
   );
 }

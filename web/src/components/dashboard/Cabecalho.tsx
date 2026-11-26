@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PageHeader } from "@/design-system/layout";
 import { primeiroNome, saudacao } from "@/lib/saudacao";
 
 const formatoData = new Intl.DateTimeFormat("pt-PT", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-/** Saudação grande do dashboard (estilo bento): data em pílula, «Bom dia, Nome», frase-resumo e atalhos. */
+/** Cabeçalho do dashboard: data, «Bom dia, Nome», frase-resumo e atalhos (o único h1 da página). */
 export default function Cabecalho({
   nome,
   hoje,
@@ -25,17 +26,9 @@ export default function Cabecalho({
   const data = formatoData.format(new Date(`${hoje}T12:00:00`));
 
   return (
-    <section className="flex flex-col gap-6 px-1 motion-safe:animate-subir md:flex-row md:items-end md:justify-between">
-      <div className="flex min-w-0 flex-col gap-3">
-        <p className="w-fit rounded-full border border-linha bg-painel px-4 py-1.5 text-sm font-semibold text-texto">
-          {data.charAt(0).toUpperCase() + data.slice(1)}
-        </p>
-        <h1 className="text-4xl font-bold leading-[1.05] tracking-tight [overflow-wrap:anywhere] md:text-6xl">
-          {saudacao(agora)}, {primeiroNome(nome)}
-        </h1>
-        {resumo && <p className="max-w-prose text-lg">{resumo}</p>}
-      </div>
-      {acoes && <div className="flex flex-wrap gap-3 md:shrink-0">{acoes}</div>}
-    </section>
+    <div className="flex flex-col gap-2">
+      <p className="text-sm text-text-3">{data.charAt(0).toUpperCase() + data.slice(1)}</p>
+      <PageHeader title={`${saudacao(agora)}, ${primeiroNome(nome)}`} description={resumo} actions={acoes} />
+    </div>
   );
 }

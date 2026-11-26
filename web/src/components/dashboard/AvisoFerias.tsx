@@ -5,11 +5,10 @@ import Link from "next/link";
 import { api, type Limite } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { diasTxt, feriasPorMarcar, passouPrazo, prazoTxt } from "@/lib/ferias";
-import { IconeFechar } from "../Icones";
-import { erro as avisoCls } from "../ui";
+import { Button } from "@/design-system/primitives";
+import { Alert } from "@/design-system/overlays";
 
 const CHAVE_FECHADO = "vatech_aviso_ferias_fechado";
-const ligacaoCls = "inline-flex min-h-10 items-center underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
 
 /** Funcionário: aviso de férias por marcar depois do prazo e, no dashboard, as férias transitadas. */
 export default function AvisoFerias({ comTransitadas = false }: { comTransitadas?: boolean }) {
@@ -55,26 +54,24 @@ export default function AvisoFerias({ comTransitadas = false }: { comTransitadas
 
   if (!avisar && !(comTransitadas && transitados > 0)) return null;
   return (
-    <div className="flex flex-col gap-2 lg:shrink-0">
+    <div className="flex flex-col gap-3">
       {avisar && (
-        <p role="status" className={`${avisoCls} flex flex-wrap items-center gap-x-3`}>
-          <span>
-            Tem {diasTxt(porMarcar)} de férias por marcar. O prazo era {prazoTxt(dados.prazo)}.
-          </span>
-          <Link href="/calendario" className={ligacaoCls}>
-            Fazer pedido de férias
-          </Link>
-          <button
-            type="button"
-            onClick={fechar}
-            aria-label="Fechar aviso"
-            className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-rosa/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
-          >
-            <IconeFechar className="h-4 w-4" />
-          </button>
-        </p>
+        <Alert
+          tone="warning"
+          title={`Tem ${diasTxt(porMarcar)} de férias por marcar. O prazo era ${prazoTxt(dados.prazo)}.`}
+          action={
+            <>
+              <Button asChild size="sm">
+                <Link href="/calendario">Fazer pedido de férias</Link>
+              </Button>
+              <Button variant="ghost" tone="neutral" size="sm" onClick={fechar} aria-label="Fechar aviso">
+                Fechar
+              </Button>
+            </>
+          }
+        />
       )}
-      {comTransitadas && transitados > 0 && <p className="text-sm text-texto-suave">Férias transitadas: {diasTxt(transitados)}</p>}
+      {comTransitadas && transitados > 0 && <p className="text-sm text-text-2">Férias transitadas: {diasTxt(transitados)}</p>}
     </div>
   );
 }

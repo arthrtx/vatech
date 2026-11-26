@@ -8,8 +8,9 @@ import { ausenciasAdmin, maisDias } from "@/lib/dashboard";
 import { useFonte } from "@/lib/useFonte";
 import { useAuth } from "@/lib/auth";
 import PedidosAdmin from "../PedidosAdmin";
-import { acao, acaoDestaque, erro as erroCls } from "../ui";
-import { IconeAgenda, IconeFuncionarios, IconePedidos } from "../Icones";
+import { Button } from "@/design-system/primitives";
+import { Alert } from "@/design-system/overlays";
+import { IconeAgenda, IconePedidos } from "../Icones";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
 import { CartaoPresenca } from "./DashboardEstagiario";
@@ -20,7 +21,6 @@ import WidgetFeriados from "./WidgetFeriados";
 
 // Poucos itens por bloco para tudo caber no ecrã sem scroll; o resto fica atrás de «Ver ...».
 const MAX = 3;
-const ligacaoCls = "mt-1 inline-flex min-h-10 items-center self-start whitespace-nowrap rounded-full bg-primaria px-5 text-sm font-semibold text-white hover:bg-primaria-forte focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2";
 
 export default function DashboardAdmin() {
   const { user } = useAuth();
@@ -54,7 +54,7 @@ export default function DashboardAdmin() {
   const foraHoje = aus?.hoje.length;
   const resumo =
     pendentes === undefined || foraHoje === undefined ? (
-      <span className="text-texto-suave">Quem está fora, o que falta aprovar e o que vem aí.</span>
+      "Quem está fora, o que falta aprovar e o que vem aí."
     ) : (
       <>
         {foraHoje === 0 ? "Hoje está toda a equipa." : <><strong>{foraHoje}</strong> {foraHoje === 1 ? "pessoa fora" : "pessoas fora"} hoje.</>}{" "}
@@ -63,125 +63,108 @@ export default function DashboardAdmin() {
     );
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-          <Cabecalho
-            nome={user?.nome ?? ""}
-            hoje={hoje}
-            resumo={resumo}
-            acoes={
-              <>
-                <Link href="/agenda" className={acao}>
-                  <IconeAgenda className="h-4 w-4" />
-                  Agenda
-                </Link>
-                <Link href="/" className={acaoDestaque}>
-                  <IconePedidos className="h-4 w-4" />
-                  Ver pedidos
-                </Link>
-              </>
-            }
-          />
-      </div>
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="flex min-w-0 flex-col gap-4">
-      <CartaoPresenca />
-      <ul className="grid gap-4 sm:grid-cols-3">
-        <CartaoContador
-          rotulo="Pedidos pendentes"
-          valor={num(pedidos.dados?.length)}
-          aCarregar={!pedidos.erro && pedidos.dados === null}
-          ligacao={{ href: "/", texto: "Ver pedidos" }}
-          Icone={IconePedidos}
-          cor="violeta"
-        />
-        <CartaoContador
-          rotulo="Ausentes hoje"
-          valor={num(aus?.hoje.length)}
-          aCarregar={!agenda.erro && agenda.dados === null}
-          ligacao={{ href: "/agenda", texto: "Ver agenda" }}
-          Icone={IconeAgenda}
-          cor="rosa"
-        />
-        <CartaoContador
-          rotulo="Funcionários"
-          valor={num(funcionarios.dados?.length)}
-          aCarregar={!funcionarios.erro && funcionarios.dados === null}
-          ligacao={{ href: "/funcionarios", texto: "Ver funcionários" }}
-          Icone={IconeFuncionarios}
-          cor="positivo"
-        />
-      </ul>
-      <FeriasPorMarcar />
-
-      <div className="grid items-start gap-4 2xl:grid-cols-2">
-      <BlocoEstado
-        efeito="recentes"
-        titulo="Ausentes hoje e nos próximos 30 dias"
-        fonte={agenda}
-        mensagemErro="Não foi possível carregar a agenda. Verifique a ligação."
-        linhas={3}
-        vazio={() => aus !== null && aus.hoje.length === 0 && aus.proximos.length === 0}
-        vazioTitulo="Ninguém ausente nos próximos 30 dias"
-        vazioTexto="Quando houver pedidos aprovados, aparecem aqui."
-      >
-        {() => (
+    <div className="flex flex-col gap-8">
+      <Cabecalho
+        nome={user?.nome ?? ""}
+        hoje={hoje}
+        resumo={resumo}
+        acoes={
           <>
-            {grupos.map((g) => (
-              <div key={g.titulo} className="flex flex-col gap-2">
-                <h3 className="mt-2 w-fit rounded-full bg-campo px-3 py-1 text-xs font-semibold uppercase tracking-wide text-texto">
-                  {g.titulo} ({g.lista.length})
-                </h3>
-                {g.lista.length === 0 ? (
-                  <p className="text-sm text-texto-suave">{g.vazio}</p>
-                ) : (
-                  <ListaAusencias pedidos={g.lista.slice(0, MAX)} titulo="nome" comDias />
-                )}
-                {g.lista.length > MAX && (
-                  <Link href="/agenda" className={ligacaoCls}>
-                    Ver agenda ({g.lista.length - MAX} mais)
-                  </Link>
-                )}
-              </div>
-            ))}
-            <p className="text-xs text-texto-suave">Só pedidos aprovados.</p>
+            <Button asChild variant="outline" tone="neutral" leading={<IconeAgenda className="size-4" />}>
+              <Link href="/agenda">Agenda</Link>
+            </Button>
+            <Button asChild leading={<IconePedidos className="size-4" />}>
+              <Link href="/">Ver pedidos</Link>
+            </Button>
           </>
-        )}
-      </BlocoEstado>
-
-      <BlocoEstado
-        titulo="Pedidos pendentes"
-        fonte={pedidos}
-        mensagemErro="Não foi possível carregar os pedidos. Verifique a ligação."
-        linhas={2}
-        vazio={(d) => d.length === 0}
-        vazioTitulo="Sem pedidos pendentes"
-        vazioTexto="Os novos pedidos da equipa aparecem aqui para aprovar ou recusar."
-      >
-        {(d) => (
-          <>
-            {erroAcao && (
-              <p role="alert" className={erroCls}>
-                {erroAcao}
-              </p>
-            )}
-            <PedidosAdmin
-              semBusca
-              pedidos={d.slice(0, MAX)}
-              onAprovar={(id) => decidir(() => api.aprovar(id))}
-              onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
+        }
+      />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+          <CartaoPresenca />
+          <ul className="grid gap-4 sm:grid-cols-3">
+            <CartaoContador
+              rotulo="Pedidos pendentes"
+              valor={num(pedidos.dados?.length)}
+              aCarregar={!pedidos.erro && pedidos.dados === null}
+              ligacao={{ href: "/", texto: "Ver pedidos" }}
             />
-            <Link href="/" className={ligacaoCls}>
-              Ver todos os pedidos ({d.length})
-            </Link>
-          </>
-        )}
-      </BlocoEstado>
-      </div>
-      </div>
-      <aside className="flex flex-col gap-4">
-        <WidgetFeriados hoje={hoje} quantos={2} />
-      </aside>
+            <CartaoContador
+              rotulo="Ausentes hoje"
+              valor={num(aus?.hoje.length)}
+              aCarregar={!agenda.erro && agenda.dados === null}
+              ligacao={{ href: "/agenda", texto: "Ver agenda" }}
+            />
+            <CartaoContador
+              rotulo="Funcionários"
+              valor={num(funcionarios.dados?.length)}
+              aCarregar={!funcionarios.erro && funcionarios.dados === null}
+              ligacao={{ href: "/funcionarios", texto: "Ver funcionários" }}
+            />
+          </ul>
+          <FeriasPorMarcar />
+
+          <BlocoEstado
+            titulo="Ausentes hoje e nos próximos 30 dias"
+            fonte={agenda}
+            mensagemErro="Não foi possível carregar a agenda. Verifique a ligação."
+            linhas={3}
+            vazio={() => aus !== null && aus.hoje.length === 0 && aus.proximos.length === 0}
+            vazioTitulo="Ninguém ausente nos próximos 30 dias"
+            vazioTexto="Quando houver pedidos aprovados, aparecem aqui."
+          >
+            {() => (
+              <>
+                {grupos.map((g) => (
+                  <div key={g.titulo} className="flex flex-col gap-3">
+                    <h3 className="text-sm font-semibold text-text-1">
+                      {g.titulo} ({g.lista.length})
+                    </h3>
+                    {g.lista.length === 0 ? (
+                      <p className="text-sm text-text-2">{g.vazio}</p>
+                    ) : (
+                      <ListaAusencias pedidos={g.lista.slice(0, MAX)} titulo="nome" comDias />
+                    )}
+                    {g.lista.length > MAX && (
+                      <Button asChild variant="outline" tone="neutral" size="sm" className="self-start">
+                        <Link href="/agenda">Ver agenda ({g.lista.length - MAX} mais)</Link>
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <p className="text-xs text-text-3">Só pedidos aprovados.</p>
+              </>
+            )}
+          </BlocoEstado>
+
+          <BlocoEstado
+            titulo="Pedidos pendentes"
+            fonte={pedidos}
+            mensagemErro="Não foi possível carregar os pedidos. Verifique a ligação."
+            linhas={2}
+            vazio={(d) => d.length === 0}
+            vazioTitulo="Sem pedidos pendentes"
+            vazioTexto="Os novos pedidos da equipa aparecem aqui para aprovar ou recusar."
+          >
+            {(d) => (
+              <>
+                {erroAcao && <Alert tone="critical" title={erroAcao} />}
+                <PedidosAdmin
+                  semBusca
+                  pedidos={d.slice(0, MAX)}
+                  onAprovar={(id) => decidir(() => api.aprovar(id))}
+                  onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
+                />
+                <Button asChild variant="outline" tone="neutral" size="sm" className="self-start">
+                  <Link href="/">Ver todos os pedidos ({d.length})</Link>
+                </Button>
+              </>
+            )}
+          </BlocoEstado>
+        </div>
+        <aside className="flex flex-col gap-6">
+          <WidgetFeriados hoje={hoje} quantos={2} />
+        </aside>
       </div>
     </div>
   );

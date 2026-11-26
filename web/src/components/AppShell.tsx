@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import AvisoLicencas from "./AvisoLicencas";
@@ -21,28 +20,24 @@ import {
   IconeSol,
   IconeUtilizador,
 } from "./Icones";
-import Avatar from "./Avatar";
 import Notificacoes from "./Notificacoes";
 import Pesquisa from "./Pesquisa";
 import { useTema } from "@/lib/tema";
-import { botao, botaoSec } from "./ui";
+import { AppShell as Concha, MobileNav, Sidebar, SidebarGroup, SidebarItem, SidebarNav, Topbar, UserMenu } from "@/design-system/shell";
+import { ConfirmDialog } from "@/design-system/overlays";
+import { Kbd } from "@/design-system/primitives";
+import { cn } from "@/design-system/lib/cn";
 
-// Dica com o nome do item, só na barra compacta do telemóvel (no desktop o texto está visível).
-const dica =
-  "pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:hidden";
-// Dica para o avatar na barra de topo: sempre por baixo, alinhada à direita.
-const dicaAbaixo =
-  "pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-controlo bg-barra px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100";
-// Peças sólidas da barra de topo: pílulas e botões circulares com contorno fino.
-const solidoTopo = "rounded-full border border-linha-forte bg-painel text-texto";
+// Botão só com ícone da barra superior: alvo de 44px, sem contorno, realce no hover.
 const botaoTopo =
-  "group relative flex h-11 w-11 shrink-0 max-[360px]:h-9 max-[360px]:w-9 items-center justify-center hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
-// Itens da barra lateral (escura): ícone + texto no desktop, só ícone no telemóvel.
-const itemInativo = "text-white/80 hover:bg-white/10 hover:text-white";
-const botaoIcone =
-  "group relative flex h-11 w-11 shrink-0 max-[360px]:h-9 max-[360px]:w-9 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white md:w-full md:justify-start md:gap-3 md:px-4 text-sm font-medium";
-const rotuloSecao = "hidden px-4 pb-1 text-xs font-semibold uppercase tracking-wide text-white/70 md:block";
-const textoItem = "hidden md:inline";
+  "relative inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-md text-text-2 transition-colors duration-[var(--ds-motion-base)] ease-ds hover:bg-wash hover:text-text-1";
+// Linha de navegação no painel do telemóvel e botão «Sair» da barra lateral: mesmo desenho do SidebarItem.
+const linhaBase =
+  "flex min-h-touch w-full items-center gap-3 rounded-md px-3 text-md font-medium transition-colors duration-[var(--ds-motion-base)] ease-ds lg:text-sm";
+const linhaInativa = "text-text-2 hover:bg-wash hover:text-text-1";
+const linhaAtiva = "bg-accent-wash font-semibold text-accent-ink";
+
+const ID_CONTEUDO = "conteudo";
 
 export default function AppShell({
   children,
@@ -82,13 +77,6 @@ export default function AppShell({
   }, []);
 
   useEffect(() => {
-    if (!aSair) return;
-    const tecla = (e: KeyboardEvent) => e.key === "Escape" && setASair(false);
-    window.addEventListener("keydown", tecla);
-    return () => window.removeEventListener("keydown", tecla);
-  }, [aSair]);
-
-  useEffect(() => {
     const atualizar = () => setAgora(new Date());
     atualizar();
     const t = setInterval(atualizar, 15000);
@@ -102,7 +90,7 @@ export default function AppShell({
   }, [loading, user, semAcesso, router]);
 
   if (loading || !user || semAcesso) {
-    return <p className="p-6 text-texto-suave">A carregar...</p>;
+    return <p className="p-6 text-text-2">A carregar...</p>;
   }
 
   const links = [
@@ -118,185 +106,151 @@ export default function AppShell({
     links.push({ href: "/rh", texto: "RH", Icone: IconeFuncionarios });
   }
   links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });
-  const definicoes = { href: "/definicoes", texto: "Definições" };
-  const classeLink = (href: string) => `${botaoIcone} ${pathname === href ? "bg-rosa text-white" : itemInativo}`;
+  const definicoes = { href: "/definicoes", texto: "Definições", Icone: IconeDefinicoes };
 
-  const iniciais = user.nome
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("");
   const hora = agora ? new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" }).format(agora) : "";
-  const pagina = [...links, { ...definicoes, Icone: IconeDefinicoes }].find((l) => l.href === pathname);
+  const pagina = [...links, definicoes].find((l) => l.href === pathname);
   const IconePagina = pagina?.Icone;
 
+  // Navegação de cliente nas linhas do sistema (que são âncoras simples); cliques com modificador seguem o browser.
+  const irPara = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    router.push(href);
+  };
+
+  const marca = (
+    <div className="flex min-w-0 items-center gap-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-setuptech.png" alt="" className="size-9 shrink-0 rounded-md object-cover" />
+      <span className="truncate text-lg font-bold tracking-tight text-text-1">Nick Fury</span>
+    </div>
+  );
+
+  const itemLateral = ({ href, texto, Icone }: (typeof links)[number]) => (
+    <SidebarItem key={href} href={href} active={pathname === href} onClick={irPara(href)} icon={<Icone className="size-5" />}>
+      {texto}
+    </SidebarItem>
+  );
+
+  const linhaMovel = ({ href, texto, Icone }: (typeof links)[number]) => (
+    <a
+      key={href}
+      href={href}
+      aria-current={pathname === href ? "page" : undefined}
+      onClick={irPara(href)}
+      className={cn(linhaBase, pathname === href ? linhaAtiva : linhaInativa)}
+    >
+      <Icone className="size-5 shrink-0" />
+      <span className="min-w-0 truncate">{texto}</span>
+    </a>
+  );
+
+  const botaoSair = (
+    <button type="button" onClick={() => setASair(true)} className={cn(linhaBase, linhaInativa)}>
+      <IconeSair className="size-5 shrink-0" />
+      <span>Sair</span>
+    </button>
+  );
+
   return (
-    <div className={`min-h-screen bg-fundo p-0 text-texto md:p-6 ${ecraInteiro ? "lg:[@media(min-height:820px)]:h-screen lg:[@media(min-height:820px)]:overflow-hidden" : ""}`}>
-      <div
-        className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip bg-creme p-3 max-[360px]:p-2 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:border-2 md:border-texto md:p-3 ${ecraInteiro ? "lg:[@media(min-height:820px)]:h-full lg:[@media(min-height:820px)]:min-h-0" : ""}`}
+    <>
+      <a
+        href={`#${ID_CONTEUDO}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[var(--ds-z-toast)] focus:rounded-md focus:bg-surface-1 focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-text-1 focus:shadow-float"
       >
-        <aside className="relative z-30 flex max-md:flex-wrap items-center gap-3 max-[360px]:gap-1 max-[360px]:px-1.5 rounded-barra bg-barra px-3 py-2 text-white md:sticky md:top-9 md:h-[calc(100vh-5.5rem)] md:w-56 md:shrink-0 md:self-start md:flex-col md:items-stretch md:gap-4 md:overflow-y-auto md:px-3 md:pb-8 md:pt-5">
-          <div className="flex shrink-0 items-center gap-2.5 md:ml-1">
-            <p className="flex h-10 w-10 shrink-0 max-[360px]:h-8 max-[360px]:w-8 items-center justify-center rounded-controlo overflow-hidden bg-barra">
-              <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
-            </p>
-            <span className="text-lg font-bold tracking-tight max-[360px]:hidden">Nick Fury</span>
-          </div>
-          <nav aria-label="Principal" className="flex shrink-0 items-center gap-1 max-[360px]:gap-0.5 md:flex-col md:items-stretch md:gap-1">
-            <p className={rotuloSecao}>Geral</p>
-            {links.map(({ href, texto, Icone }) => (
-              <Link
-                key={href}
-                href={href}
-                aria-label={texto}
-                aria-current={pathname === href ? "page" : undefined}
-                className={classeLink(href)}
-              >
-                <Icone />
-                <span aria-hidden="true" className={textoItem}>
-                  {texto}
-                </span>
-                <span aria-hidden="true" className={dica}>
-                  {texto}
-                </span>
-              </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex shrink-0 items-center gap-1 max-[360px]:gap-0.5 md:ml-0 md:mt-auto md:flex-col md:items-stretch">
-            <p className={rotuloSecao}>Conta</p>
-            <Link
-              href={definicoes.href}
-              aria-label={definicoes.texto}
-              aria-current={pathname === definicoes.href ? "page" : undefined}
-              className={classeLink(definicoes.href)}
-            >
-              <IconeDefinicoes />
-              <span aria-hidden="true" className={textoItem}>
-                {definicoes.texto}
-              </span>
-              <span aria-hidden="true" className={dica}>
-                {definicoes.texto}
-              </span>
-            </Link>
-            <button type="button" onClick={() => setASair(true)} aria-label="Sair" className={`${botaoIcone} ${itemInativo}`}>
-              <IconeSair />
-              <span aria-hidden="true" className={textoItem}>
-                Sair
-              </span>
-              <span aria-hidden="true" className={dica}>
-                Sair
-              </span>
-            </button>
-          </div>
-        </aside>
-        <div className={`flex min-w-0 flex-1 flex-col ${ecraInteiro ? "gap-6 lg:min-h-0" : "gap-6"}`}>
-          <header className="relative z-30 flex items-center gap-3 max-[360px]:gap-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_auto] md:gap-6">
-            <div className="min-w-0">
-              {agora && (
-                <time dateTime={agora.toISOString()} className="block pl-3 text-4xl max-[360px]:text-3xl font-bold leading-none tracking-tight tabular-nums md:text-5xl">
-                  {hora}
-                </time>
-              )}
-            </div>
+        Saltar para o conteúdo
+      </a>
+      <Concha
+        className={ecraInteiro ? "lg:items-stretch lg:[@media(min-height:820px)]:h-dvh lg:[@media(min-height:820px)]:overflow-hidden" : undefined}
+        contentId={ID_CONTEUDO}
+        contentClassName={ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : undefined}
+        sidebar={
+          <Sidebar header={marca} footer={botaoSair}>
+            <SidebarNav label="Principal">
+              <SidebarGroup title="Geral">{links.map(itemLateral)}</SidebarGroup>
+              <SidebarGroup title="Conta">{itemLateral(definicoes)}</SidebarGroup>
+            </SidebarNav>
+          </Sidebar>
+        }
+        topbar={
+          <Topbar
+            leading={
+              <MobileNav label="Menu" footer={botaoSair}>
+                {marca}
+                {[...links, definicoes].map(linhaMovel)}
+              </MobileNav>
+            }
+            actions={
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPesquisaAberta(true)}
+                  aria-label="Pesquisar"
+                  aria-keyshortcuts="Control+K"
+                  title="Pesquisar (Ctrl+K)"
+                  className={cn(botaoTopo, "xl:w-56 xl:justify-start xl:gap-2 xl:border xl:border-line-strong xl:bg-surface-2 xl:px-3")}
+                >
+                  <IconePesquisa className="size-4 shrink-0" />
+                  <span aria-hidden="true" className="hidden text-sm text-text-3 xl:inline">
+                    Pesquisar
+                  </span>
+                  <Kbd aria-hidden="true" className="ml-auto hidden xl:inline-flex">
+                    Ctrl+K
+                  </Kbd>
+                </button>
+                <Notificacoes user={user} className={botaoTopo} />
+                <button
+                  type="button"
+                  aria-pressed={escuro}
+                  aria-label="Tema João"
+                  title={escuro ? "Mudar para Tema Joana" : "Mudar para Tema João"}
+                  onClick={() => definirTema(escuro ? "claro" : "escuro")}
+                  className={botaoTopo}
+                >
+                  {escuro ? <IconeSol className="size-4" /> : <IconeLua className="size-4" />}
+                </button>
+                <UserMenu
+                  name={primeiroNome(user.nome)}
+                  email={user.email}
+                  avatarUrl={user.avatar_url ?? undefined}
+                  items={[
+                    { label: "A minha conta", icon: <IconeUtilizador className="size-4" />, onSelect: () => router.push("/definicoes") },
+                    { label: "Sair", icon: <IconeSair className="size-4" />, tone: "critical", onSelect: () => setASair(true) },
+                  ]}
+                />
+              </>
+            }
+          >
             {pagina && IconePagina && (
-              <p className={`${solidoTopo} hidden items-center gap-3 py-1.5 pl-1.5 pr-6 md:flex`}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primaria-suave">
-                  <IconePagina className="h-4 w-4" />
-                </span>
-                <span className="font-semibold">{pagina.texto}</span>
+              <p className="flex shrink-0 items-center gap-2 text-md font-semibold text-text-1">
+                <IconePagina className="size-5 shrink-0 text-text-2" />
+                <span>{pagina.texto}</span>
               </p>
             )}
-            <div className="ml-auto flex items-center gap-2 max-[360px]:gap-1.5 md:justify-self-end">
-              <button
-                type="button"
-                onClick={() => setPesquisaAberta(true)}
-                aria-label="Pesquisar"
-                aria-keyshortcuts="Control+K"
-                className={`${solidoTopo} group relative flex h-11 shrink-0 items-center justify-center gap-2 hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria max-[360px]:h-9 max-[360px]:w-9 w-11 xl:w-52 xl:justify-start xl:px-4`}
-              >
-                <IconePesquisa className="h-4 w-4 shrink-0" />
-                <span aria-hidden="true" className="hidden text-sm text-texto-suave xl:inline">
-                  Pesquisar
-                </span>
-                <span aria-hidden="true" className="ml-auto hidden rounded-full bg-campo px-2 py-0.5 text-xs text-texto-suave xl:inline">
-                  Ctrl+K
-                </span>
-                <span aria-hidden="true" className={`${dicaAbaixo} xl:hidden`}>
-                  Pesquisar (Ctrl+K)
-                </span>
-              </button>
-              <Notificacoes user={user} className={`${solidoTopo} ${botaoTopo}`} />
-              <button
-                type="button"
-                aria-pressed={escuro}
-                aria-label="Tema João"
-                onClick={() => definirTema(escuro ? "claro" : "escuro")}
-                className={`${solidoTopo} ${botaoTopo}`}
-              >
-                {escuro ? <IconeSol className="h-4 w-4" /> : <IconeLua className="h-4 w-4" />}
-                <span aria-hidden="true" className={dicaAbaixo}>
-                  {escuro ? "Mudar para Tema Joana" : "Mudar para Tema João"}
-                </span>
-              </button>
-              <Link
-                href="/definicoes"
-                aria-label={`${user.nome}, a minha conta`}
-                className={`${solidoTopo} flex shrink-0 items-center gap-3 p-1 hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria sm:pr-5`}
-              >
-                {user.avatar_url ? (
-                  <Avatar nome={user.nome} id={user.id} foto={user.avatar_url} className="h-10 w-10 text-sm" />
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primaria-suave text-sm font-semibold text-primaria-forte dark:text-texto"
-                  >
-                    {iniciais || <IconeUtilizador />}
-                  </span>
-                )}
-                <span aria-hidden="true" className="hidden min-w-0 leading-tight sm:block">
-                  <span className="block max-w-40 truncate font-semibold">{primeiroNome(user.nome)}</span>
-                  <span className="block text-xs text-texto-suave">A minha conta</span>
-                </span>
-              </Link>
-            </div>
-          </header>
-          <main className={`min-w-0 flex-1 md:pr-2 ${ecraInteiro ? "lg:flex lg:min-h-0 lg:flex-col" : ""}`}>
-            {user.papel === "admin" && <AvisoLicencas />}
-            {children}
-          </main>
-        </div>
-      </div>
-      {aSair && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-barra/40 p-4" onClick={() => setASair(false)}>
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="sair-titulo"
-            aria-describedby="sair-texto"
-            className="w-full max-w-sm rounded-cartao border border-linha bg-painel p-6 shadow-suave"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="sair-titulo" className="text-xl font-bold tracking-tight">
-              Sair da conta?
-            </h2>
-            <p id="sair-texto" className="mt-2 text-sm text-texto-suave">
-              Tem a certeza de que quer terminar a sessão? Terá de iniciar sessão novamente para voltar a entrar.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button type="button" autoFocus onClick={() => setASair(false)} className={botaoSec}>
-                Ficar
-              </button>
-              <button type="button" onClick={logout} className={botao}>
-                Sim, sair
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            {agora && (
+              <time dateTime={agora.toISOString()} className="ds-tabular ml-auto hidden text-sm text-text-2 sm:block">
+                {hora}
+              </time>
+            )}
+          </Topbar>
+        }
+      >
+        {user.papel === "admin" && <AvisoLicencas />}
+        {children}
+      </Concha>
+      <ConfirmDialog
+        open={aSair}
+        onOpenChange={setASair}
+        title="Sair da conta?"
+        description="Tem a certeza de que quer terminar a sessão? Terá de iniciar sessão novamente para voltar a entrar."
+        cancelLabel="Ficar"
+        confirmLabel="Sim, sair"
+        onConfirm={logout}
+      />
       {pesquisaAberta && (
         <Pesquisa destinos={[...links, definicoes].map(({ href, texto }) => ({ href, texto }))} onFechar={fecharPesquisa} />
       )}
-    </div>
+    </>
   );
 }

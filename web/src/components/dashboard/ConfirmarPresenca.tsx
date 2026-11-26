@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { botao, botaoSec } from "../ui";
+import { Button } from "@/design-system/primitives";
 
 const formatoHora = new Intl.DateTimeFormat("pt", { hour: "2-digit", minute: "2-digit" });
 
@@ -47,7 +47,10 @@ export default function ConfirmarPresenca({
   const hora = formatoHora.format(agora);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-barra/50 p-4" onMouseDown={onCancelar}>
+    <div
+      className="fixed inset-0 z-[var(--ds-z-modal)] flex items-end justify-center bg-overlay p-4 sm:items-center"
+      onMouseDown={onCancelar}
+    >
       <div
         ref={caixa}
         role="alertdialog"
@@ -56,21 +59,23 @@ export default function ConfirmarPresenca({
         aria-describedby="conf-presenca-d"
         onKeyDown={teclas}
         onMouseDown={(e) => e.stopPropagation()}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-barra bg-painel p-6 text-texto shadow-suave"
+        className="flex w-full max-w-(--container-form) flex-col gap-6 rounded-xl border border-line bg-surface-1 p-6 shadow-float-lg"
       >
-        <h2 id="conf-presenca-t" className="text-lg font-semibold">
-          Deseja marcar {saida ? "saída" : "entrada"} às {hora}?
-        </h2>
-        <p id="conf-presenca-d" className="text-sm text-texto-suave">
-          A hora registada é a de agora.
-        </p>
-        <div className="flex flex-wrap justify-end gap-2">
-          <button type="button" className={`${botaoSec} min-h-10`} onClick={onCancelar}>
+        <div className="flex flex-col gap-2">
+          <h2 id="conf-presenca-t" className="text-md font-semibold text-text-1">
+            Deseja marcar {saida ? "saída" : "entrada"} às {hora}?
+          </h2>
+          <p id="conf-presenca-d" className="text-sm text-text-2">
+            A hora registada é a de agora.
+          </p>
+        </div>
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button variant="outline" tone="neutral" onClick={onCancelar}>
             Cancelar
-          </button>
-          <button ref={confirmar} type="button" className={`${botao} min-h-10`} onClick={onConfirmar}>
+          </Button>
+          <Button ref={confirmar} onClick={onConfirmar}>
             Confirmar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

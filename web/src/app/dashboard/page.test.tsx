@@ -96,8 +96,8 @@ describe("Dashboard admin", () => {
     expect(within(cartao("Funcionários")).getByText("3")).toBeTruthy();
     expect(screen.getByText("Hoje (2)")).toBeTruthy();
     expect(screen.getByText("Próximos 30 dias (1)")).toBeTruthy();
-    expect(screen.getByText("Licença · 2026-11-24 a 2026-12-05 · 12 dias")).toBeTruthy();
-    expect(screen.getByText("Ausência · 2026-11-19 · 1 dia")).toBeTruthy();
+    expect(screen.getByText("Licença · 24/11/2026 a 05/12/2026 · 12 dias")).toBeTruthy();
+    expect(screen.getByText("Ausência · 19/11/2026 · 1 dia")).toBeTruthy();
     expect(screen.queryByText("Pendente Longe")).toBeNull();
     expect(screen.queryByText("Fora do Intervalo")).toBeNull();
     expect(screen.queryByLabelText("Pesquisar pedidos")).toBeNull();
@@ -244,7 +244,7 @@ describe("Dashboard funcionário", () => {
     expect(screen.getByRole("heading", { name: "Os meus pedidos" })).toBeTruthy();
     expect(screen.getAllByText(/· Pendente$/).length).toBe(1);
     expect(screen.getAllByText(/· Recusado$/).length).toBe(2);
-    expect(screen.getByText(/2026-10-01 · 1 dia/)).toBeTruthy();
+    expect(screen.getByText(/01\/10\/2026 · 1 dia/)).toBeTruthy();
     expect(api.pedidos).toHaveBeenCalledWith(); // todos, sem filtro de estado
   });
 

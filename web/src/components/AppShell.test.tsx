@@ -10,7 +10,6 @@ vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana Dias"
 vi.mock("@/lib/tema", () => ({ useTema: () => ({ escuro: false, definir: vi.fn() }) }));
 vi.mock("./Notificacoes", () => ({ default: () => null }));
 vi.mock("./Pesquisa", () => ({ default: () => null }));
-vi.mock("./FundoQuente", () => ({ default: () => null, classeFundoQuente: "" }));
 
 afterEach(() => {
   cleanup();

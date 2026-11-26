@@ -63,7 +63,7 @@ export default function AvisoLicencas() {
             <button
               type="button"
               onClick={() => visto(p.id)}
-              className="min-h-10 rounded-controlo border border-linha-forte bg-painel px-4 py-2 text-sm font-medium hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
+              className="min-h-touch rounded-controlo border border-linha-forte bg-painel px-4 py-2 text-sm font-medium hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria"
             >
               Visto
             </button>
