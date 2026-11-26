@@ -79,9 +79,9 @@ function Conteudo() {
   // Presenças do intervalo (a API devolve só as próprias a quem não é admin).
   const [pres, setPres] = useState<{ chave: string; lista: Presenca[]; erro: boolean } | null>(null);
   const papel = user?.papel;
-  const veTodasPresencas = papel === "admin" || papel === "estagiario";
+  const veTodasPresencas = papel === "admin" || papel === "funcionario" || papel === "estagiario";
   useEffect(() => {
-    // O funcionário não tem presenças (a API responde 403): nem se pede.
+    // Todos os papéis marcam presença; sem papel (utilizador por carregar) nem se pede.
     if (!veTodasPresencas) return;
     let vivo = true;
     api
