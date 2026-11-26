@@ -12,6 +12,7 @@ import { acao, acaoDestaque, erro as erroCls } from "../ui";
 import { IconeAgenda, IconeFuncionarios, IconePedidos } from "../Icones";
 import BlocoEstado from "./BlocoEstado";
 import Cabecalho from "./Cabecalho";
+import { CartaoPresenca } from "./DashboardEstagiario";
 import CartaoContador from "./CartaoContador";
 import FeriasPorMarcar from "./FeriasPorMarcar";
 import ListaAusencias from "./ListaAusencias";
@@ -82,6 +83,7 @@ export default function DashboardAdmin() {
             }
           />
       </div>
+      <CartaoPresenca />
       <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
       <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:min-w-0 lg:flex-[3]">
         <CartaoContador
