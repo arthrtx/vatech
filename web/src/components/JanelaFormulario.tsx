@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { useBloquearScroll } from "@/lib/bloquearScroll";
 
 /** Janela por cima da página (fecha com Escape ou ao clicar fora). Usada para o formulário "Novo pedido". */
 export default function JanelaFormulario({ children, aoFechar, titulo }: { children: ReactNode; aoFechar: () => void; titulo: string }) {
   const caixa = useRef<HTMLDivElement>(null);
+
+  useBloquearScroll(true);
 
   useEffect(() => {
     caixa.current?.focus();

@@ -37,6 +37,7 @@ import JanelaFormulario from "./JanelaFormulario";
 import NovaMarcacao from "./NovaMarcacao";
 import PainelFiltros from "./PainelFiltros";
 import PedidoForm from "./PedidoForm";
+import { useBloquearScroll } from "@/lib/bloquearScroll";
 import Seletor from "./Seletor";
 
 const botaoSeta =
@@ -129,6 +130,7 @@ export default function Agenda({
   const [novo, setNovo] = useState<{ data: string } | null>(null);
   const [enviado, setEnviado] = useState(false);
   const [novoComp, setNovoComp] = useState<{ data: string } | null>(null);
+  useBloquearScroll(!!novo);
   const [erroComp, setErroComp] = useState<string | null>(null);
   const [mes, setMes] = useState(() => mesDe(hoje));
   useEffect(() => {
