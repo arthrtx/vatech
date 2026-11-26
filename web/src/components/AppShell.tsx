@@ -137,10 +137,12 @@ export default function AppShell({
         className={`relative isolate flex min-h-screen flex-col gap-4 overflow-clip bg-creme p-3 max-[360px]:p-2 md:min-h-[calc(100vh-3rem)] md:flex-row md:gap-6 md:rounded-painel md:border-2 md:border-texto md:p-3 ${ecraInteiro ? "lg:[@media(min-height:820px)]:h-full lg:[@media(min-height:820px)]:min-h-0" : ""}`}
       >
         <aside className="relative z-30 flex max-md:flex-wrap items-center gap-3 max-[360px]:gap-1 max-[360px]:px-1.5 rounded-barra bg-barra px-3 py-2 text-white md:sticky md:top-9 md:h-[calc(100vh-5.5rem)] md:w-56 md:shrink-0 md:self-start md:flex-col md:items-stretch md:gap-4 md:overflow-y-auto md:px-3 md:pb-8 md:pt-5">
-          <p className="flex h-10 w-10 shrink-0 max-[360px]:h-8 max-[360px]:w-8 items-center justify-center rounded-controlo overflow-hidden bg-barra md:ml-1">
-            <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
-            <span className="sr-only">Setuptech</span>
-          </p>
+          <div className="flex shrink-0 items-center gap-2.5 md:ml-1">
+            <p className="flex h-10 w-10 shrink-0 max-[360px]:h-8 max-[360px]:w-8 items-center justify-center rounded-controlo overflow-hidden bg-barra">
+              <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
+            </p>
+            <span className="text-lg font-bold tracking-tight max-[360px]:hidden">FuryNick</span>
+          </div>
           <nav aria-label="Principal" className="flex shrink-0 items-center gap-1 max-[360px]:gap-0.5 md:flex-col md:items-stretch md:gap-1">
             <p className={rotuloSecao}>Geral</p>
             {links.map(({ href, texto, Icone }) => (
