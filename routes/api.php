@@ -4,6 +4,8 @@ use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AnexoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompromissoController;
+use App\Http\Controllers\ConviteController;
+use App\Http\Controllers\DefinicoesConviteController;
 use App\Http\Controllers\FuncionarioController;
 use App\Http\Controllers\LimiteController;
 use App\Http\Controllers\OcorrenciaController;
@@ -14,7 +16,8 @@ use App\Http\Controllers\TextoController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/registo', [AuthController::class, 'registo'])->middleware('throttle:5,1');
+Route::get('/convites/{token}', [ConviteController::class, 'mostrar'])->middleware('throttle:30,1');
+Route::post('/convites/{token}/aceitar', [ConviteController::class, 'aceitar'])->middleware('throttle:10,1');
 Route::post('/email/reenviar', [AuthController::class, 'reenviarVerificacao'])->middleware('throttle:5,1');
 Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEmail'])->name('verification.verify');
 Route::post('/esqueci-password', [AuthController::class, 'esqueciPassword'])->middleware('throttle:5,1');
@@ -39,10 +42,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('papel:admin')->group(function () {
         Route::put('/limites', [LimiteController::class, 'update']);
+        Route::get('/definicoes/convite', [DefinicoesConviteController::class, 'show']);
+        Route::put('/definicoes/convite', [DefinicoesConviteController::class, 'update']);
         Route::get('/ferias-resumo', [LimiteController::class, 'feriasResumo']);
         Route::post('/pontes', [PonteController::class, 'store']);
         Route::delete('/pontes/{id}', [PonteController::class, 'destroy']);
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
+        Route::post('/funcionarios/{id}/aprovar', [FuncionarioController::class, 'aprovar']);
+        Route::post('/funcionarios/{id}/recusar', [FuncionarioController::class, 'recusar']);
+        Route::get('/funcionarios/convites', [ConviteController::class, 'index']);
+        Route::post('/funcionarios/convites', [ConviteController::class, 'store'])->middleware('throttle:20,1');
+        Route::post('/funcionarios/convites/{id}/reenviar', [ConviteController::class, 'reenviar'])->middleware('throttle:20,1');
+        Route::delete('/funcionarios/convites/{id}', [ConviteController::class, 'destroy']);
         Route::post('/pedidos/{id}/aprovar', [PedidoController::class, 'aprovar']);
         Route::post('/pedidos/{id}/visto', [PedidoController::class, 'visto']);
         Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);

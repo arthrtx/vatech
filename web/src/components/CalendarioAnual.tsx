@@ -14,6 +14,7 @@ import CampoBusca from "./CampoBusca";
 import { IconeDescarregar, IconeSeta } from "./Icones";
 import EscolhaCorFerias, { corDaChave, paleta } from "./EscolhaCorFerias";
 import PedidoForm from "./PedidoForm";
+import { useBloquearScroll } from "@/lib/bloquearScroll";
 import { botao, botaoSec, erro as erroCls } from "./ui";
 
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-1";
@@ -81,6 +82,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
   const [aberto, setAberto] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [novo, setNovo] = useState(false);
+  useBloquearScroll(novo);
   const [enviado, setEnviado] = useState(false);
   const { user } = useAuth();
   // Arrasto para marcar férias: só na linha da própria pessoa (e nunca estagiário).

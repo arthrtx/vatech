@@ -105,3 +105,15 @@
 - Aiven MySQL grátis: deixou de aceitar serviços novos em novembro de 2026.
 
 **Consequências:** a API adormece após 15 minutos sem pedidos e o primeiro pedido a seguir demora cerca de um minuto. O disco do Render apaga-se a cada arranque, por isso as fotos de perfil guardadas no disco perdem-se até passarem para a base de dados ou para um armazenamento externo. O TiDB não suporta procedimentos guardados nem triggers (o vatech não usa).
+
+## D9: Contas por convite do admin com aprovação
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** o auto-registo (#89) deixava qualquer pessoa criar conta. O admin quer controlar quem entra.
+
+**Decisão:** o admin convida (nome, email, papel). O convidado abre o link, define a palavra-passe e aceita os termos; a conta nasce `pendente` e só entra depois de o admin a aprovar. Convite com token de uso único e 7 dias. O link também aparece ao admin porque produção ainda não tem SMTP. O texto do formulário é editável por empresa em Definições. Utilizadores existentes ficam `aprovado`.
+
+**Alternativas consideradas:** manter o registo público com aprovação (rejeitada: o admin quer partir do email que conhece); aprovar já ao aceitar o convite (rejeitada: o admin pediu o passo de autorização).
+
+**Consequências:** sem SMTP em produção (`MAIL_*`) o email não chega e o admin copia o link. Em dev os emails caem no Mailpit (`docker compose`, http://localhost:8025).

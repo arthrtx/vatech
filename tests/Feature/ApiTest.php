@@ -244,10 +244,10 @@ it('devolve os erros de validacao em portugues', function () {
         ->assertJsonPath('errors.email.0', 'O campo email é obrigatório.');
 
     $admin = User::factory()->admin()->create();
-    $this->postJson('/api/registo', ['nome' => 'A', 'email' => $admin->email, 'password' => 'curta'])
+    Sanctum::actingAs($admin);
+    $this->postJson('/api/funcionarios/convites', ['nome' => 'A', 'email' => $admin->email])
         ->assertStatus(422)
-        ->assertJsonPath('errors.email.0', 'Já existe um registo com este email.')
-        ->assertJsonPath('errors.password.0', 'O campo palavra-passe tem de ter pelo menos 8 caracteres.');
+        ->assertJsonPath('errors.email.0', 'Já existe um registo com este email.');
 });
 
 it('devolve as mensagens de erro do framework em portugues', function () {

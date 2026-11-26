@@ -475,49 +475,186 @@ function LimitesDias() {
   );
 }
 
+const MAX_TEXTO_CONVITE = 1000;
+
+function TextoConvite() {
+  const [texto, setTexto] = useState("");
+  const [inicial, setInicial] = useState("");
+  const [predefinido, setPredefinido] = useState(true);
+  const [carregado, setCarregado] = useState(false);
+  const [erroCarga, setErroCarga] = useState<string | null>(null);
+  const [aRepor, setARepor] = useState(false);
+  const [erroRepor, setErroRepor] = useState<string | null>(null);
+  const { erros, erroGeral, ok, enviando, submeter, desc, limparOk } = useEnvio(async () => {
+    aplicar(await api.guardarTextoConvite(texto.trim() === "" ? null : texto));
+  });
+
+  function aplicar(r: { texto: string; predefinido: boolean }) {
+    setTexto(r.texto);
+    setInicial(r.texto);
+    setPredefinido(r.predefinido);
+  }
+
+  useEffect(() => {
+    let ativo = true;
+    api
+      .textoConvite()
+      .then((r) => {
+        if (!ativo) return;
+        aplicar(r);
+        setCarregado(true);
+      })
+      .catch((err) => ativo && setErroCarga(mensagemDeErro(err)));
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  async function repor() {
+    setErroRepor(null);
+    limparOk();
+    setARepor(true);
+    try {
+      aplicar(await api.guardarTextoConvite(null));
+    } catch (err) {
+      setErroRepor(mensagemDeErro(err));
+    } finally {
+      setARepor(false);
+    }
+  }
+
+  const sujo = texto !== inicial;
+  return (
+    <form onSubmit={(e) => submeter(e)} noValidate aria-labelledby="def-texto-convite" className={cartao}>
+      <div>
+        <FormaCanto tom="pessego" />
+        <h2 id="def-texto-convite" className="text-xl font-bold tracking-tight">
+          Texto do convite
+        </h2>
+        <p className="text-sm text-texto-suave">Mensagem mostrada a quem recebe um convite, no topo da página de criação de conta.</p>
+      </div>
+      {erroCarga && (
+        <p role="alert" className={erroCls}>
+          {erroCarga}
+        </p>
+      )}
+      <Campo id="texto_convite" rotulo="Mensagem" erros={erros.texto}>
+        <textarea
+          id="texto_convite"
+          data-campo="texto"
+          rows={5}
+          maxLength={MAX_TEXTO_CONVITE}
+          disabled={!carregado}
+          className={input}
+          value={texto}
+          aria-invalid={!!erros.texto}
+          aria-describedby={desc("texto") ? "texto_convite-erro" : undefined}
+          onChange={(e) => {
+            setTexto(e.target.value);
+            limparOk();
+          }}
+        />
+        <p className="mt-1 text-sm text-texto-suave">
+          {texto.length}/{MAX_TEXTO_CONVITE} caracteres{predefinido ? " · texto predefinido" : ""}
+        </p>
+      </Campo>
+      {erroRepor && (
+        <p role="alert" className={erroCls}>
+          {erroRepor}
+        </p>
+      )}
+      <Rodape erroGeral={erroGeral} ok={ok} enviando={enviando} sujo={sujo} />
+      <div>
+        <button type="button" disabled={!carregado || aRepor || enviando} className={botaoSec} onClick={() => void repor()}>
+          {aRepor ? "A repor..." : "Repor predefinido"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function Conteudo() {
   const { user, atualizarUser } = useAuth();
+  const [separador, setSeparador] = useState<"conta" | "geral">("conta");
   if (!user) return null;
+  const admin = user.papel === "admin";
+  const aba = admin ? separador : "conta";
+
+  const colunaConta = (
+    <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+      <div className="flex min-w-0 flex-col gap-6">
+        <FotoPerfil user={user} atualizarUser={atualizarUser} />
+        <DadosConta user={user} atualizarUser={atualizarUser} />
+      </div>
+      <div className="flex min-w-0 flex-col gap-6">
+        <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />
+        <section aria-labelledby="def-aparencia" className={cartao}>
+          <div>
+            <FormaCanto tom="violeta" baixo />
+            <h2 id="def-aparencia" className="text-xl font-bold tracking-tight">
+              Aparência
+            </h2>
+            <p className="text-sm text-texto-suave">
+              Claro, escuro ou igual ao sistema. Também podes trocar no botão da lua, ao lado da pesquisa.
+            </p>
+          </div>
+          <EscolhaTema />
+        </section>
+        <section aria-labelledby="def-localidade" className={cartao}>
+          <div>
+            <FormaCanto tom="rosa" />
+            <h2 id="def-localidade" className="text-xl font-bold tracking-tight">
+              Localidade
+            </h2>
+            <p className="text-sm text-texto-suave">
+              Escolhe o concelho para a Agenda mostrar o feriado municipal. Fica guardado neste navegador.
+            </p>
+          </div>
+          <EscolhaLocalidade />
+        </section>
+        {user.papel === "estagiario" && <DatasEstagio user={user} atualizarUser={atualizarUser} />}
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="titulo-bento">Definições</h1>
-      {/* Duas colunas que se enchem de forma independente, para não ficarem buracos entre cartões. */}
-      <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-6">
-          <FotoPerfil user={user} atualizarUser={atualizarUser} />
-          <DadosConta user={user} atualizarUser={atualizarUser} />
+      {admin && (
+        <div role="tablist" aria-label="Secções das definições" className="flex gap-2">
+          {(
+            [
+              ["conta", "Configurações da conta"],
+              ["geral", "Geral"],
+            ] as const
+          ).map(([id, nome]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              id={`separador-${id}`}
+              aria-selected={aba === id}
+              aria-controls={`painel-${id}`}
+              className={aba === id ? botao : botaoSec}
+              onClick={() => setSeparador(id)}
+            >
+              {nome}
+            </button>
+          ))}
         </div>
-        <div className="flex min-w-0 flex-col gap-6">
-          <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />
-          <section aria-labelledby="def-aparencia" className={cartao}>
-            <div>
-              <FormaCanto tom="violeta" baixo />
-              <h2 id="def-aparencia" className="text-xl font-bold tracking-tight">
-                Aparência
-              </h2>
-              <p className="text-sm text-texto-suave">
-                Claro, escuro ou igual ao sistema. Também podes trocar no botão da lua, ao lado da pesquisa.
-              </p>
-            </div>
-            <EscolhaTema />
-          </section>
-          <section aria-labelledby="def-localidade" className={cartao}>
-            <div>
-              <FormaCanto tom="rosa" />
-              <h2 id="def-localidade" className="text-xl font-bold tracking-tight">
-                Localidade
-              </h2>
-              <p className="text-sm text-texto-suave">
-                Escolhe o concelho para a Agenda mostrar o feriado municipal. Fica guardado neste navegador.
-              </p>
-            </div>
-            <EscolhaLocalidade />
-          </section>
-          {user.papel === "estagiario" && <DatasEstagio user={user} atualizarUser={atualizarUser} />}
-          {user.papel === "admin" && <LimitesDias />}
+      )}
+      {aba === "conta" ? (
+        <div role={admin ? "tabpanel" : undefined} id="painel-conta" aria-labelledby={admin ? "separador-conta" : undefined}>
+          {colunaConta}
         </div>
-      </div>
+      ) : (
+        <div role="tabpanel" id="painel-geral" aria-labelledby="separador-geral" className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-6">
+            <LimitesDias />
+            <TextoConvite />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

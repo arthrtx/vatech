@@ -10,7 +10,7 @@ vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: Re
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user, atualizarUser }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
-  return { ...real, api: { editarPerfil: vi.fn(), limites: vi.fn(), guardarLimites: vi.fn() } };
+  return { ...real, api: { editarPerfil: vi.fn(), limites: vi.fn(), guardarLimites: vi.fn(), textoConvite: vi.fn().mockResolvedValue({ texto: "Bem-vindo.", predefinido: true }), guardarTextoConvite: vi.fn() } };
 });
 
 afterEach(() => {
@@ -220,6 +220,7 @@ describe("Limites de dias úteis por ano", () => {
   const comoAdmin = () => {
     user = { ...user, papel: "admin" };
     vi.mocked(api.limites).mockResolvedValue({ limites: lista, prazo_ferias: "2026-04-30" });
+    vi.mocked(api.textoConvite).mockResolvedValue({ texto: "Bem-vindo.", predefinido: true });
   };
   afterEach(() => {
     user = { ...user, papel: "funcionario" };
@@ -239,6 +240,7 @@ describe("Limites de dias úteis por ano", () => {
       { tipo: "licenca", dias_ano: 5, transitados: 0, usados: 0 },
     ]);
     render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
     const f = await screen.findByRole("form", { name: "Limites de dias úteis por ano" });
     await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
     expect((within(f).getByLabelText("Ausência") as HTMLInputElement).value).toBe("");
@@ -258,9 +260,59 @@ describe("Limites de dias úteis por ano", () => {
     comoAdmin();
     vi.mocked(api.guardarLimites).mockRejectedValue(new ApiError(500, "Falhou."));
     render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
     const f = await screen.findByRole("form", { name: "Limites de dias úteis por ano" });
     await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
     fireEvent.change(within(f).getByLabelText("Férias"), { target: { value: "" } });
+    fireEvent.click(guardar(f));
+    await within(f).findByText("Falhou.");
+  });
+
+  it("separa as definições do admin em conta e geral", async () => {
+    comoAdmin();
+    render(<DefinicoesPage />);
+    expect(await screen.findByRole("tab", { name: "Configurações da conta" })).toBeTruthy();
+    expect(screen.queryByRole("form", { name: "Limites de dias úteis por ano" })).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Geral" }));
+    expect(await screen.findByRole("form", { name: "Limites de dias úteis por ano" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Aparência" })).toBeNull();
+  });
+
+  it("texto do convite: carrega, edita e guarda", async () => {
+    comoAdmin();
+    vi.mocked(api.guardarTextoConvite).mockResolvedValue({ texto: "Olá equipa.", predefinido: false });
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    const f = await screen.findByRole("form", { name: "Texto do convite" });
+    await waitFor(() => expect((within(f).getByLabelText("Mensagem") as HTMLTextAreaElement).value).toBe("Bem-vindo."));
+    expect(guardar(f).disabled).toBe(true);
+    fireEvent.change(within(f).getByLabelText("Mensagem"), { target: { value: "Olá equipa." } });
+    fireEvent.click(guardar(f));
+    await within(f).findByText("Dados guardados.");
+    expect(api.guardarTextoConvite).toHaveBeenCalledWith("Olá equipa.");
+  });
+
+  it("texto do convite: repor predefinido envia null e mostra o texto do servidor", async () => {
+    comoAdmin();
+    vi.mocked(api.textoConvite).mockResolvedValue({ texto: "Personalizado.", predefinido: false });
+    vi.mocked(api.guardarTextoConvite).mockResolvedValue({ texto: "Bem-vindo.", predefinido: true });
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    const f = await screen.findByRole("form", { name: "Texto do convite" });
+    await waitFor(() => expect((within(f).getByLabelText("Mensagem") as HTMLTextAreaElement).value).toBe("Personalizado."));
+    fireEvent.click(within(f).getByRole("button", { name: "Repor predefinido" }));
+    await waitFor(() => expect((within(f).getByLabelText("Mensagem") as HTMLTextAreaElement).value).toBe("Bem-vindo."));
+    expect(api.guardarTextoConvite).toHaveBeenCalledWith(null);
+  });
+
+  it("texto do convite: mostra o erro do servidor ao guardar", async () => {
+    comoAdmin();
+    vi.mocked(api.guardarTextoConvite).mockRejectedValue(new ApiError(500, "Falhou."));
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    const f = await screen.findByRole("form", { name: "Texto do convite" });
+    await waitFor(() => expect((within(f).getByLabelText("Mensagem") as HTMLTextAreaElement).value).toBe("Bem-vindo."));
+    fireEvent.change(within(f).getByLabelText("Mensagem"), { target: { value: "x" } });
     fireEvent.click(guardar(f));
     await within(f).findByText("Falhou.");
   });
