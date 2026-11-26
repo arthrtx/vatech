@@ -1,7 +1,12 @@
-import { datasDoAno } from "./feriados";
+import { datasDoAno, versaoFeriados } from "./feriados";
 
 const feriadosPorAno = new Map<number, Set<string>>();
+let versaoVista = -1;
 function feriadosNacionais(ano: number): Set<string> {
+  if (versaoVista !== versaoFeriados()) {
+    feriadosPorAno.clear(); // chegaram feriados da API
+    versaoVista = versaoFeriados();
+  }
   let s = feriadosPorAno.get(ano);
   if (!s) {
     s = new Set(datasDoAno(ano).filter((d) => d.tipo === "feriado").map((d) => d.iso));

@@ -9,6 +9,7 @@ import { tipos } from "@/lib/rotulos";
 import { temPermissao } from "@/lib/permissoes";
 import CampoAnexos from "./CampoAnexos";
 import { diasUteis } from "@/lib/diasUteis";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import CampoData from "./CampoData";
 import PedidoPessoaCampo from "./PedidoPessoaCampo";
 import Seletor from "./Seletor";
@@ -84,6 +85,7 @@ export default function PedidoForm({
   // não há saldo local fiável, a validação fica toda no servidor.
   const limite = emNomeDe ? undefined : limites.find((l) => l.tipo === tipo);
   const ano = hoje.slice(0, 4);
+  useFeriadosDoAno(Number(ano), Number((inicio || hoje).slice(0, 4)), Number((fim || hoje).slice(0, 4)));
   // Ao editar um pedido do mesmo tipo, os seus dias já estão em «usados».
   const proprios = pedido && pedido.tipo === tipo && pedido.estado !== "recusado" ? diasUteis(pedido.data_inicio, pedido.data_fim) : 0;
   const usados = limite ? Math.max(0, limite.usados - proprios) : 0;

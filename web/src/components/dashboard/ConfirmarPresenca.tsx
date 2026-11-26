@@ -20,9 +20,8 @@ export default function ConfirmarPresenca({
   const confirmar = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const anterior = document.activeElement as HTMLElement | null;
+    // O foco volta ao botão de presença pelo cartão (o botão ainda está disabled quando isto desmonta).
     confirmar.current?.focus();
-    return () => anterior?.focus?.();
   }, []);
 
   function teclas(e: React.KeyboardEvent) {

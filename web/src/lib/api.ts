@@ -79,9 +79,25 @@ export interface User {
   /** Só estagiários: datas do estágio (Y-m-d). */
   estagio_inicio?: string | null;
   estagio_fim?: string | null;
-  /** Só estagiários: horário de almoço (HH:MM, hora de Lisboa). */
-  almoco_inicio?: string | null;
-  almoco_fim?: string | null;
+}
+
+/** Horário de um dia de trabalho (HH:MM, hora de Lisboa); almoço = início + duração em minutos. */
+export interface Horario {
+  entrada: string;
+  saida: string;
+  almoco_inicio: string;
+  almoco_min: number;
+}
+
+/** Horário de uma pessoa: campos null seguem a empresa; `efectivo` é o que vale. */
+export interface HorarioPessoa {
+  user_id: number;
+  nome: string;
+  entrada: string | null;
+  saida: string | null;
+  almoco_inicio: string | null;
+  almoco_min: number | null;
+  efectivo: Horario;
 }
 
 /** Marcação de presença do dia; entrada/saida em ISO8601, hora do servidor. */
@@ -386,8 +402,13 @@ export const api = {
     f.append("avatar", ficheiro);
     return (await request<{ user: User }>("POST", "/me/avatar", f)).user;
   },
-  definirAlmoco: async (b: { almoco_inicio: string | null; almoco_fim: string | null }) =>
-    (await request<{ user: User }>("PUT", "/me/almoco", b)).user,
+  getHorario: async () => (await request<{ data: { empresa: Horario; meu: Horario } }>("GET", "/horario")).data,
+  definirHorarioEmpresa: async (b: Horario) => (await request<{ data: Horario }>("PUT", "/definicoes/horario", b)).data,
+  horarios: async () => (await request<{ data: HorarioPessoa[] }>("GET", "/definicoes/horarios")).data,
+  definirHorarioPessoa: async (
+    id: number,
+    b: { entrada: string | null; saida: string | null; almoco_inicio: string | null; almoco_min: number | null },
+  ) => (await request<{ data: HorarioPessoa }>("PUT", `/definicoes/horarios/${id}`, b)).data,
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
   convites: {
     listar: async () => (await request<{ data: Convite[] }>("GET", "/funcionarios/convites")).data,

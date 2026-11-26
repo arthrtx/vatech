@@ -14,7 +14,7 @@ import { botao, botaoSec, erro as erroCls, label, vidro } from "@/components/ui"
 import { api, mensagemDeErro, type Ocorrencia, type Presenca, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { rotuloMotivo, rotuloTipo } from "@/lib/ocorrencias";
-import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
+import { agruparPorDia, dataPt, duracaoTexto, textoPeriodo } from "@/lib/presencas";
 
 type Res = { chave: string; linhas: Presenca[]; erro: string | null };
 
@@ -79,9 +79,7 @@ function Conteudo() {
   const atual = res?.chave === chave ? res : null;
   const aCarregar = valido && !atual;
   const erro = atual?.erro ?? null;
-  const linhas = [...(atual?.linhas ?? [])].sort(
-    (a, b) => b.data.localeCompare(a.data) || (a.user?.nome ?? "").localeCompare(b.user?.nome ?? ""),
-  );
+  const linhas = agruparPorDia(atual?.linhas ?? []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -101,7 +99,7 @@ function Conteudo() {
         </div>
       </div>
       <section aria-label="Horário de almoço" className={`${vidro} p-4`}>
-        <HorarioAlmoco onGuardado={() => setVolta((v) => v + 1)} />
+        <HorarioAlmoco />
       </section>
       {podeOcorrencias && comunicar && (
         <RegistarOcorrencia
@@ -175,7 +173,7 @@ function Conteudo() {
       )}
       {linhas.length > 0 && (
         <div className={`${vidro} overflow-x-auto p-3`}>
-          <table className="w-full min-w-[32rem] text-left text-sm">
+          <table className="w-full text-left text-sm">
             <caption className="sr-only">Horas por dia</caption>
             <thead>
               <tr className="text-texto-suave">
@@ -188,31 +186,36 @@ function Conteudo() {
                   Dia
                 </th>
                 <th scope="col" className={th}>
-                  Entrada
+                  Total do dia
                 </th>
                 <th scope="col" className={th}>
-                  Saída
-                </th>
-                <th scope="col" className={th}>
-                  Total
+                  Períodos
                 </th>
               </tr>
             </thead>
             <tbody>
-              {linhas.map((p) => (
-                <tr key={p.id} className="border-t border-linha">
-                  {admin && <td className="px-3 py-3 font-medium">{p.user?.nome ?? `#${p.user_id}`}</td>}
-                  <td className={td}>
-                    {dataPt(p.data)}
-                    {p.atrasada && (
-                      <span className="ml-2 rounded-full border border-linha-forte px-2.5 py-0.5 text-xs text-texto-suave">
-                        Atrasada
-                      </span>
-                    )}
+              {linhas.map((g) => (
+                <tr key={g.chave} className="border-t border-linha align-top">
+                  {admin && <td className="px-3 py-3 font-medium">{g.user?.nome ?? `#${g.user_id}`}</td>}
+                  <td className={td}>{dataPt(g.data)}</td>
+                  <td className={`${td} font-medium`}>
+                    {duracaoTexto(g.minutos)}
+                    {g.emCurso && <span className="block text-xs font-normal text-texto-suave">+ período em curso</span>}
                   </td>
-                  <td className={td}>{horaDe(p.entrada)}</td>
-                  <td className={td}>{horaDe(p.saida) || "Em curso"}</td>
-                  <td className={td}>{totalHoras(p) || "-"}</td>
+                  <td className={td}>
+                    <ul className="flex flex-col gap-1">
+                      {g.periodos.map((p) => (
+                        <li key={p.id}>
+                          {textoPeriodo(p)}
+                          {p.atrasada && (
+                            <span className="ml-2 rounded-full border border-linha-forte px-2.5 py-0.5 text-xs text-texto-suave">
+                              Atrasada
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
                 </tr>
               ))}
             </tbody>

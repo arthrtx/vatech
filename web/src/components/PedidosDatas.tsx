@@ -2,9 +2,11 @@ import type { Pedido } from "@/lib/api";
 import { horasDoPedido } from "@/lib/agenda";
 import { diasUteis } from "@/lib/diasUteis";
 import { formatarData } from "@/lib/rotulos";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 
 /** Período do pedido e nº de dias úteis; igual nos cartões dos dois blocos. */
 export default function PedidosDatas({ pedido: p }: { pedido: Pedido }) {
+  useFeriadosDoAno(Number(p.data_inicio.slice(0, 4)), Number(p.data_fim.slice(0, 4)));
   const dias = diasUteis(p.data_inicio.slice(0, 10), p.data_fim.slice(0, 10));
   const horas = horasDoPedido(p);
   return (

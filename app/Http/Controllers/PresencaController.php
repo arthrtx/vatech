@@ -4,74 +4,53 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePresencaAtrasadaRequest;
 use App\Models\Presenca;
-use Illuminate\Database\UniqueConstraintViolationException;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PresencaController extends Controller
 {
     public function hoje(Request $request): JsonResponse
     {
-        return response()->json(['data' => $this->doDia($request)?->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()]);
+        return response()->json(['data' => $this->doDia($request)?->load(Presenca::RELACOES)->toContrato()]);
     }
 
     public function entrada(Request $request): JsonResponse
     {
-        abort_if($this->doDia($request), 422, 'Já marcou a entrada hoje.');
+        $presenca = $this->sobBloqueio($request, function () use ($request) {
+            abort_if($this->aberta($request), 422, 'Já tem uma entrada aberta. Marque primeiro a saída.');
 
-        try {
-            $presenca = Presenca::create(['user_id' => $request->user()->id, 'data' => $this->diaLocal(), 'entrada' => now()]);
-        } catch (UniqueConstraintViolationException) {
-            // Duplo clique ou pedidos em simultâneo: a segunda marcação não passa.
-            abort(422, 'Já marcou a entrada hoje.');
-        }
+            return Presenca::create(['user_id' => $request->user()->id, 'data' => $this->diaLocal(), 'entrada' => now()]);
+        });
 
-        return response()->json(['data' => $presenca->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()], 201);
+        return response()->json(['data' => $presenca->load(Presenca::RELACOES)->toContrato()], 201);
     }
 
     public function saida(Request $request): JsonResponse
     {
-        $presenca = $this->doDia($request);
-        abort_if(! $presenca, 422, 'Marque primeiro a entrada.');
-        abort_if($presenca->saida, 422, 'Já marcou a saída hoje.');
+        $presenca = $this->sobBloqueio($request, function () use ($request) {
+            $aberta = $this->aberta($request);
+            abort_if(! $aberta, 422, 'Marque primeiro a entrada.');
+            $aberta->update(['saida' => now()]);
 
-        $presenca->update(['saida' => now()]);
+            return $aberta;
+        });
 
-        return response()->json(['data' => $presenca->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()]);
-    }
-
-    /** O estagiário define (ou apaga, com os dois campos vazios) o seu horário de almoço. */
-    public function almoco(Request $request): JsonResponse
-    {
-        $dados = $request->validate([
-            'almoco_inicio' => ['nullable', 'date_format:H:i', 'required_with:almoco_fim'],
-            'almoco_fim' => ['nullable', 'date_format:H:i', 'required_with:almoco_inicio', 'after:almoco_inicio'],
-        ], [
-            'almoco_fim.after' => 'O fim do almoço tem de ser depois do início.',
-            'almoco_inicio.required_with' => 'Indique a hora de início do almoço.',
-            'almoco_fim.required_with' => 'Indique a hora de fim do almoço.',
-        ]);
-        $user = $request->user();
-        $user->update(['almoco_inicio' => $dados['almoco_inicio'] ?? null, 'almoco_fim' => $dados['almoco_fim'] ?? null]);
-
-        return response()->json(['user' => $user->fresh()->toContrato()]);
+        return response()->json(['data' => $presenca->load(Presenca::RELACOES)->toContrato()]);
     }
 
     public function atrasada(StorePresencaAtrasadaRequest $request): JsonResponse
     {
-        try {
-            $presenca = Presenca::create([
-                'user_id' => $request->user()->id,
-                'data' => $request->input('data'),
-                'entrada' => $request->instante('entrada'),
-                'saida' => $request->instante('saida'),
-                'atrasada' => true,
-            ]);
-        } catch (UniqueConstraintViolationException) {
-            abort(422, 'Já existe presença nesse dia.');
-        }
+        $presenca = Presenca::create([
+            'user_id' => $request->user()->id,
+            'data' => $request->input('data'),
+            'entrada' => $request->instante('entrada'),
+            'saida' => $request->instante('saida'),
+            'atrasada' => true,
+        ]);
 
-        return response()->json(['data' => $presenca->load('user:id,nome,almoco_inicio,almoco_fim')->toContrato()], 201);
+        return response()->json(['data' => $presenca->load(Presenca::RELACOES)->toContrato()], 201);
     }
 
     public function index(Request $request): JsonResponse
@@ -83,7 +62,7 @@ class PresencaController extends Controller
             'user_id' => ['nullable', 'integer'],
         ]);
 
-        $query = Presenca::with('user:id,nome,almoco_inicio,almoco_fim')->latest('data')->latest('id');
+        $query = Presenca::with(Presenca::RELACOES)->orderByDesc('data')->orderByDesc('entrada')->orderByDesc('id');
 
         if ($user->temPermissao('ver_presencas_empresa')) {
             $query->whereHas('user', fn ($q) => $q->where('empresa_id', $user->empresa_id));
@@ -103,9 +82,29 @@ class PresencaController extends Controller
         return response()->json(['data' => $query->get()->map->toContrato()->values()]);
     }
 
+    /** O período aberto (de um dia anterior, se o turno atravessou a meia-noite) ou o último do dia; o ecrã decide entre entrada e saída. */
     private function doDia(Request $request): ?Presenca
     {
-        return Presenca::where('user_id', $request->user()->id)->where('data', $this->diaLocal())->first();
+        return $this->aberta($request)
+            ?? Presenca::where('user_id', $request->user()->id)->where('data', $this->diaLocal())
+                ->orderByDesc('entrada')->orderByDesc('id')->first();
+    }
+
+    /** O período aberto mais recente da pessoa, de qualquer dia: um turno pode atravessar a meia-noite. */
+    private function aberta(Request $request): ?Presenca
+    {
+        return Presenca::where('user_id', $request->user()->id)->whereNull('saida')
+            ->orderByDesc('entrada')->orderByDesc('id')->first();
+    }
+
+    /** Transação com a linha da pessoa trancada: dois cliques em simultâneo não criam dois períodos abertos. */
+    private function sobBloqueio(Request $request, callable $fazer): Presenca
+    {
+        return DB::transaction(function () use ($request, $fazer) {
+            User::whereKey($request->user()->id)->lockForUpdate()->first();
+
+            return $fazer();
+        });
     }
 
     // O dia da presença é o dia em Lisboa (o servidor corre em UTC), igual ao que o utilizador vê.

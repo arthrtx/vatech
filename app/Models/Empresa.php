@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['nome', 'texto_convite', 'permissoes'])]
+#[Fillable(['nome', 'texto_convite', 'permissoes', 'horario_entrada', 'horario_saida', 'almoco_inicio', 'almoco_minutos'])]
 class Empresa extends Model
 {
     use HasFactory;
@@ -74,6 +74,17 @@ class Empresa extends Model
     protected function casts(): array
     {
         return ['permissoes' => 'array'];
+    }
+
+    /** @return array{entrada:string,saida:string,almoco_inicio:string,almoco_min:int} */
+    public function horario(): array
+    {
+        return [
+            'entrada' => substr($this->horario_entrada, 0, 5),
+            'saida' => substr($this->horario_saida, 0, 5),
+            'almoco_inicio' => substr($this->almoco_inicio, 0, 5),
+            'almoco_min' => (int) $this->almoco_minutos,
+        ];
     }
 
     public function textoConvite(): string

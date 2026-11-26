@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Services\FeriadosService;
 use Carbon\CarbonImmutable;
 
 /**
@@ -27,8 +28,14 @@ class LimiteFerias
         return $total;
     }
 
-    /** Feriados nacionais obrigatorios (Codigo do Trabalho, art. 234.o), como datas Y-m-d. */
+    /** Feriados nacionais obrigatorios como datas Y-m-d: Nager.Date (D17) com fallback ao calculo local. */
     public static function feriadosNacionais(int $ano): array
+    {
+        return app(FeriadosService::class)->nacionais($ano) ?? self::feriadosCalculados($ano);
+    }
+
+    /** Calculo local (Codigo do Trabalho, art. 234.o): Pascoa + datas fixas. */
+    public static function feriadosCalculados(int $ano): array
     {
         $pascoa = self::pascoa($ano);
 

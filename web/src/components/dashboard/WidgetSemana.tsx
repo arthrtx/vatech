@@ -4,6 +4,7 @@ import { cobreDia } from "@/lib/agenda";
 import type { PedidoAgenda } from "@/lib/api";
 import { aprovados, maisDias } from "@/lib/dashboard";
 import { datasDoDia } from "@/lib/feriados";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import { useLocalidade } from "@/lib/localidade";
 import { vidro } from "../ui";
 
@@ -12,6 +13,7 @@ const letras = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 /** Quantas pessoas estão fora em cada um dos próximos 7 dias (só aprovados). */
 export default function WidgetSemana({ agenda, hoje }: { agenda: PedidoAgenda[]; hoje: string }) {
   const [localidade] = useLocalidade();
+  useFeriadosDoAno(Number(hoje.slice(0, 4)), Number(maisDias(hoje, 6).slice(0, 4)));
   const ap = aprovados(agenda);
   const dias = Array.from({ length: 7 }, (_, i) => {
     const iso = maisDias(hoje, i);

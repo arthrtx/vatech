@@ -43,10 +43,13 @@ interface Props {
   onChange: (hora: string) => void;
   required?: boolean;
   className?: string;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
+  "data-campo"?: string;
 }
 
 /** Campo de hora no estilo do campo de data: escreve-se com os ":" automáticos ou escolhe-se no relógio. */
-export default function CampoHora({ id, valor, onChange, required, className = "" }: Props) {
+export default function CampoHora({ id, valor, onChange, required, className = "", "aria-invalid": invalido, "aria-describedby": descrito, "data-campo": campo }: Props) {
   const [aberto, setAberto] = useState(false);
   const [rascunho, setRascunho] = useState<string | null>(null);
   const raiz = useRef<HTMLDivElement>(null);
@@ -83,6 +86,9 @@ export default function CampoHora({ id, valor, onChange, required, className = "
     <div ref={raiz} className="relative">
       <input
         id={id}
+        data-campo={campo}
+        aria-invalid={invalido}
+        aria-describedby={descrito}
         type="text"
         inputMode="numeric"
         autoComplete="off"

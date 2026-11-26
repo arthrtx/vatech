@@ -4,18 +4,22 @@ import DefinicoesPage from "./page";
 import { ApiError, api } from "@/lib/api";
 
 const atualizarUser = vi.fn();
+const H0 = { entrada: "08:00", saida: "17:00", almoco_inicio: "12:00", almoco_min: 60 };
 let user: { id: number; nome: string; email: string; papel: "admin" | "funcionario" | "estagiario"; empresa_id: number } = { id: 1, nome: "Ana", email: "ana@x.pt", papel: "funcionario" as const, empresa_id: 1 };
 
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user, atualizarUser }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
-  return { ...real, api: { editarPerfil: vi.fn(), textoConvite: vi.fn().mockResolvedValue({ texto: "Bem-vindo.", predefinido: true }), guardarTextoConvite: vi.fn() } };
+  return { ...real, api: { editarPerfil: vi.fn(), textoConvite: vi.fn().mockResolvedValue({ texto: "Bem-vindo.", predefinido: true }), guardarTextoConvite: vi.fn(), getHorario: vi.fn().mockResolvedValue({ empresa: { entrada: "08:00", saida: "17:00", almoco_inicio: "12:00", almoco_min: 60 }, meu: { entrada: "08:00", saida: "17:00", almoco_inicio: "12:00", almoco_min: 60 } }), definirHorarioEmpresa: vi.fn(), horarios: vi.fn().mockResolvedValue([]), definirHorarioPessoa: vi.fn(), funcionarios: vi.fn().mockResolvedValue([]) } };
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.mocked(api.getHorario).mockResolvedValue({ empresa: H0, meu: H0 });
+  vi.mocked(api.horarios).mockResolvedValue([]);
+  vi.mocked(api.funcionarios).mockResolvedValue([]);
 });
 
 const dados = () => screen.getByRole("form", { name: "Dados da conta" });
@@ -226,7 +230,6 @@ describe("Definições do admin", () => {
     fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
     expect(await screen.findByText("Férias: 22 dias úteis por ano, podendo pedir até 25.")).toBeTruthy();
     expect(screen.queryByRole("form", { name: "Limites de dias úteis por ano" })).toBeNull();
-    expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 
   it("separa as definições do admin em conta e geral", async () => {
@@ -276,5 +279,159 @@ describe("Definições do admin", () => {
     fireEvent.change(within(f).getByLabelText("Mensagem"), { target: { value: "x" } });
     fireEvent.click(guardar(f));
     await within(f).findByText("Falhou.");
+  });
+
+  it("horário da empresa: carrega, mostra a jornada, edita e guarda", async () => {
+    comoAdmin();
+    vi.mocked(api.definirHorarioEmpresa).mockResolvedValue({ entrada: "09:00", saida: "18:00", almoco_inicio: "13:00", almoco_min: 30 });
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    const f = await screen.findByRole("form", { name: "Horário da empresa" });
+    await waitFor(() => expect((within(f).getByLabelText("Entrada") as HTMLInputElement).value).toBe("08:00"));
+    expect((within(f).getByLabelText("Almoço das") as HTMLInputElement).value).toBe("12:00");
+    expect(within(f).getByText("8 h de trabalho.")).toBeTruthy();
+    expect(guardar(f).disabled).toBe(true);
+    fireEvent.change(within(f).getByLabelText("Entrada"), { target: { value: "09:00" } });
+    fireEvent.change(within(f).getByLabelText("Saída"), { target: { value: "18:00" } });
+    fireEvent.change(within(f).getByLabelText("Almoço das"), { target: { value: "13:00" } });
+    fireEvent.change(within(f).getByLabelText("Durante (minutos)"), { target: { value: "30" } });
+    expect(within(f).getByText("8 h 30 min de trabalho.")).toBeTruthy();
+    fireEvent.click(guardar(f));
+    await within(f).findByText("Dados guardados.");
+    expect(api.definirHorarioEmpresa).toHaveBeenCalledWith({ entrada: "09:00", saida: "18:00", almoco_inicio: "13:00", almoco_min: 30 });
+  });
+
+  it("horário da empresa: mostra o erro 422 do servidor", async () => {
+    comoAdmin();
+    vi.mocked(api.definirHorarioEmpresa).mockRejectedValue(new ApiError(422, "A saída tem de ser depois da entrada."));
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    const f = await screen.findByRole("form", { name: "Horário da empresa" });
+    await waitFor(() => expect((within(f).getByLabelText("Entrada") as HTMLInputElement).value).toBe("08:00"));
+    fireEvent.change(within(f).getByLabelText("Saída"), { target: { value: "07:00" } });
+    fireEvent.click(guardar(f));
+    await within(f).findByText("A saída tem de ser depois da entrada.");
+  });
+
+  const pessoa = (o = {}) => ({ user_id: 7, nome: "Rui", entrada: null, saida: null, almoco_inicio: null, almoco_min: null, efectivo: H0, ...o });
+
+  it("horário por pessoa: só o que difere da empresa fica personalizado e volta a seguir a empresa", async () => {
+    comoAdmin();
+    const ef = { entrada: "10:00", saida: "17:00", almoco_inicio: "12:00", almoco_min: 60 };
+    vi.mocked(api.horarios).mockResolvedValue([pessoa()]);
+    vi.mocked(api.definirHorarioPessoa).mockResolvedValueOnce(pessoa({ entrada: "10:00", efectivo: ef })).mockResolvedValueOnce(pessoa());
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    expect(await screen.findByText("Segue a empresa")).toBeTruthy();
+    expect(screen.getByText("08:00 às 17:00, almoço das 12:00 às 13:00")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Editar horário de Rui" }));
+    const f = screen.getByRole("form", { name: "Horário de Rui" });
+    expect(within(f).getAllByText("Igual à empresa")).toHaveLength(4);
+    fireEvent.change(within(f).getByLabelText("Entrada"), { target: { value: "10:00" } });
+    expect(within(f).getAllByText("Igual à empresa")).toHaveLength(3);
+    expect(within(f).getAllByText("Personalizado")).toHaveLength(1);
+    fireEvent.click(within(f).getByRole("button", { name: "Guardar" }));
+    expect(await screen.findAllByText("Personalizado")).toBeTruthy();
+    expect(api.definirHorarioPessoa).toHaveBeenNthCalledWith(1, 7, { entrada: "10:00", saida: null, almoco_inicio: null, almoco_min: null });
+    expect(screen.queryByRole("form", { name: "Horário de Rui" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar horário de Rui" }));
+    fireEvent.click(screen.getByRole("button", { name: "Voltar ao horário da empresa" }));
+    expect(await screen.findByText("Segue a empresa")).toBeTruthy();
+    expect(api.definirHorarioPessoa).toHaveBeenNthCalledWith(2, 7, { entrada: null, saida: null, almoco_inicio: null, almoco_min: null });
+  });
+
+  it("horário por pessoa: mostra o erro do servidor", async () => {
+    comoAdmin();
+    vi.mocked(api.horarios).mockResolvedValue([pessoa()]);
+    vi.mocked(api.definirHorarioPessoa).mockRejectedValue(new ApiError(422, "Horário inválido."));
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Editar horário de Rui" }));
+    fireEvent.click(within(screen.getByRole("form", { name: "Horário de Rui" })).getByRole("button", { name: "Guardar" }));
+    expect(await screen.findByText("Horário inválido.")).toBeTruthy();
+  });
+
+  it("guardar a empresa recarrega a lista por pessoa e o Editar abre com valores frescos", async () => {
+    comoAdmin();
+    const nova = { entrada: "09:00", saida: "18:00", almoco_inicio: "13:00", almoco_min: 30 };
+    vi.mocked(api.horarios).mockResolvedValueOnce([pessoa()]).mockResolvedValueOnce([pessoa({ efectivo: nova })]);
+    vi.mocked(api.definirHorarioEmpresa).mockResolvedValue(nova);
+    vi.mocked(api.getHorario)
+      .mockResolvedValueOnce({ empresa: H0, meu: H0 })
+      .mockResolvedValueOnce({ empresa: H0, meu: H0 })
+      .mockResolvedValue({ empresa: nova, meu: nova });
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    expect(await screen.findByText("08:00 às 17:00, almoço das 12:00 às 13:00")).toBeTruthy();
+    const f = await screen.findByRole("form", { name: "Horário da empresa" });
+    await waitFor(() => expect((within(f).getByLabelText("Entrada") as HTMLInputElement).value).toBe("08:00"));
+    fireEvent.change(within(f).getByLabelText("Entrada"), { target: { value: "09:00" } });
+    fireEvent.change(within(f).getByLabelText("Saída"), { target: { value: "18:00" } });
+    fireEvent.change(within(f).getByLabelText("Almoço das"), { target: { value: "13:00" } });
+    fireEvent.change(within(f).getByLabelText("Durante (minutos)"), { target: { value: "30" } });
+    fireEvent.click(guardar(f));
+    expect(await screen.findByText("09:00 às 18:00, almoço das 13:00 às 13:30")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Editar horário de Rui" }));
+    const p = screen.getByRole("form", { name: "Horário de Rui" });
+    expect((within(p).getByLabelText("Entrada") as HTMLInputElement).value).toBe("09:00");
+    expect((within(p).getByLabelText("Durante (minutos)") as HTMLInputElement).value).toBe("30");
+    expect(within(p).getAllByText("Igual à empresa")).toHaveLength(4);
+  });
+
+  it("erro de hora liga-se ao campo (aria-invalid/describedby) e leva-lhe o foco", async () => {
+    comoAdmin();
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    const f = await screen.findByRole("form", { name: "Horário da empresa" });
+    await waitFor(() => expect((within(f).getByLabelText("Saída") as HTMLInputElement).value).toBe("17:00"));
+    fireEvent.change(within(f).getByLabelText("Saída"), { target: { value: "" } });
+    fireEvent.change(within(f).getByLabelText("Entrada"), { target: { value: "09:00" } });
+    fireEvent.click(guardar(f));
+    const campo = within(f).getByLabelText("Saída");
+    expect(campo.getAttribute("aria-invalid")).toBe("true");
+    const alvo = campo.getAttribute("aria-describedby")!;
+    expect(document.getElementById(alvo)?.textContent).toBe("Indique a hora de saída.");
+    expect(document.activeElement).toBe(campo);
+    expect(api.definirHorarioEmpresa).not.toHaveBeenCalled();
+  });
+
+  it("erro 422 do servidor leva o foco ao campo da hora", async () => {
+    comoAdmin();
+    vi.mocked(api.definirHorarioEmpresa).mockRejectedValue(new ApiError(422, "Invalid", { saida: ["A hora de saída tem de ser depois da entrada."] }));
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    const f = await screen.findByRole("form", { name: "Horário da empresa" });
+    await waitFor(() => expect((within(f).getByLabelText("Entrada") as HTMLInputElement).value).toBe("08:00"));
+    fireEvent.change(within(f).getByLabelText("Entrada"), { target: { value: "18:00" } });
+    fireEvent.click(guardar(f));
+    await within(f).findByText("A hora de saída tem de ser depois da entrada.");
+    const campo = within(f).getByLabelText("Saída");
+    expect(campo.getAttribute("aria-invalid")).toBe("true");
+    await waitFor(() => expect(document.activeElement).toBe(campo));
+  });
+
+  it("homónimos distinguem-se pelo email na lista e no nome acessível", async () => {
+    comoAdmin();
+    vi.mocked(api.horarios).mockResolvedValue([pessoa({ user_id: 4 }), pessoa({ user_id: 6 })]);
+    vi.mocked(api.funcionarios).mockResolvedValue([
+      { id: 4, nome: "Rui", email: "rui1@x.pt", papel: "funcionario" },
+      { id: 6, nome: "Rui", email: "rui2@x.pt", papel: "funcionario" },
+    ] as never);
+    render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    expect(await screen.findByText("rui1@x.pt")).toBeTruthy();
+    expect(screen.getByText("rui2@x.pt")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Editar horário de Rui (rui1@x.pt)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Editar horário de Rui (rui2@x.pt)" })).toBeTruthy();
+  });
+
+  it("o não-admin não vê os formulários de horário nem os pede à API", () => {
+    render(<DefinicoesPage />);
+    expect(screen.queryByRole("form", { name: "Horário da empresa" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Horário por pessoa" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Geral" })).toBeNull();
+    expect(api.getHorario).not.toHaveBeenCalled();
+    expect(api.horarios).not.toHaveBeenCalled();
   });
 });
