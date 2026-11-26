@@ -61,7 +61,7 @@ export default function AvisoFerias({ comTransitadas = false }: { comTransitadas
           <span>
             Tem {diasTxt(porMarcar)} de férias por marcar. O prazo era {prazoTxt(dados.prazo)}.
           </span>
-          <Link href="/" className={ligacaoCls}>
+          <Link href="/calendario" className={ligacaoCls}>
             Fazer pedido de férias
           </Link>
           <button
