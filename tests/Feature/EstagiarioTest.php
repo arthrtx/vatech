@@ -61,7 +61,7 @@ it('marca entrada e saida com hora do servidor e valida os estados', function ()
     $this->getJson('/api/presencas/hoje')->assertJsonPath('data.user_id', $e->id);
 });
 
-it('admin ve presencas da empresa, estagiario so as suas, funcionario nao ve', function () {
+it('admin ve presencas da empresa, estagiario e funcionario so as suas', function () {
     $empresa = Empresa::factory()->create();
     $admin = User::factory()->admin()->create(['empresa_id' => $empresa->id]);
     $e1 = estagiario(['empresa_id' => $empresa->id]);
@@ -81,9 +81,9 @@ it('admin ve presencas da empresa, estagiario so as suas, funcionario nao ve', f
     $this->postJson('/api/presencas/entrada')->assertCreated();
 
     Sanctum::actingAs($admin);
-    $this->postJson('/api/presencas/entrada')->assertForbidden();
-    Sanctum::actingAs(User::factory()->create());
-    $this->getJson('/api/presencas')->assertForbidden();
+    $this->postJson('/api/presencas/entrada')->assertCreated();
+    Sanctum::actingAs(User::factory()->create(['empresa_id' => $empresa->id]));
+    $this->getJson('/api/presencas')->assertOk()->assertJsonCount(0, 'data');
 });
 
 it('recusar exige motivo e o dono recebe motivo_recusa', function () {
@@ -138,12 +138,12 @@ it('presenca atrasada rejeita futura, anterior ao estagio, duplicada e horas inv
         ->assertStatus(422)->assertJsonValidationErrors(['data' => 'Já existe presença nesse dia.']);
 });
 
-it('presenca atrasada e so para estagiarios', function () {
+it('presenca atrasada vale para todos os papeis', function () {
     $body = ['data' => '2026-07-08', 'entrada' => '09:00', 'saida' => '10:00'];
     Sanctum::actingAs(User::factory()->create());
-    $this->postJson('/api/presencas/atrasada', $body)->assertForbidden();
+    $this->postJson('/api/presencas/atrasada', $body)->assertCreated();
     Sanctum::actingAs(User::factory()->admin()->create());
-    $this->postJson('/api/presencas/atrasada', $body)->assertForbidden();
+    $this->postJson('/api/presencas/atrasada', $body)->assertCreated();
 });
 
 it('estagiario define o horario de almoco e o contrato devolve-o', function () {
@@ -161,9 +161,9 @@ it('estagiario define o horario de almoco e o contrato devolve-o', function () {
         ->assertOk()->assertJsonPath('user.almoco_inicio', null);
 });
 
-it('so o estagiario define horario de almoco', function () {
+it('funcionario tambem define horario de almoco', function () {
     Sanctum::actingAs(User::factory()->create());
-    $this->putJson('/api/me/almoco', ['almoco_inicio' => '12:30', 'almoco_fim' => '13:30'])->assertForbidden();
+    $this->putJson('/api/me/almoco', ['almoco_inicio' => '12:30', 'almoco_fim' => '13:30'])->assertOk();
 });
 
 it('desconta o almoco que cai entre a entrada e a saida', function () {
@@ -197,8 +197,8 @@ it('estagiario comunica uma falta com motivo e descricao, e o admin ve-a', funct
         ->assertJsonPath('data.0.descricao', 'O carro avariou.');
 });
 
-it('funcionario nao comunica faltas de estagio', function () {
+it('funcionario tambem comunica faltas', function () {
     Sanctum::actingAs(User::factory()->create());
     $this->postJson('/api/ocorrencias', ['data' => '2026-11-24', 'tipo' => 'falta', 'motivo' => 'imprevisto', 'descricao' => 'x'])
-        ->assertForbidden();
+        ->assertCreated();
 });

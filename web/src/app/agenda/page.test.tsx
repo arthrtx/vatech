@@ -28,13 +28,13 @@ describe("pagina da agenda", () => {
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2026-12-28", "2027-01-31"));
   });
 
-  it("não pede presenças a um funcionário (a API responde 403)", async () => {
+  it("pede as presenças do próprio funcionário", async () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-12-10T12:00:00") });
     agenda.mockResolvedValue([]);
     presencas.mockClear();
     render(<AgendaPage />);
     await waitFor(() => expect(agenda).toHaveBeenCalled());
-    expect(presencas).not.toHaveBeenCalled();
+    await waitFor(() => expect(presencas).toHaveBeenCalled());
     expect(screen.queryByText("Não foi possível carregar as presenças.")).toBeNull();
   });
 

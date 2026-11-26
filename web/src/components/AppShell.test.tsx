@@ -23,8 +23,8 @@ describe("AppShell, menu por papel", () => {
   it.each([
     ["admin", true],
     ["estagiario", true],
-    ["funcionario", false],
-  ] as const)("%s: Estágio no menu = %s", (p, tem) => {
+    ["funcionario", true],
+  ] as const)("%s: Presenças no menu = %s", (p, tem) => {
     papel = p;
     render(<AppShell>x</AppShell>);
     expect(!!menu().querySelector('a[href="/presencas"]')).toBe(tem);

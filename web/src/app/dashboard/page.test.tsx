@@ -12,7 +12,7 @@ vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
   return {
     ...real,
-    api: { pedidos: vi.fn(), funcionarios: vi.fn(), agenda: vi.fn(), aprovar: vi.fn(), recusar: vi.fn(), limites: vi.fn(), feriasResumo: vi.fn() },
+    api: { pedidos: vi.fn(), funcionarios: vi.fn(), agenda: vi.fn(), aprovar: vi.fn(), recusar: vi.fn(), limites: vi.fn(), feriasResumo: vi.fn(), presencaHoje: vi.fn() },
   };
 });
 
@@ -21,6 +21,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-11-19T12:00:00"));
   vi.mocked(api.limites).mockResolvedValue({ limites: [], prazo_ferias: "2026-04-30" });
   vi.mocked(api.feriasResumo).mockResolvedValue({ resumo: [], prazo_ferias: "2026-04-30" });
+  vi.mocked(api.presencaHoje).mockResolvedValue(null);
 });
 afterEach(() => {
   cleanup();
@@ -110,7 +111,7 @@ describe("Dashboard admin", () => {
     vi.mocked(api.agenda).mockReturnValue(new Promise(() => {}));
     const { container } = render(<DashboardPage />);
     expect(container.querySelectorAll("[data-skeleton]").length).toBe(3 + 3 + 2);
-    expect(container.querySelectorAll("[aria-busy=true]").length).toBe(2);
+    expect(container.querySelectorAll("[aria-busy=true]").length).toBe(3); // 2 blocos + cartão de presença
     expect(screen.queryByText("Sem pedidos pendentes")).toBeNull();
     expect(screen.queryByText("Ninguém ausente nos próximos 30 dias")).toBeNull();
     expect(screen.queryByText("0")).toBeNull();

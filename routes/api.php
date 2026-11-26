@@ -48,10 +48,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
     });
 
-    Route::middleware('papel:admin,estagiario')->get('/presencas', [PresencaController::class, 'index']);
-    Route::middleware('papel:admin,estagiario')->get('/ocorrencias', [OcorrenciaController::class, 'index']);
-
-    Route::middleware('papel:estagiario')->group(function () {
+    // Todos marcam a sua presença; o admin vê a da empresa, os outros só a sua.
+    Route::middleware('papel:admin,funcionario,estagiario')->group(function () {
+        Route::get('/presencas', [PresencaController::class, 'index']);
+        Route::get('/ocorrencias', [OcorrenciaController::class, 'index']);
         Route::get('/presencas/hoje', [PresencaController::class, 'hoje']);
         Route::post('/presencas/entrada', [PresencaController::class, 'entrada']);
         Route::post('/presencas/saida', [PresencaController::class, 'saida']);

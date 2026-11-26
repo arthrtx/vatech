@@ -15,7 +15,7 @@ type Estado = { fase: "a-carregar" } | { fase: "erro"; msg: string } | { fase: "
 const botaoPresenca =
   "inline-flex min-h-12 items-center justify-center rounded-full bg-positivo px-8 text-base font-semibold text-barra hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2 disabled:opacity-50";
 
-function CartaoPresenca() {
+export function CartaoPresenca() {
   const [estado, setEstado] = useState<Estado>({ fase: "a-carregar" });
   const [aMarcar, setAMarcar] = useState(false);
   const [pergunta, setPergunta] = useState<"entrada" | "saida" | null>(null);

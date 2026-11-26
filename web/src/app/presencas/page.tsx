@@ -25,7 +25,7 @@ function Conteudo() {
   const [de, setDe] = useState(() => `${hojeIso().slice(0, 8)}01`);
   const [ate, setAte] = useState(() => hojeIso());
   const [userId, setUserId] = useState("");
-  const [estagiarios, setEstagiarios] = useState<User[]>([]);
+  const [pessoas, setPessoas] = useState<User[]>([]);
   const [res, setRes] = useState<Res | null>(null);
   const [volta, setVolta] = useState(0);
   const [esqueci, setEsqueci] = useState(false);
@@ -35,11 +35,11 @@ function Conteudo() {
   const chave = `${de}|${ate}|${userId}|${volta}`;
 
   useEffect(() => {
-    if (!admin) return; // o estagiário recebe 403 na lista de funcionários
+    if (!admin) return; // quem não é admin recebe 403 na lista de funcionários
     let vivo = true;
     api
       .funcionarios()
-      .then((l) => vivo && setEstagiarios(l.filter((u) => u.papel === "estagiario")))
+      .then((l) => vivo && setPessoas(l))
       .catch(() => {}); // sem lista só falta o filtro; as presenças carregam à mesma
     return () => {
       vivo = false;
@@ -81,28 +81,24 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Estágio</h1>
-        {!admin && (
-          <div className="flex flex-wrap gap-2">
-            {!comunicar && (
-              <button type="button" className={`${botaoSec} min-h-10`} onClick={() => setComunicar(true)}>
-                Falta ou atraso
-              </button>
-            )}
-            {!esqueci && (
-              <button type="button" className={`${botao} min-h-10`} onClick={() => setEsqueci(true)}>
-                Esqueci de marcar presença
-              </button>
-            )}
-          </div>
-        )}
+        <h1 className="text-2xl font-semibold">Presenças</h1>
+        <div className="flex flex-wrap gap-2">
+          {!comunicar && (
+            <button type="button" className={`${botaoSec} min-h-10`} onClick={() => setComunicar(true)}>
+              Falta ou atraso
+            </button>
+          )}
+          {!esqueci && (
+            <button type="button" className={`${botao} min-h-10`} onClick={() => setEsqueci(true)}>
+              Esqueci de marcar presença
+            </button>
+          )}
+        </div>
       </div>
-      {!admin && (
-        <section aria-label="Horário de almoço" className={`${vidro} p-4`}>
-          <HorarioAlmoco onGuardado={() => setVolta((v) => v + 1)} />
-        </section>
-      )}
-      {!admin && comunicar && (
+      <section aria-label="Horário de almoço" className={`${vidro} p-4`}>
+        <HorarioAlmoco onGuardado={() => setVolta((v) => v + 1)} />
+      </section>
+      {comunicar && (
         <RegistarOcorrencia
           onCancelar={() => setComunicar(false)}
           onRegistado={() => {
@@ -111,7 +107,7 @@ function Conteudo() {
           }}
         />
       )}
-      {!admin && esqueci && (
+      {esqueci && (
         <PresencaAtrasada
           min={user?.estagio_inicio}
           onCancelar={() => setEsqueci(false)}
@@ -137,12 +133,12 @@ function Conteudo() {
         {admin && (
           <div>
             <label htmlFor="pres_user" className={label}>
-              Estagiário
+              Pessoa
             </label>
             <Seletor
               id="pres_user"
               valor={userId}
-              opcoes={[{ valor: "", rotulo: "Todos" }, ...estagiarios.map((u) => ({ valor: String(u.id), rotulo: u.nome }))]}
+              opcoes={[{ valor: "", rotulo: "Todos" }, ...pessoas.map((u) => ({ valor: String(u.id), rotulo: u.nome }))]}
               onChange={setUserId}
             />
           </div>
@@ -243,7 +239,7 @@ function Conteudo() {
 
 export default function PresencasPage() {
   return (
-    <AppShell papeis={["admin", "estagiario"]}>
+    <AppShell papeis={["admin", "funcionario", "estagiario"]}>
       <Conteudo />
     </AppShell>
   );
