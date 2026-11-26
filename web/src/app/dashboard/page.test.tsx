@@ -66,7 +66,7 @@ describe("Dashboard admin", () => {
     vi.mocked(api.funcionarios).mockResolvedValue([user(1)]);
     vi.mocked(api.agenda).mockResolvedValue([]);
     vi.mocked(api.feriasResumo).mockResolvedValue({
-      resumo: [{ user_id: 2, nome: "Sofia", dias_ano: 22, transitados: 2, usados: 4, por_marcar: 20 }],
+      resumo: [{ user_id: 2, nome: "Sofia", dias_ano: 22, dias_max: 25, transitados: 2, usados: 4, por_marcar: 20 }],
       prazo_ferias: "2026-04-30",
     });
     render(<DashboardPage />);
@@ -217,7 +217,7 @@ describe("Dashboard funcionário", () => {
   it("depois do prazo avisa das férias por marcar e mostra as transitadas", async () => {
     vi.mocked(api.pedidos).mockResolvedValue([]);
     vi.mocked(api.limites).mockResolvedValue({
-      limites: [{ tipo: "ferias", dias_ano: 22, transitados: 3, usados: 5 }],
+      limites: [{ tipo: "ferias", dias_ano: 22, dias_max: 25, transitados: 3, usados: 5 }],
       prazo_ferias: "2026-04-30",
     });
     render(<DashboardPage />);

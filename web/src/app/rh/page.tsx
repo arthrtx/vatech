@@ -1,52 +1,55 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
-import Avatar from "@/components/Avatar";
-import Link from "next/link";
-import { useAuth } from "@/lib/auth";
-import { pastasRh as pastas, type PastaRh } from "@/lib/rh";
-
-// TODO: token em falta — a referência usa uma fonte monoespaçada para os títulos; aqui fica `font-mono` do sistema.
-
-function Pasta({ slug, nome, de, ate, aba }: PastaRh) {
-  const { user } = useAuth();
-  return (
-    <li className="relative mt-5">
-      <Link href={`/rh/${slug}`} className="group block rounded-cartao rounded-tl-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2">
-      <div aria-hidden className={`absolute -top-5 left-0 h-8 w-[42%] rounded-t-[2rem] ${aba}`} />
-      <div
-        className={`relative flex min-h-40 flex-col justify-between gap-8 rounded-barra rounded-tl-none bg-gradient-to-br p-6 ring-1 ring-linha ${de} ${ate}`}
-      >
-        <span aria-hidden className="absolute right-4 top-3 flex h-7 w-12 items-center justify-center rounded-full bg-painel text-lg leading-none ring-1 ring-linha">
-          ⋮
-        </span>
-        <h3 className="pt-5 font-mono text-lg">{nome}</h3>
-        <div className="flex items-center justify-between border-t border-linha-forte/30 pt-3 text-sm text-texto-suave">
-          {user ? <Avatar nome={user.nome} id={user.id} foto={user.avatar_url} className="h-7 w-7 text-xs" /> : <span />}
-          <span className="tabular-nums">0 itens</span>
-        </div>
-      </div>
-      </Link>
-    </li>
-  );
-}
+import FichaRhCartao from "@/components/FichaRhCartao";
+import FichaRhPainel from "@/components/FichaRhPainel";
+import VistaFuncionario from "@/components/VistaFuncionario";
+import { api, mensagemDeErro, type FichaRh } from "@/lib/api";
+import { erro as erroCls } from "@/components/ui";
 
 export default function RhPage() {
+  const [fichas, setFichas] = useState<FichaRh[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [vista, setVista] = useState<FichaRh | null>(null);
+  const [aberta, setAberta] = useState<number | null>(null);
+
+  const carregar = useCallback(() => {
+    api.fichasRh().then(setFichas, (e) => setErro(mensagemDeErro(e)));
+  }, []);
+
+  useEffect(carregar, [carregar]);
+
+  const fecharVista = useCallback(() => setVista(null), []);
+  const fecharFicha = useCallback(() => setAberta(null), []);
+
   return (
-    <AppShell soAdmin>
+    <AppShell soAdmin permissao="gerir_rh">
       <div className="flex flex-col gap-4">
         <h1 className="titulo-bento">RH</h1>
-        <section aria-labelledby="rh-pastas" className="flex flex-col gap-2">
-          <h2 id="rh-pastas" className="text-xl font-bold tracking-tight">
-            Pastas <span className="ml-2 rounded-full bg-campo px-3 py-0.5 text-sm text-texto-suave">{pastas.length}</span>
+        <section aria-labelledby="rh-fichas" className="flex flex-col gap-2">
+          <h2 id="rh-fichas" className="text-xl font-bold tracking-tight">
+            Fichas
+            {fichas && <span className="ml-2 rounded-full bg-campo px-3 py-0.5 text-sm text-texto-suave">{fichas.length}</span>}
           </h2>
-          <ul className="grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
-            {pastas.map((p) => (
-              <Pasta key={p.nome} {...p} />
-            ))}
-          </ul>
+          {erro && (
+            <p role="alert" className={erroCls}>
+              {erro}
+            </p>
+          )}
+          {!fichas && !erro && <p className="text-sm text-texto-suave">A carregar...</p>}
+          {fichas && fichas.length === 0 && <p className="text-sm text-texto-suave">Ainda não há pessoas no sistema.</p>}
+          {fichas && fichas.length > 0 && (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {fichas.map((f) => (
+                <FichaRhCartao key={f.id} ficha={f} onVista={() => setVista(f)} onAbrir={() => setAberta(f.id)} />
+              ))}
+            </ul>
+          )}
         </section>
       </div>
+      {vista && <VistaFuncionario user={vista} onFechar={fecharVista} />}
+      {aberta !== null && <FichaRhPainel userId={aberta} onFechar={fecharFicha} onAlterada={carregar} />}
     </AppShell>
   );
 }

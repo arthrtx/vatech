@@ -117,3 +117,51 @@
 **Alternativas consideradas:** manter o registo público com aprovação (rejeitada: o admin quer partir do email que conhece); aprovar já ao aceitar o convite (rejeitada: o admin pediu o passo de autorização).
 
 **Consequências:** sem SMTP em produção (`MAIL_*`) o email não chega e o admin copia o link. Em dev os emails caem no Mailpit (`docker compose`, http://localhost:8025).
+
+## D10: Permissões por papel definidas pelo admin
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** as capacidades de Funcionário e Estagiário estavam fixas no código (por exemplo, o estagiário não pedia férias). O admin quer ajustar o que cada papel pode fazer, e delegar tarefas de gestão.
+
+**Decisão:** catálogo fixo de 12 permissões (8 do dia a dia, 4 de gestão) guardado como JSON `permissoes` na empresa, por papel, por cima de predefinidos em código (funcionário: dia a dia; estagiário: o mesmo sem férias). O admin tem sempre tudo. Middleware `permissao:<chave>` nas rotas; os pedidos validam-se por tipo em `StorePedidoRequest`. `/me` devolve `permissoes`. Aprovar e recusar contas, limites e definições ficam só do admin. Quem tem `aprovar_pedidos` não decide pedidos seus.
+
+**Alternativas consideradas:** tabela de papéis e permissões (rejeitada: o catálogo é pequeno e fixo, e os papéis são só dois editáveis); manter regras fixas no código (rejeitada: o admin pediu controlo).
+
+**Consequências:** `aprovar_pedidos` alarga a leitura de pedidos e da agenda a todos os da empresa, e dos anexos deles; `ver_presencas_empresa` faz o mesmo com presenças e ocorrências. Sem permissão, a API responde 403 «Sem permissão.» (o pedido de férias do estagiário deixou de ser 422). Chaves novas no catálogo ficam com o predefinido até o admin as editar.
+
+## D11: Tipos personalizados de pessoa
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** só havia Funcionário e Estagiário; o admin quer perfis como «Responsável de RH» com permissões próprias.
+
+**Decisão:** tabela `tipos` por empresa (nome único sem distinguir maiusculas, `base` funcionario|estagiario fixa, `permissoes` JSON por cima dos predefinidos da base). `users.tipo_id` e `convites.tipo_id` nullable (restrict, nunca apagam pessoas). `users.papel` continua a ser o papel-base, por isso nenhuma regra que testa o papel muda. Pessoa com tipo usa as permissões do tipo; sem tipo, as do papel (D10). Apagar um tipo em uso: 409. O tipo muda por `PUT /funcionarios/{id}/tipo`, que também permite mudar o papel de quem fica sem tipo.
+
+**Alternativas consideradas:** tipos que substituem o papel (rejeitada: reescrevia as regras de estágio e férias); permissões em tabela pivô (rejeitada: catálogo fixo de 12).
+
+**Consequências:** mudar a base exige criar outro tipo. Admin não tem tipo.
+
+## D12: Férias fixas em 22 dias, máximo 25, sem limites configuráveis
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** o admin definia limites de dias por tipo de pedido (`PUT /limites`). Na prática só interessam as férias, e o direito é sempre o mesmo.
+
+**Decisão:** férias fixas em 22 dias úteis por ano (`LimitesPedidoService::FERIAS_DIAS_POR_ANO`), com um máximo pedível de 25 (`FERIAS_DIAS_MAXIMO`). Os dias acima de 22 são excedente: cada pedido traz `dias_excedentes` para o admin ver ao aprovar. Pedir mais de 25 no ano dá 422. Ausência e licença ficam sem limite. Os transitados continuam calculados sobre 22 e não alargam o máximo. Removido `PUT /limites`; `GET /limites` mantém-se com `dias_max`.
+
+**Alternativas consideradas:** manter os limites configuráveis (rejeitada: o admin pediu para sair); bloquear em 22 (rejeitada: a empresa aceita até 25 com aprovação).
+
+**Consequências:** a tabela `limites_pedido` e o modelo `LimitePedido` ficam órfãos: já ninguém os lê nem escreve, e as linhas existentes são ignoradas. Não se apaga a tabela agora (migration destrutiva); pode sair numa limpeza futura. `dias_excedentes` custa uma query por pedido de férias serializado.
+
+## D13: Fichas de RH por pessoa
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** o RH precisa de uma ficha por pessoa da empresa, com informações livres e documentos anexados.
+
+**Decisão:** nova permissão `gerir_rh` (grupo gestão; só por tipo ou admin, fora das predefinições de funcionário e estagiário). Tabelas `rh_infos` (título + valor livres) e `rh_ficheiros` (metadados), ambas por empresa e pessoa, com FK em cascade. Os ficheiros ficam no disco privado `local` em `rh/{empresa_id}/{user_id}/` com nome gerado; o nome original (sanitizado), o mime e o tamanho ficam na BD. Tipos aceites: pdf, png, jpg, jpeg, docx, xlsx, txt, até 10 MB, validados por extensão e por conteúdo. A descarga é por rota autenticada e o `caminho` nunca sai na API. Tudo escopado pela empresa de quem pede (outra empresa: 404).
+
+**Alternativas consideradas:** guardar os bytes na BD como nos anexos dos pedidos (rejeitada: 10 MB por ficheiro pesa demais); disco `public` (rejeitada: documentos pessoais).
+
+**Consequências:** o catálogo passa a 13 permissões (o admin tem as 13). Apagar uma pessoa por hard delete apaga as linhas mas não os ficheiros em disco; hoje as contas só se apagam por soft delete.

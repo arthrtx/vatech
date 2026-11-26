@@ -10,7 +10,7 @@ vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: Re
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user, atualizarUser }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
-  return { ...real, api: { editarPerfil: vi.fn(), limites: vi.fn(), guardarLimites: vi.fn(), textoConvite: vi.fn().mockResolvedValue({ texto: "Bem-vindo.", predefinido: true }), guardarTextoConvite: vi.fn() } };
+  return { ...real, api: { editarPerfil: vi.fn(), textoConvite: vi.fn().mockResolvedValue({ texto: "Bem-vindo.", predefinido: true }), guardarTextoConvite: vi.fn() } };
 });
 
 afterEach(() => {
@@ -211,70 +211,31 @@ describe("Definições", () => {
   });
 });
 
-describe("Limites de dias úteis por ano", () => {
-  const lista = [
-    { tipo: "ferias" as const, dias_ano: 22, transitados: 0, usados: 0 },
-    { tipo: "ausencia" as const, dias_ano: null, transitados: 0, usados: 0 },
-    { tipo: "licenca" as const, dias_ano: 5, transitados: 0, usados: 0 },
-  ];
+describe("Definições do admin", () => {
   const comoAdmin = () => {
     user = { ...user, papel: "admin" };
-    vi.mocked(api.limites).mockResolvedValue({ limites: lista, prazo_ferias: "2026-04-30" });
     vi.mocked(api.textoConvite).mockResolvedValue({ texto: "Bem-vindo.", predefinido: true });
   };
   afterEach(() => {
     user = { ...user, papel: "funcionario" };
   });
 
-  it("só o admin vê a secção", () => {
+  it("mostra as férias como fixas, sem formulário de limites", async () => {
+    comoAdmin();
     render(<DefinicoesPage />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
+    expect(await screen.findByText("Férias: 22 dias úteis por ano, podendo pedir até 25.")).toBeTruthy();
     expect(screen.queryByRole("form", { name: "Limites de dias úteis por ano" })).toBeNull();
-    expect(api.limites).not.toHaveBeenCalled();
-  });
-
-  it("carrega os valores (vazio = sem limite), edita e guarda", async () => {
-    comoAdmin();
-    vi.mocked(api.guardarLimites).mockResolvedValue([
-      { tipo: "ferias", dias_ano: 25, transitados: 0, usados: 0 },
-      { tipo: "ausencia", dias_ano: null, transitados: 0, usados: 0 },
-      { tipo: "licenca", dias_ano: 5, transitados: 0, usados: 0 },
-    ]);
-    render(<DefinicoesPage />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
-    const f = await screen.findByRole("form", { name: "Limites de dias úteis por ano" });
-    await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
-    expect((within(f).getByLabelText("Ausência") as HTMLInputElement).value).toBe("");
-    expect((within(f).getByLabelText("Licença") as HTMLInputElement).value).toBe("5");
-    expect(guardar(f).disabled).toBe(true);
-    fireEvent.change(within(f).getByLabelText("Férias"), { target: { value: "25" } });
-    fireEvent.click(guardar(f));
-    await within(f).findByText("Dados guardados.");
-    expect(api.guardarLimites).toHaveBeenCalledWith([
-      { tipo: "ferias", dias_ano: 25 },
-      { tipo: "ausencia", dias_ano: null },
-      { tipo: "licenca", dias_ano: 5 },
-    ]);
-  });
-
-  it("mostra o erro do servidor ao guardar", async () => {
-    comoAdmin();
-    vi.mocked(api.guardarLimites).mockRejectedValue(new ApiError(500, "Falhou."));
-    render(<DefinicoesPage />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Geral" }));
-    const f = await screen.findByRole("form", { name: "Limites de dias úteis por ano" });
-    await waitFor(() => expect((within(f).getByLabelText("Férias") as HTMLInputElement).value).toBe("22"));
-    fireEvent.change(within(f).getByLabelText("Férias"), { target: { value: "" } });
-    fireEvent.click(guardar(f));
-    await within(f).findByText("Falhou.");
+    expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 
   it("separa as definições do admin em conta e geral", async () => {
     comoAdmin();
     render(<DefinicoesPage />);
     expect(await screen.findByRole("tab", { name: "Configurações da conta" })).toBeTruthy();
-    expect(screen.queryByRole("form", { name: "Limites de dias úteis por ano" })).toBeNull();
+    expect(screen.queryByRole("form", { name: "Texto do convite" })).toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: "Geral" }));
-    expect(await screen.findByRole("form", { name: "Limites de dias úteis por ano" })).toBeTruthy();
+    expect(await screen.findByRole("form", { name: "Texto do convite" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Aparência" })).toBeNull();
   });
 

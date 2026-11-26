@@ -12,7 +12,7 @@ vi.mock("@/lib/api", async (orig) => {
 
 const prazo = "2026-04-30";
 const limites = (dias_ano: number | null, transitados: number, usados: number) =>
-  vi.mocked(api.limites).mockResolvedValue({ limites: [{ tipo: "ferias", dias_ano, transitados, usados }], prazo_ferias: prazo });
+  vi.mocked(api.limites).mockResolvedValue({ limites: [{ tipo: "ferias", dias_ano, dias_max: dias_ano === null ? null : 25, transitados, usados }], prazo_ferias: prazo });
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -84,9 +84,9 @@ describe("AvisoFerias", () => {
 
 describe("FeriasPorMarcar (admin)", () => {
   const resumo = [
-    { user_id: 1, nome: "Ana", dias_ano: 22, transitados: 4, usados: 10, por_marcar: 16 },
-    { user_id: 2, nome: "Rui", dias_ano: 22, transitados: 0, usados: 22, por_marcar: 0 },
-    { user_id: 3, nome: "Eva", dias_ano: 22, transitados: 1, usados: 0, por_marcar: 23 },
+    { user_id: 1, nome: "Ana", dias_ano: 22, dias_max: 25, transitados: 4, usados: 10, por_marcar: 16 },
+    { user_id: 2, nome: "Rui", dias_ano: 22, dias_max: 25, transitados: 0, usados: 22, por_marcar: 0 },
+    { user_id: 3, nome: "Eva", dias_ano: 22, dias_max: 25, transitados: 1, usados: 0, por_marcar: 23 },
   ];
 
   it("depois do prazo lista só quem tem dias por marcar", async () => {

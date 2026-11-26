@@ -6,11 +6,14 @@ import { api, mensagemDeErro, type Anexo, type Limite, type Pedido, type Subtipo
 import { hojeIso } from "@/lib/agenda";
 import CampoHora from "./CampoHora";
 import { tipos } from "@/lib/rotulos";
+import { temPermissao } from "@/lib/permissoes";
 import CampoAnexos from "./CampoAnexos";
 import { diasUteis } from "@/lib/diasUteis";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
 import { areaTexto, botao, botaoSec, erro as erroCls, label, vidro } from "./ui";
+
+const PERMISSAO_DO_TIPO = { ferias: "pedir_ferias", ausencia: "pedir_ausencia", licenca: "pedir_licenca" } as const;
 
 const subtipos: { v: SubtipoPedido; t: string }[] = [
   { v: "medica", t: "Médica" },
@@ -37,10 +40,12 @@ export default function PedidoForm({
 }) {
   const edicao = !!pedido;
   const { user } = useAuth();
-  const semFerias = user?.papel === "estagiario";
+  const permitidos = (["ferias", "ausencia", "licenca"] as const).filter((t) => temPermissao(user, PERMISSAO_DO_TIPO[t]));
+  const podeAnexar = temPermissao(user, "anexar_documentos");
+  const podeMelhorar = temPermissao(user, "melhorar_texto");
   const admin = user?.papel === "admin";
   const hoje = hojeIso();
-  const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? (semFerias ? "ausencia" : "ferias"));
+  const [tipo, setTipo] = useState<TipoPedido>(pedido?.tipo ?? permitidos[0] ?? "ausencia");
   const [subtipo, setSubtipo] = useState<SubtipoPedido | "">(pedido?.subtipo ?? "");
   const [inicio, setInicio] = useState(pedido?.data_inicio ?? dataInicial);
   const [fim, setFim] = useState(pedido?.data_fim ?? dataInicial);
@@ -80,7 +85,11 @@ export default function PedidoForm({
   const total = limite?.dias_ano != null ? limite.dias_ano + limite.transitados : null;
   const restam = total !== null ? Math.max(0, total - usados) : null;
   const diasPedidos = inicio && fim && fim >= inicio ? diasUteis(inicio, fim) : 0;
-  const excede = restam !== null && diasPedidos > restam;
+  // Férias: pode pedir até dias_max (25); os dias acima de dias_ano (22) são excedente.
+  const maximo = limite?.dias_max != null ? limite.dias_max + limite.transitados : total;
+  const restamMax = maximo !== null ? Math.max(0, maximo - usados) : null;
+  const excede = restamMax !== null && diasPedidos > restamMax;
+  const excedentes = total !== null && !excede ? Math.max(0, usados + diasPedidos - total) : 0;
 
   async function melhorar() {
     setErroTexto(null);
@@ -122,7 +131,7 @@ export default function PedidoForm({
       const r = pedido ? await api.editarPedido(pedido.id, corpo) : await api.criarPedido(corpo);
       setAvisos(r.avisos ?? []);
       let falhaAnexos: string | null = null;
-      if (novos.length > 0) {
+      if (podeAnexar && novos.length > 0) {
         try {
           const criados = await api.enviarAnexos(r.data.id, novos);
           setGuardados((g) => [...g, ...criados]);
@@ -177,10 +186,10 @@ export default function PedidoForm({
           id="tipo"
           valor={tipo}
           opcoes={[
-            ...(semFerias ? [] : [{ valor: "ferias", rotulo: "Férias" }]),
+            { valor: "ferias", rotulo: "Férias" },
             { valor: "ausencia", rotulo: "Ausência" },
             { valor: "licenca", rotulo: "Licença" },
-          ]}
+          ].filter((o) => permitidos.includes(o.valor as TipoPedido) || (edicao && o.valor === pedido?.tipo))}
           onChange={(v) => setTipo(v as TipoPedido)}
         />
       </div>
@@ -197,7 +206,8 @@ export default function PedidoForm({
       {limite?.dias_ano != null && (
         <p role="status" className="text-sm text-texto-suave">
           {tipos[tipo]}: {usados} de {total} dias úteis usados em {ano} (
-          {limite.transitados > 0 ? `${limite.dias_ano} do ano + ${limite.transitados} transitados; ` : ""}restam {restam})
+          {limite.transitados > 0 ? `${limite.dias_ano} do ano + ${limite.transitados} transitados; ` : ""}restam {restam}
+          {maximo !== null && maximo !== total ? `; pode pedir até ${maximo}` : ""})
         </p>
       )}
       {tipo === "ausencia" && (
@@ -252,7 +262,13 @@ export default function PedidoForm({
       </div>
       {excede && (
         <p role="alert" className={erroCls}>
-          Este pedido tem {diasPedidos} dias úteis e só restam {restam} de {tipos[tipo].toLowerCase()} em {ano}.
+          Este pedido tem {diasPedidos} dias úteis e só restam {restamMax} de {tipos[tipo].toLowerCase()} em {ano}
+          {maximo !== total ? ` (máximo de ${maximo})` : ""}.
+        </p>
+      )}
+      {excedentes > 0 && (
+        <p role="status" className="rounded-cartao border border-linha-forte bg-painel px-4 py-2 text-sm">
+          Este pedido inclui {excedentes} {excedentes === 1 ? "dia" : "dias"} acima dos {total} de direito (excedente). Pode pedir até {maximo}.
         </p>
       )}
       <div>
@@ -271,9 +287,11 @@ export default function PedidoForm({
           }}
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button type="button" disabled={aMelhorar || obs.trim().length < 3} onClick={melhorar} className={`${botaoSec} min-h-9 px-3 py-1`}>
-            {aMelhorar ? "A melhorar..." : "Melhorar texto"}
-          </button>
+          {podeMelhorar && (
+            <button type="button" disabled={aMelhorar || obs.trim().length < 3} onClick={melhorar} className={`${botaoSec} min-h-9 px-3 py-1`}>
+              {aMelhorar ? "A melhorar..." : "Melhorar texto"}
+            </button>
+          )}
           {antesDeMelhorar !== null && !aMelhorar && (
             <>
               <button
@@ -298,6 +316,7 @@ export default function PedidoForm({
           </p>
         )}
       </div>
+      {podeAnexar && (
       <CampoAnexos
         novos={novos}
         onNovos={setNovos}
@@ -312,6 +331,7 @@ export default function PedidoForm({
           }
         }}
       />
+      )}
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}
@@ -328,7 +348,7 @@ export default function PedidoForm({
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={enviando} className={botao}>
+        <button type="submit" disabled={enviando || excede} className={botao}>
           {enviando ? "A enviar..." : edicao ? "Guardar alterações" : admin ? "Marcar" : tipo === "licenca" ? "Comunicar licença" : "Submeter pedido"}
         </button>
         {edicao && onCancelar && (

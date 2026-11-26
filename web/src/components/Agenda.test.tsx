@@ -1,10 +1,15 @@
+import { CHAVES_DIA_A_DIA } from "@/lib/permissoes";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Agenda from "./Agenda";
 import type { Pedido, PedidoAgenda } from "@/lib/api";
 
 let papelAtual = "funcionario";
-vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: papelAtual, empresa_id: 1 } }) }));
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({
+    user: { id: 1, nome: "Ana", papel: papelAtual, empresa_id: 1, permissoes: papelAtual === "estagiario" ? CHAVES_DIA_A_DIA.filter((c) => c !== "pedir_ferias") : CHAVES_DIA_A_DIA },
+  }),
+}));
 
 afterEach(() => {
   cleanup();

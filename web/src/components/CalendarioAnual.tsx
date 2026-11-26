@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, mensagemDeErro, type Aniversario, type CorFerias, type PedidoAgenda, type Ponte } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { temPermissao } from "@/lib/permissoes";
 import { hojeIso, mesesPt, nomeDoDia, quemE, visiveis } from "@/lib/agenda";
 import { marcasDoAno } from "@/lib/calendario";
 import { diasUteis } from "@/lib/diasUteis";
@@ -86,7 +87,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
   const [enviado, setEnviado] = useState(false);
   const { user } = useAuth();
   // Arrasto para marcar férias: só na linha da própria pessoa (e nunca estagiário).
-  const meuId = podeCriar && user && user.papel !== "estagiario" ? user.id : undefined;
+  const meuId = podeCriar && user && temPermissao(user, "pedir_ferias") ? user.id : undefined;
   const [corEscolhida, setCorEscolhida] = useState<CorFerias>("verde");
   const [arrasto, setArrasto] = useState<{ de: string; ate: string; vazia: boolean } | null>(null);
   const [caixa, setCaixa] = useState<{ de: string; ate: string } | null>(null);
