@@ -48,6 +48,16 @@ describe("pagina do calendario", () => {
     await waitFor(() => expect(agenda).toHaveBeenCalledWith("2027-01-01", "2027-12-31"));
   }, LIMITE);
 
+  it("marca o aniversário na linha da própria pessoa, sem repetir na linha Aniversários", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-25T12:00:00") });
+    agenda.mockResolvedValue([{ id: 1, user: { id: 2, nome: "Rui" }, tipo: "ferias", data_inicio: "2026-08-03", data_fim: "2026-08-05", estado: "aprovado" }]);
+    aniversarios.mockResolvedValue([{ user: { id: 2, nome: "Rui" }, data: "2026-08-04" }]);
+    render(<CalendarioPage />);
+    const marca = await screen.findByRole("img", { name: "Aniversário de Rui" });
+    expect(marca.closest("tr")?.textContent).toContain("Rui");
+    expect(screen.queryByRole("rowheader", { name: "Aniversários" })).toBeNull();
+  }, LIMITE);
+
   it("mostra o erro da agenda", async () => {
     agenda.mockRejectedValue(new Error("falhou"));
     aniversarios.mockResolvedValue([]);
