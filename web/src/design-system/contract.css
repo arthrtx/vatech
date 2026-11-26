@@ -1,0 +1,164 @@
+/*
+| CONTRATO DE COR — o que o design system PEDE ao projecto, não o que impõe.
+|
+| O sistema é agnóstico de marca de propósito: a mesma estrutura serve o painel
+| interno, um site institucional e um SaaS de cliente. O que muda entre eles é
+| a cor; o que não muda é o nome que ela tem.
+|
+| Cada variável aqui tem um valor neutro por omissão. Um projecto que não
+| defina nada renderiza cinzento e legível — nunca partido, nunca branco sobre
+| branco. Um projecto que queira a sua marca redefine as mesmas variáveis
+| DEPOIS deste ficheiro (ver docs/CONTRATO-DE-COR.md).
+|
+| Regra que não se negoceia: nenhum componente escreve um hex. Se um #hex
+| aparecer em src/**, alguém abriu um segundo sítio onde a marca pode divergir.
+*/
+
+:root {
+  /* ---- superfícies: do fundo da página ao elemento mais elevado ---- */
+  --ds-plane: #f9f9f7; /* fundo da página */
+  --ds-surface-1: #ffffff; /* cartão, painel, conteúdo */
+  --ds-surface-2: #f4f4f1; /* cabeçalho de tabela, chip, campo em repouso */
+  --ds-surface-3: #e9e9e4; /* estado premido, faixa alternada */
+  --ds-rail: #ffffff; /* barra lateral e barra superior */
+  --ds-overlay: rgb(11 11 11 / 0.55); /* véu por baixo de modal e drawer */
+
+  /* ---- texto: três níveis, não mais ---- */
+  --ds-text-1: #0b0b0b; /* título e valor — o que se lê primeiro */
+  --ds-text-2: #52514e; /* corpo e legenda */
+  /*
+  | Não é o #898781 da primeira versão. Aquele dava 3.41:1 contra o plano e
+  | 3.26:1 contra a surface-2 — e o gate de runtime encontrou-o em 269 pedaços
+  | de texto informativo (eyebrows, legendas de tamanho, descrições de token),
+  | não em texto incidental. Um rótulo que diz o que a coisa é tem de se ler.
+  |
+  | Este dá 5.62:1 sobre o plano, 5.92:1 sobre surface-1, 5.37:1 sobre surface-2
+  | e 4.86:1 sobre surface-3 — e continua visivelmente mais baixo que o text-2
+  | (7.53:1), pelo que a hierarquia se mantém e deixa é de custar legibilidade.
+  |
+  | As QUATRO superfícies contam. Uma primeira correcção mediu só contra plane e
+  | surface-1 e ficou em 4.25:1 sobre surface-3, que é o fundo dos chips e das
+  | faixas alternadas — o gate voltou a apanhá-lo lá.
+  */
+  --ds-text-3: #66645d; /* auxiliar, legenda, placeholder */
+  --ds-text-on-accent: #ffffff; /* texto sobre chapa de accent */
+
+  /*
+  | OBSOLETO — não usar em componente novo. Uma cor só não serve para as cinco
+  | chapas de feedback: branco sobre o amarelo de aviso dá 1.83:1. Cada tom tem
+  | agora o seu `--ds-<tom>-on`, gerado de tokens/feedback.json. Fica aqui
+  | porque é o valor certo para `critical` e para o que ainda o referencia.
+  */
+  --ds-text-on-feedback: #ffffff;
+
+  /* ---- linhas ---- */
+  --ds-border: rgb(11 11 11 / 0.1);
+  --ds-border-strong: rgb(11 11 11 / 0.18);
+  --ds-wash: rgb(11 11 11 / 0.04); /* hover de linha e de item de menu */
+
+  /* ---- accent: a única cor de marca que o sistema conhece pelo nome ---- */
+  /*
+  | O valor por omissão não é escolha estética — é o mais claro dos azuis dos
+  | tokens do painel que ainda dá 4.5:1 contra o branco (5.39:1). O #2a78d6 da
+  | primeira versão dava 4.42:1: reprova WCAG 1.4.3 AA por 0.08, e o botão
+  | primário do sistema inteiro assentava nele.
+  |
+  | Um projecto que redefina o accent herda essa obrigação: o par
+  | accent / text-on-accent tem de dar >= 4.5:1. Ver docs/CONTRATO-DE-COR.md.
+  */
+  --ds-accent: #256abf;
+  --ds-accent-hover: #184f95; /* 8.10:1 com branco */
+  --ds-accent-wash: color-mix(in srgb, var(--ds-accent) 12%, transparent); /* item seleccionado */
+  --ds-accent-ink: #184f95; /* accent como TEXTO sobre superfície clara */
+
+  /* ---- foco: deliberadamente separado do accent ---- */
+  /*
+  | O anel de foco herda o accent por omissão, mas é uma variável própria: há
+  | marcas cujo accent não chega a 3:1 contra a superfície, e nessas o anel
+  | tem de ser outra cor. WCAG 2.4.11.
+  */
+  --ds-focus-ring: var(--ds-accent);
+
+  /* ---- tipografia: família fornecida pelo projecto ---- */
+  --ds-font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ds-font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+
+  /* ---- sombra de superfície: troca com o tema ---- */
+  --ds-shadow-surface: var(--ds-shadow-elev-1);
+}
+
+/*
+| Tema escuro. Duas portas — preferência do sistema e selector explícito —
+| pela mesma razão que em tokens.css: um projecto que force o tema tem de
+| ganhar ao SO.
+*/
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --ds-plane: #0d0d0d;
+    --ds-surface-1: #1a1a19;
+    --ds-surface-2: #232322;
+    --ds-surface-3: #2c2c2a;
+    --ds-rail: #151514;
+    --ds-overlay: rgb(0 0 0 / 0.7);
+
+    --ds-text-1: #ffffff;
+    --ds-text-2: #c3c2b7;
+    --ds-text-3: #9c9a93; /* 6.90:1 sobre plane, 5.59:1 sobre surface-2 */
+
+    --ds-border: rgb(255 255 255 / 0.1);
+    --ds-border-strong: rgb(255 255 255 / 0.18);
+    --ds-wash: rgb(255 255 255 / 0.05);
+
+    --ds-accent: #3987e5;
+    --ds-accent-hover: #6da7ec;
+    --ds-accent-wash: color-mix(in srgb, var(--ds-accent) 16%, transparent);
+    --ds-accent-ink: #6da7ec;
+
+    /*
+    | No escuro o accent é claro, e por isso o que vai EM CIMA dele é tinta
+    | escura, não branco: branco sobre #3987e5 dá 3.64:1 e reprova. Com
+    | #0d0d0d dá 5.34:1, e sobre o hover #6da7ec dá 7.76:1.
+    |
+    | É por isto que `--ds-text-on-accent` é uma variável e não a constante
+    | branca que parecia bastar.
+    */
+    --ds-text-on-accent: #0d0d0d;
+
+    --ds-shadow-surface: var(--ds-shadow-elev-1-dark);
+  }
+}
+
+[data-tema='escuro'] {
+  --ds-plane: #0d0d0d;
+  --ds-surface-1: #1a1a19;
+  --ds-surface-2: #232322;
+  --ds-surface-3: #2c2c2a;
+  --ds-rail: #151514;
+  --ds-overlay: rgb(0 0 0 / 0.7);
+
+  --ds-text-1: #ffffff;
+  --ds-text-2: #c3c2b7;
+  --ds-text-3: #9c9a93; /* ver a nota no bloco de preferência do sistema */
+
+  --ds-border: rgb(255 255 255 / 0.1);
+  --ds-border-strong: rgb(255 255 255 / 0.18);
+  --ds-wash: rgb(255 255 255 / 0.05);
+
+  --ds-accent: #3987e5;
+  --ds-accent-hover: #6da7ec;
+  --ds-accent-wash: color-mix(in srgb, var(--ds-accent) 16%, transparent);
+  --ds-accent-ink: #6da7ec;
+
+  /* Ver a nota no bloco de preferência do sistema: no escuro é tinta escura. */
+  --ds-text-on-accent: #0d0d0d;
+
+  --ds-shadow-surface: var(--ds-shadow-elev-1-dark);
+}
+
+[data-tema='escuro'] {
+  color-scheme: dark;
+}
+
+[data-tema='claro'] {
+  color-scheme: light;
+}

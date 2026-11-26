@@ -1,0 +1,15 @@
+/* GERADO A PARTIR DE tokens/*.json — NÃO EDITAR À MÃO */
+
+/*
+| Cortes literais para o @theme do Tailwind. Ver a nota em build.mjs: media
+| queries não resolvem var(), e um corte em variável passa o typecheck e falha
+| no build.
+*/
+
+@theme {
+  --breakpoint-xs: 380px; /* telemóvel pequeno — só afinação */
+  --breakpoint-sm: 640px; /* telemóvel grande / phablet */
+  --breakpoint-md: 860px; /* tablet retrato */
+  --breakpoint-lg: 1000px; /* tablet paisagem / portátil — CORTE PRINCIPAL: a nav vira menu */
+  --breakpoint-xl: 1280px; /* desktop */
+}

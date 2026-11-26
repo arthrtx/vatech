@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Sistema de design (copiado de D:\design-system, ver docs/DECISIONS.md). A marca vem DEPOIS (contrato de cor). */
+@import "../design-system/styles.css";
 
 /* Variante dark: segue o atributo data-tema que lib/tema.ts põe no <html>. */
 @custom-variant dark (&:where([data-tema="escuro"], [data-tema="escuro"] *));
@@ -143,10 +145,60 @@
   --tw-ring-offset-color: var(--color-painel);
 }
 
-body {
-  background: var(--color-fundo);
-  color: var(--color-texto);
-  font-family: system-ui, sans-serif;
+/*
+ * Contrato de cor do sistema de design (--ds-*): a paleta Setuptech de cima, sem cores novas.
+ * Vem DEPOIS do import do sistema, senão o contrato neutro ganha. A barra lateral e a superior
+ * (rail) seguem o sistema: superfície normal, não a barra escura do redesign anterior.
+ */
+:root {
+  --ds-plane: var(--color-fundo);
+  --ds-surface-1: var(--color-painel);
+  --ds-surface-2: var(--color-campo);
+  --ds-surface-3: var(--color-trilho);
+  --ds-rail: var(--color-painel);
+  --ds-overlay: rgb(26 24 30 / 0.55);
+
+  --ds-text-1: var(--color-texto);
+  --ds-text-2: #433d44; /* o --efeito-suave do projecto */
+  --ds-text-3: var(--color-texto-suave);
+  --ds-text-on-accent: #ffffff;
+
+  --ds-border: var(--color-linha);
+  --ds-border-strong: var(--color-linha-forte);
+  --ds-wash: rgb(26 24 30 / 0.05);
+
+  --ds-accent: var(--color-primaria);
+  --ds-accent-hover: var(--color-primaria-forte);
+  --ds-accent-wash: var(--color-primaria-suave);
+  --ds-accent-ink: var(--color-primaria);
+  --ds-focus-ring: var(--color-rosa);
+
+  --ds-font-sans: system-ui, sans-serif; /* TODO: token em falta (família de fonte) */
+}
+:root[data-tema="escuro"] {
+  --ds-plane: var(--color-fundo);
+  --ds-surface-1: var(--color-painel);
+  --ds-surface-2: var(--color-campo);
+  --ds-surface-3: var(--color-trilho);
+  --ds-rail: var(--color-barra);
+  --ds-overlay: rgb(0 0 0 / 0.7);
+
+  --ds-text-1: var(--color-texto);
+  --ds-text-2: #c9cbe8; /* o --efeito-suave do projecto, escuro */
+  --ds-text-3: var(--color-texto-suave);
+  --ds-text-on-accent: #ffffff;
+
+  --ds-border: var(--color-linha);
+  --ds-border-strong: var(--color-linha-forte);
+  --ds-wash: rgb(255 255 255 / 0.05);
+
+  --ds-accent: var(--color-primaria);
+  --ds-accent-hover: var(--color-primaria-forte);
+  --ds-accent-wash: var(--color-primaria-suave);
+  --ds-accent-ink: var(--color-texto);
+  --ds-focus-ring: var(--color-rosa);
+
+  --ds-shadow-surface: var(--ds-shadow-elev-1-dark);
 }
 
 /*

@@ -1,0 +1,413 @@
+/*
+| Folha única do design system. Um projecto consumidor faz:
+|
+|   @import 'tailwindcss';
+|   @import '@setuptech/design-system/styles.css';
+|   // e a seguir, opcionalmente, as suas próprias variáveis de marca
+|
+| Ordem importa: as variáveis do projecto vêm DEPOIS, senão o contrato neutro
+| ganha e a marca não aparece.
+*/
+
+@import './dist/tokens.css';
+@import './contract.css';
+
+/*
+| Ponte para as utilidades do Tailwind v4. `inline` faz o Tailwind resolver a
+| var no momento de gerar a utilidade — sem isso, um `bg-surface-1` dentro de
+| [data-tema="escuro"] continuaria a pintar a cor do tema claro.
+*/
+@theme inline {
+  /* ---- cor ---- */
+  --color-plane: var(--ds-plane);
+  --color-surface-1: var(--ds-surface-1);
+  --color-surface-2: var(--ds-surface-2);
+  --color-surface-3: var(--ds-surface-3);
+  --color-surface-tray: var(--ds-surface-tray);
+  --color-rail: var(--ds-rail);
+  --color-overlay: var(--ds-overlay);
+
+  --color-text-1: var(--ds-text-1);
+  --color-text-2: var(--ds-text-2);
+  --color-text-3: var(--ds-text-3);
+  --color-on-accent: var(--ds-text-on-accent);
+  --color-on-feedback: var(--ds-text-on-feedback);
+
+  --color-line: var(--ds-border);
+  --color-line-strong: var(--ds-border-strong);
+  --color-wash: var(--ds-wash);
+
+  --color-accent: var(--ds-accent);
+  --color-accent-hover: var(--ds-accent-hover);
+  --color-accent-wash: var(--ds-accent-wash);
+  --color-accent-ink: var(--ds-accent-ink);
+
+  --color-good: var(--ds-good);
+  --color-warning: var(--ds-warning);
+  --color-serious: var(--ds-serious);
+  --color-critical: var(--ds-critical);
+  --color-info: var(--ds-info);
+
+  --color-good-ink: var(--ds-good-ink);
+  --color-warning-ink: var(--ds-warning-ink);
+  --color-serious-ink: var(--ds-serious-ink);
+  --color-critical-ink: var(--ds-critical-ink);
+  --color-info-ink: var(--ds-info-ink);
+
+  /*
+  | Texto sobre a chapa — um por tom. `text-on-feedback` a branco reprovava em
+  | quatro dos cinco: usar `text-good-on`, `text-warning-on`, etc.
+  */
+  --color-good-on: var(--ds-good-on);
+  --color-warning-on: var(--ds-warning-on);
+  --color-serious-on: var(--ds-serious-on);
+  --color-critical-on: var(--ds-critical-on);
+  --color-info-on: var(--ds-info-on);
+
+  /* Tratamento discreto: fundo e borda derivados da chapa. */
+  --color-good-wash: var(--ds-good-wash);
+  --color-warning-wash: var(--ds-warning-wash);
+  --color-serious-wash: var(--ds-serious-wash);
+  --color-critical-wash: var(--ds-critical-wash);
+  --color-info-wash: var(--ds-info-wash);
+
+  --color-good-edge: var(--ds-good-edge);
+  --color-warning-edge: var(--ds-warning-edge);
+  --color-serious-edge: var(--ds-serious-edge);
+  --color-critical-edge: var(--ds-critical-edge);
+  --color-info-edge: var(--ds-info-edge);
+
+  /* ---- raio: md e lg passam a significar controlo e superfície ---- */
+  --radius-xs: var(--ds-radius-xs);
+  --radius-sm: var(--ds-radius-sm);
+  --radius-md: var(--ds-radius-md);
+  --radius-lg: var(--ds-radius-lg);
+  --radius-xl: var(--ds-radius-xl);
+  --radius-2xl: var(--ds-radius-2xl);
+  --radius-pill: var(--ds-radius-pill);
+
+  /* ---- tipo ---- */
+  --font-sans: var(--ds-font-sans);
+  --font-mono: var(--ds-font-mono);
+
+  --text-2xs: var(--ds-text-2xs);
+  --text-xs: var(--ds-text-xs);
+  --text-sm: var(--ds-text-sm);
+  --text-base: var(--ds-text-base);
+  --text-md: var(--ds-text-md);
+  --text-lg: var(--ds-text-lg);
+  --text-h4: var(--ds-text-h4);
+  --text-h3: var(--ds-text-h3);
+  --text-h2: var(--ds-text-h2);
+  --text-h1: var(--ds-text-h1);
+  --text-display: var(--ds-text-display);
+
+  --text-h1--line-height: var(--ds-leading-tight);
+  --text-h2--line-height: var(--ds-leading-snug);
+  --text-h3--line-height: var(--ds-leading-snug);
+  --text-display--line-height: var(--ds-leading-tight);
+
+  /*
+  | Os degraus de corpo também precisam de par, e é por faltarem que o texto
+  | do painel andou apertado sem ninguém dar por isso.
+  |
+  | O Tailwind traz um `line-height` por omissão agarrado a cada degrau de
+  | tamanho (`text-sm` → 1.4286, `text-xs` → 1.3333, `text-base` → 1.5).
+  | Redefinir `--text-sm` **não** redefine o par: a utilidade continua a emitir
+  | `line-height: var(--tw-leading, var(--text-sm--line-height))` com o valor
+  | de origem, que ganha ao 1.7 que o `body` desta folha declara. Resultado:
+  | qualquer `<Text size="sm">` apertava a entrelinha em silêncio, sem erro,
+  | sem aviso e com o `tsc` verde — 97 ocorrências contadas no painel, da
+  | página de entrada à ficha de projecto.
+  |
+  | Declarar os pares fecha o buraco na fonte, em vez de obrigar cada chamada
+  | a lembrar-se de `leading-relaxed`. Quem quiser outra entrelinha continua a
+  | poder pô-la por utilidade: a `--tw-leading` do `leading-*` vem primeiro no
+  | `var()` e ganha na mesma.
+  |
+  | ⚠ `--text-2xs` fica DE FORA de propósito. Não é degrau de origem do
+  | Tailwind, logo a utilidade nunca emitiu `line-height` nenhum e o texto
+  | herda o do pai — que hoje é o que se quer (1.7 na maioria, 1.4 dentro da
+  | ficha do calendário). Declará-lo passaria a forçar 1.7 em sítios onde o
+  | pai manda outra coisa, e isso seria mudar o que está certo.
+  */
+  --text-xs--line-height: var(--ds-leading-relaxed);
+  --text-sm--line-height: var(--ds-leading-relaxed);
+  --text-base--line-height: var(--ds-leading-relaxed);
+  --text-md--line-height: var(--ds-leading-relaxed);
+  --text-lg--line-height: var(--ds-leading-relaxed);
+
+  --leading-tight: var(--ds-leading-tight);
+  --leading-snug: var(--ds-leading-snug);
+  --leading-normal: var(--ds-leading-normal);
+  --leading-relaxed: var(--ds-leading-relaxed);
+  --leading-loose: var(--ds-leading-loose);
+
+  --tracking-eyebrow: var(--ds-tracking-eyebrow);
+  --tracking-wider: var(--ds-tracking-wider);
+  --tracking-wide: var(--ds-tracking-wide);
+  --tracking-tight: var(--ds-tracking-tight);
+
+  /* ---- espaço nomeado ---- */
+  /*
+  | A escala numérica do Tailwind (base 4px) já cobre os degraus 1–8 do sistema
+  | tal e qual: p-4 = 16px, p-6 = 24px, p-8 = 32px. Acima disso a nossa escala
+  | e a do Tailwind divergem (o nosso degrau 9 é 40px, o `9` do Tailwind é 36px)
+  | — por isso os degraus grandes têm nome, e não número. Usar `p-gutter`, não
+  | `p-10`, quando se quer o gutter.
+  */
+  --spacing-gutter: var(--ds-section-gutter);
+  --spacing-gutter-mobile: var(--ds-section-gutter-mobile);
+  --spacing-section: var(--ds-section-y);
+  --spacing-section-mobile: var(--ds-section-y-mobile);
+  --spacing-card: var(--ds-space-8);
+  --spacing-touch: var(--ds-control-touch-min);
+  --spacing-touch-comfort: var(--ds-control-touch-comfort);
+
+  /* ---- largura de conteúdo ---- */
+  --container-max: var(--ds-container-max);
+  --container-wide: var(--ds-container-wide);
+  --container-narrow: var(--ds-container-narrow);
+  --container-text: var(--ds-container-text);
+  --container-form: var(--ds-container-form);
+
+  /* ---- sombra ---- */
+  --shadow-surface: var(--ds-shadow-surface);
+  --shadow-float: var(--ds-shadow-float);
+  --shadow-float-lg: var(--ds-shadow-float-lg);
+  --shadow-offset-soft: var(--ds-shadow-offset-soft);
+
+  /* ---- movimento ---- */
+  --ease-ds: var(--ds-motion-ease-out);
+  --ease-spring: var(--ds-motion-ease-spring);
+
+}
+
+/*
+| Os cortes vêm num ficheiro à parte, com valores literais.
+|
+| Os do site real, não os do Tailwind: `md` é 860px (tablet retrato) e `lg` é
+| 1000px — o ponto onde a navegação passa a menu. Quem escreve `lg:` está a
+| falar do corte principal, não de um 1024px genérico.
+|
+| E não podem estar no bloco acima: uma media query não resolve `var()`, e o
+| erro só aparece no build. Ver build.mjs.
+*/
+@import './dist/breakpoints.css';
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+
+  /*
+  | A mão em cima do que se clica — reposta, não inventada.
+  |
+  | O preflight do Tailwind **v3** punha `cursor: pointer` em botões; o v4
+  | tirou-o de propósito, para seguir a folha do browser, que dá `default`. O
+  | resultado é que todo o botão migrado para este sistema perde a mão que o
+  | nativo tinha escrita à mão — e fica ao lado de ligações que a têm.
+  |
+  | Medido em produção, na página de entrada:
+  |     BUTTON «Entrar»            cursor=default
+  |     A «Entrar com Google»      cursor=pointer
+  |
+  | Vai na base e não em cada componente porque são **16** os que têm elemento
+  | clicável e nenhum o declarava: `Button`, `IconButton`, `Tag`, `Checkbox`,
+  | `RadioGroup`, `Accordion`, `Pagination`, `Calendar`, `BoardCard`,
+  | `SearchInput`, `Card`, `Toast`, `MobileNav`, `ThemeToggle`, `UserMenu` e
+  | `TableHeaderCell`. Dezasseis cópias da mesma classe são dezasseis sítios
+  | para alguém se esquecer.
+  |
+  | O `:not()` é o que impede a mão de aparecer sobre um controlo desactivado,
+  | onde os componentes já põem `cursor-not-allowed`.
+  */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary {
+    cursor: pointer;
+  }
+
+  body {
+    background: var(--ds-plane);
+    color: var(--ds-text-1);
+    font-family: var(--ds-font-sans);
+    font-size: var(--ds-text-base);
+    line-height: var(--ds-leading-relaxed);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+  | Foco visível em TODO o lado, uma vez só. Um componente que precise de
+  | anular isto está errado — WCAG 2.4.7 não tem excepção para "fica feio".
+  | :focus-visible e não :focus: o rato não deve deixar anel para trás.
+  */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: var(--ds-focus-width) solid var(--ds-focus-ring);
+    outline-offset: var(--ds-focus-offset);
+    border-radius: var(--ds-radius-xs);
+  }
+
+  /*
+  | Controlo COMPOSTO (caixa exterior desenhada pelo wrapper + campo interior
+  | transparente, ex.: `Input` com prefixo/sufixo): o anel é da CAIXA VISÍVEL,
+  | não do campo lá dentro — senão desenha-se encostado por dentro da moldura,
+  | encolhido, com folga visível até à borda cinzenta. Mesma receita da regra
+  | acima; o controlo interior apaga o seu próprio anel (`outline-hidden`)
+  | para não ficarem dois. Decisão 2026-08-31.
+  */
+  .ds-control-box:has(:focus-visible) {
+    outline: var(--ds-focus-width) solid var(--ds-focus-ring);
+    outline-offset: var(--ds-focus-offset);
+    border-radius: var(--ds-radius-xs);
+  }
+
+  ::selection {
+    background: var(--ds-accent-wash);
+  }
+}
+
+/*
+| Abertura e fecho do acordeão.
+|
+| Vivem aqui, e não no componente, porque `@keyframes` não se exprime em
+| utilidades — e é a folha partilhada que o Radix espera: a primitiva mede o
+| painel e publica a altura em `--radix-accordion-content-height`.
+|
+| A alternativa (animar `grid-template-rows: 0fr → 1fr` com o painel sempre
+| montado por `forceMount`) evita o keyframe, mas obriga o painel fechado a
+| existir no DOM e a ser escondido à mão por `visibility` — um segundo mecanismo
+| a fazer o que o `hidden` da primitiva já faz, e um sítio a mais onde o
+| conteúdo fechado pode voltar a apanhar foco. Este caminho devolve a primitiva
+| ao seu funcionamento normal: fechado, o painel sai do DOM com os filhos por
+| renderizar.
+|
+| Animar altura é a excepção à regra "só transform e opacity" (§6 das
+| CONVENCOES): `scaleY()` esmaga o texto em vez de o revelar.
+*/
+@keyframes ds-acordeao-abre {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes ds-acordeao-fecha {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@layer components {
+  /*
+  | A assinatura da casa: uma borda de 1px deslocada 8px, desenhada por ::after.
+  | Não é box-shadow — uma sombra desfoca, esta linha é nítida e é o que dá o
+  | ar de impressão em papel do site.
+  |
+  | Em ecrã pequeno o deslocamento encolhe: 8px numa coluna de 20px de gutter
+  | come metade do espaço lateral.
+  */
+  .ds-offset {
+    position: relative;
+  }
+
+  .ds-offset::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: var(--ds-border-hairline) solid var(--ds-border-strong);
+    border-radius: inherit;
+    transform: translate(var(--ds-offset-distance), var(--ds-offset-distance));
+    pointer-events: none;
+  }
+
+  @media (max-width: 639px) {
+    .ds-offset::after {
+      transform: translate(4px, 4px);
+    }
+  }
+
+  /* Levanta ao passar o rato — só quando o cartão inteiro é clicável. */
+  .ds-offset-lift {
+    transition: transform var(--ds-motion-slow) var(--ds-motion-ease-out);
+  }
+
+  .ds-offset-lift:hover {
+    transform: translate(var(--ds-offset-lift), var(--ds-offset-lift));
+  }
+
+  /*
+  | Sombra dura de botão sólido. A cor sai do próprio botão via color-mix, e
+  | não de um token fixo — assim funciona com qualquer accent que o projecto
+  | ponha, sem o design system ter de conhecer a marca.
+  */
+  .ds-press {
+    box-shadow: 0 6px 0 var(--ds-press-colour, currentColor);
+    transition:
+      transform var(--ds-motion-fast) var(--ds-motion-ease-out),
+      box-shadow var(--ds-motion-fast) var(--ds-motion-ease-out);
+  }
+
+  .ds-press:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 var(--ds-press-colour, currentColor);
+  }
+
+  /*
+  | Eyebrow: a etiqueta pequena por cima de um título. O tracking largo só
+  | funciona em maiúsculas e em textos curtos — daí estar numa classe e não
+  | numa utilidade solta.
+  */
+  .ds-eyebrow {
+    font-size: var(--ds-text-sm);
+    font-weight: var(--ds-weight-semibold);
+    letter-spacing: var(--ds-tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--ds-text-3);
+  }
+
+  /*
+  | Números em tabela: largura fixa. Sem isto, uma coluna de valores fica com
+  | os decimais aos saltos e deixa de se ler de relance.
+  */
+  .ds-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  /*
+  | Esconde visualmente, mantém para leitor de ecrã. Necessário sempre que um
+  | ícone é a única coisa visível num controlo.
+  |
+  | ⚠ O `left/top: 0` não é decoração — sem ele isto **empurra a página**.
+  |
+  | `position: absolute` sem deslocamento fica na posição estática, que é onde
+  | o texto teria caído no fluxo: ao fim de uma linha larga, isso é fora do
+  | ecrã à direita. E um `absolute` cujo antepassado com `overflow` não está
+  | posicionado **escapa ao recorte dele** — ao contrário de `fixed`, estende a
+  | área deslizável. Medido na `/capacidade` a 372px: 26px de deslize
+  | horizontal, que desaparecem com estas duas linhas.
+  |
+  | Uma utilidade de acessibilidade não pode depender de quem a usa ter posto
+  | `position: relative` no pai. Ninguém se lembra, e a falha é invisível em
+  | ecrã grande.
+  */
+  .ds-sr-only {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}

@@ -1,0 +1,228 @@
+/* GERADO A PARTIR DE tokens/*.json — NÃO EDITAR À MÃO */
+
+/*
+| Contrato de cor: este ficheiro NÃO define superfícies, texto nem accent.
+| Define forma, espaço, tipo, movimento, camada — e as cinco cores de função.
+| O projecto consumidor tem de fornecer as variáveis do contrato antes de usar
+| qualquer componente. Sem elas, os fallbacks de src/contract.css entram e o
+| resultado é cinzento e legível, nunca partido. Ver docs/CONTRATO-DE-COR.md.
+*/
+
+:root {
+
+  /* space — Escala de base 4. Os valores do site (4,8,12,16,18,20,24,28,32,36,40,44,48,56,60,90) foram normalizados para a grelha de 4 — 18 arredonda a 16 ou 20 conforme o uso, e o site já o faz. */
+  --ds-space-0:          0;
+  --ds-space-1:          4px; /* colagem: ícone a texto muito junto */
+  --ds-space-2:          8px; /* gap de tags, padding de chip */
+  --ds-space-3:          12px; /* gap interno de botão (medido: .btn gap 12px) */
+  --ds-space-4:          16px; /* gutter de grelha interna (medido: padding 0 16px) */
+  --ds-space-5:          20px; /* gutter lateral mobile (medido: --gutter-m) */
+  --ds-space-6:          24px; /* padding horizontal de botão md (medido: 12px 24px) */
+  --ds-space-7:          28px; /* padding horizontal de botão lg (medido: 14px 28px) */
+  --ds-space-8:          32px; /* padding de cartão (medido: .card padding 32px) */
+  --ds-space-9:          40px; /* gutter lateral desktop (medido: .section padding 90px 40px) */
+  --ds-space-10:         48px; /* gap de grelha larga (medido: gap 48px) */
+  --ds-space-11:         56px;
+  --ds-space-12:         64px;
+  --ds-space-13:         80px;
+  --ds-space-14:         96px;
+  --ds-space-15:         120px;
+
+  /* section — Ritmo vertical de secção. Medido: 90px desktop, 60px abaixo de 1000px. */
+  --ds-section-y:                     90px;
+  --ds-section-y-mobile:              60px;
+  --ds-section-gutter:                40px;
+  --ds-section-gutter-mobile:         20px;
+
+  /* container — Medido: --max: 1366px; .section__inner--narrow 1100px; prosa 720px. */
+  --ds-container-max:            1366px;
+  --ds-container-wide:           1280px;
+  --ds-container-narrow:         1100px;
+  --ds-container-text:           720px; /* medida de leitura: ~70 caracteres */
+  --ds-container-form:           620px;
+
+  /* radius — Medido: 8px (controlos, 10 ocorrências), 10px (cartões, 16 ocorrências), 14px (cartão elevado), 999px (pílula), 50% (círculo). 4px e 6px derivam dos 2px/6px do site e servem de degrau interior. */
+  --ds-radius-xs:             4px; /* checkbox, marcador */
+  --ds-radius-sm:             6px; /* elemento dentro de um controlo */
+  --ds-radius-md:             8px; /* PADRÃO de controlo: botão, input, select */
+  --ds-radius-lg:             10px; /* PADRÃO de superfície: cartão, painel, dropdown */
+  --ds-radius-xl:             14px; /* superfície elevada: modal, cartão de destaque */
+  --ds-radius-2xl:            20px; /* folha inferior (bottom sheet) no topo */
+  --ds-radius-pill:           999px; /* tag, badge, grupo de avatares, switch */
+  --ds-radius-circle:         50%;
+
+  /* border */
+  --ds-border-hairline:         1px;
+  --ds-border-strong:           2px; /* estado activo, foco, item seleccionado */
+
+  /* shadow — Todas medidas. A assinatura da marca NÃO é uma sombra difusa — é uma borda deslocada (ver offset.*). As difusas só aparecem em conteúdo flutuante. */
+  --ds-shadow-press:               0 6px 0; /* sombra dura de botão sólido; a cor vem do próprio botão a 30-40% (medido: 0 6px 0 rgba(8,242,176,0.4)) */
+  --ds-shadow-offset-soft:         6px 6px 0 0 rgb(0 0 0 / 0.08);
+  --ds-shadow-elev-1:              0 1px 2px rgb(0 0 0 / 0.05), 0 8px 24px rgb(0 0 0 / 0.05); /* cartão em repouso (tokens do painel interno) */
+  --ds-shadow-elev-1-dark:         0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.25);
+  --ds-shadow-float:               0 30px 80px rgb(0 0 0 / 0.45); /* dropdown / popover sobre fundo escuro */
+  --ds-shadow-float-lg:            0 40px 100px rgb(0 0 0 / 0.5); /* modal */
+
+  /* offset — A assinatura visual: pseudo-elemento ::after com borda de 1px deslocada. Medido: transform translate(8px,8px); hover do cartão-link translate(-4px,-4px). */
+  --ds-offset-distance:         8px;
+  --ds-offset-lift:             -4px;
+
+  /* control — Alturas derivadas do padding medido + line-height. O mínimo de toque de 44px vem da WCAG 2.5.5 (AAA) e da HIG da Apple — não do CSS. */
+  --ds-control-h-sm:                  32px;
+  --ds-control-h-md:                  40px;
+  --ds-control-h-lg:                  48px;
+  --ds-control-touch-min:             44px; /* WCAG 2.5.5 AAA — mínimo absoluto de alvo táctil */
+  --ds-control-touch-comfort:         48px; /* alvo confortável; usar em acção primária mobile */
+  --ds-control-touch-gap:             8px; /* espaço mínimo entre dois alvos tácteis adjacentes */
+
+  /* type — Tamanhos fluidos medidos no bloco responsive do site.css. A família NÃO é token do sistema — cada projecto define --ds-font-sans. */
+  --ds-text-display:         clamp(64px, 13vw, 120px); /* medido: .cta-big */
+  --ds-text-h1:              clamp(40px, 8vw, 76px); /* medido: .hero__h1 */
+  --ds-text-h2:              clamp(30px, 5.2vw, 46px); /* medido: .h2 */
+  --ds-text-h3:              clamp(26px, 7vw, 34px); /* medido: nav mobile */
+  --ds-text-h4:              24px;
+  --ds-text-lg:              18px; /* medido: botão lg / lead */
+  --ds-text-md:              16px; /* medido: .btn base */
+  --ds-text-base:            15px; /* medido: nav e corpo do site */
+  --ds-text-sm:              14px;
+  --ds-text-xs:              13px; /* medido: .tag, copyright */
+  --ds-text-2xs:             12px; /* medido: .tag--mint, descrição de dropdown */
+
+  /* leading */
+  --ds-leading-tight:           1.08; /* medido: h1 */
+  --ds-leading-snug:            1.15; /* medido: nav mobile */
+  --ds-leading-normal:          1.4;
+  --ds-leading-relaxed:         1.7; /* medido: corpo */
+  --ds-leading-loose:           2; /* medido: corpo largo e cartão de código */
+
+  /* tracking */
+  --ds-tracking-tight:           -0.01em;
+  --ds-tracking-normal:          0;
+  --ds-tracking-wide:            0.08em; /* medido */
+  --ds-tracking-wider:           0.14em; /* medido */
+  --ds-tracking-eyebrow:         0.28em; /* medido: .eyebrow, sempre com uppercase */
+
+  /* weight */
+  --ds-weight-light:            300; /* medido: corpo do site */
+  --ds-weight-regular:          400;
+  --ds-weight-medium:           500;
+  --ds-weight-semibold:         600; /* medido: botão outline */
+  --ds-weight-bold:             700; /* medido: botão sólido e títulos */
+  --ds-weight-black:            800; /* medido: métrica */
+
+  /* motion — Durações e curvas medidas. Tudo respeita prefers-reduced-motion (o site tem 3 blocos desses). */
+  --ds-motion-instant:             100ms;
+  --ds-motion-fast:                150ms;
+  --ds-motion-base:                200ms; /* medido: hover de cor e borda */
+  --ds-motion-slow:                300ms; /* medido: hover de botão e transform de cartão */
+  --ds-motion-panel:               320ms; /* medido: painel de nav mobile */
+  --ds-motion-reveal:              400ms; /* medido: entrada escalonada de item de menu */
+  --ds-motion-stagger:             40ms; /* medido: 0.06s, 0.10s, 0.14s… = passo de 40ms */
+  --ds-motion-ease-out:            cubic-bezier(0.4, 0, 0.2, 1); /* medido: painel e reveal */
+  --ds-motion-ease-spring:         cubic-bezier(0.22, 1, 0.36, 1); /* medido: transição de largura */
+
+  /* z — Medido no :root do site (--z-blob 0, --z-content 5, --z-nav 40, --z-dropdown 60). Os degraus acima de 60 são a extensão para SaaS, espaçados de 10. O popover (95) é a excepção: o conteúdo flutuante em portal abre também de dentro de um modal, e a 60 ficava por baixo do véu. */
+  --ds-z-base:             0;
+  --ds-z-content:          5;
+  --ds-z-sticky:           30;
+  --ds-z-nav:              40;
+  --ds-z-dropdown:         60;
+  --ds-z-overlay:          80;
+  --ds-z-modal:            90;
+  --ds-z-popover:          95; /* select, menu e popover em portal: acima do modal de onde podem abrir, abaixo do toast */
+  --ds-z-toast:            100;
+  --ds-z-tooltip:          110;
+
+  /* breakpoint — Medidos no site.css: 380, 640, 700, 860, 1000, 1280. O 700 era pontual (modal) e absorve-se no 640. Sistema mobile-first: escrever min-width, nunca max-width. */
+  --ds-bp-xs:         380px; /* telemóvel pequeno — só afinação */
+  --ds-bp-sm:         640px; /* telemóvel grande / phablet */
+  --ds-bp-md:         860px; /* tablet retrato */
+  --ds-bp-lg:         1000px; /* tablet paisagem / portátil — CORTE PRINCIPAL: a nav vira menu */
+  --ds-bp-xl:         1280px; /* desktop */
+
+  /* focus — WCAG 2.4.11/2.4.13 (2.2): o indicador de foco tem de ter ≥2px de espessura e contraste ≥3:1 contra o adjacente. */
+  --ds-focus-width:          2px;
+  --ds-focus-offset:         2px;
+
+  /* feedback — Chapa de cor — usar como fundo de barra de estado, ponto, badge sólido. Partilhada entre tema claro e escuro: um vermelho de erro não muda de significado com o tema. */
+  --ds-good:             #0ca30c; /* sucesso, activo, saudável, dentro do orçamento */
+  --ds-warning:          #fab219; /* aviso, a aproximar-se do limite, requer atenção */
+  --ds-serious:          #ec835a; /* grave mas não fatal — degradado, atrasado, quase esgotado */
+  --ds-critical:         #d03b3b; /* erro, falha, destrutivo, vencido */
+  --ds-info:             #184f95; /* informativo e neutro. É o `sequential.5` claro dos tokens do painel, e não o `#2a78d6` da primeira versão: naquele, nem branco (4.42:1) nem tinta escura (4.40:1) chegavam a 4.5:1, e um badge sólido de informação não tinha texto legível nenhum */
+
+  /* feedback-on — Cor do TEXTO a pôr sobre cada chapa. Não é uma só — `--ds-text-on-feedback` a branco reprovava em quatro dos cinco tons (good 3.35:1, warning 1.83:1, serious 2.64:1, info 4.42:1). Cada valor abaixo foi medido contra a sua chapa e passa 4.5:1 (WCAG 1.4.3 AA para texto normal, que é o caso: um badge tem 12–13px). Não muda com o tema, porque a chapa também não muda. */
+  --ds-good-on:             #0d0d0d; /* 5.79:1 sobre #0ca30c (branco dava 3.35:1) */
+  --ds-warning-on:          #0d0d0d; /* 10.59:1 sobre #fab219 (branco dava 1.83:1) */
+  --ds-serious-on:          #0d0d0d; /* 7.37:1 sobre #ec835a (branco dava 2.64:1) */
+  --ds-critical-on:         #ffffff; /* 4.80:1 sobre #d03b3b (tinta escura dava 4.05:1 — aqui é o branco que ganha) */
+  --ds-info-on:             #ffffff; /* 8.10:1 sobre #184f95 */
+
+  /* feedback suave — gerado por color-mix sobre a chapa */
+  --ds-good-wash:             color-mix(in srgb, var(--ds-good) 14%, transparent); /* fundo discreto */
+  --ds-good-edge:             color-mix(in srgb, var(--ds-good) 30%, transparent); /* borda do fundo discreto */
+  --ds-warning-wash:          color-mix(in srgb, var(--ds-warning) 14%, transparent); /* fundo discreto */
+  --ds-warning-edge:          color-mix(in srgb, var(--ds-warning) 30%, transparent); /* borda do fundo discreto */
+  --ds-serious-wash:          color-mix(in srgb, var(--ds-serious) 14%, transparent); /* fundo discreto */
+  --ds-serious-edge:          color-mix(in srgb, var(--ds-serious) 30%, transparent); /* borda do fundo discreto */
+  --ds-critical-wash:         color-mix(in srgb, var(--ds-critical) 14%, transparent); /* fundo discreto */
+  --ds-critical-edge:         color-mix(in srgb, var(--ds-critical) 30%, transparent); /* borda do fundo discreto */
+  --ds-info-wash:             color-mix(in srgb, var(--ds-info) 14%, transparent); /* fundo discreto */
+  --ds-info-edge:             color-mix(in srgb, var(--ds-info) 30%, transparent); /* borda do fundo discreto */
+
+  /* tinta de feedback — tema claro (fallback quando não há preferência) */
+  --ds-good-ink:             #006300;
+  --ds-warning-ink:          #8a6000;
+  --ds-serious-ink:          #994b27;
+  --ds-critical-ink:         #b02b2b;
+  --ds-info-ink:             #184f95;
+}
+
+/*
+| A tinta segue o tema. Duas portas, de propósito:
+|  - preferência do sistema, quando o projecto não força nada;
+|  - [data-tema="escuro"|"claro"], quando o projecto tem selector próprio.
+| Um projecto que force o tema no HTML tem de ganhar à preferência do SO.
+*/
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --ds-good-ink:             #0db60d;
+    --ds-warning-ink:          #fab219;
+    --ds-serious-ink:          #ec835a;
+    --ds-critical-ink:         #e87474;
+    --ds-info-ink:             #6da7ec;
+  }
+}
+
+[data-tema='escuro'] {
+  --ds-good-ink:             #0db60d;
+  --ds-warning-ink:          #fab219;
+  --ds-serious-ink:          #ec835a;
+  --ds-critical-ink:         #e87474;
+  --ds-info-ink:             #6da7ec;
+}
+
+[data-tema='claro'] {
+  --ds-good-ink:             #006300;
+  --ds-warning-ink:          #8a6000;
+  --ds-serious-ink:          #994b27;
+  --ds-critical-ink:         #b02b2b;
+  --ds-info-ink:             #184f95;
+}
+
+/*
+| Movimento reduzido não é uma preferência estética — é uma acomodação para
+| perturbação vestibular. Anular as durações no token faz com que TODOS os
+| componentes obedeçam, sem cada um ter de se lembrar.
+*/
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ds-motion-instant: 1ms;
+    --ds-motion-fast: 1ms;
+    --ds-motion-base: 1ms;
+    --ds-motion-slow: 1ms;
+    --ds-motion-panel: 1ms;
+    --ds-motion-reveal: 1ms;
+    --ds-motion-stagger: 0ms;
+  }
+}
