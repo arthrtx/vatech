@@ -38,10 +38,27 @@ class Presenca extends Model
             'data' => $this->data->format('Y-m-d'),
             'entrada' => $this->entrada->toIso8601String(),
             'saida' => $this->saida?->toIso8601String(),
-            'atrasada' => (bool) $this->atrasada,
+            'atrasada' => $this->marcadaForaDeTempo(),
             'atraso_min' => $this->minutosDeAtraso(),
             'almoco_min' => $this->minutosDeAlmoco(),
         ];
+    }
+
+    /**
+     * Presença registada depois («Esqueci de marcar») fora da tolerância: só conta como atrasada se foi
+     * registada mais de TOLERANCIA_MIN depois da hora de saída do horário desse dia.
+     */
+    public function marcadaForaDeTempo(): bool
+    {
+        if (! $this->atrasada) {
+            return false;
+        }
+        if (! $this->user?->empresa || ! $this->created_at) {
+            return true;
+        }
+        $limite = Carbon::parse($this->data->format('Y-m-d').' '.$this->user->horario()['saida'], 'Europe/Lisbon')->addMinutes(self::TOLERANCIA_MIN);
+
+        return $this->created_at->greaterThan($limite);
     }
 
     /**

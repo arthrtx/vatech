@@ -215,3 +215,24 @@ it('a volta do almoco nao conta como atraso', function () {
 
     expect(presencaHorario($u, '13:30', '17:00')->minutosDeAtraso())->toBe(0);
 });
+
+function presencaEsquecida(User $u, string $dia): Presenca
+{
+    $p = Presenca::create(['user_id' => $u->id, 'data' => $dia, 'entrada' => "$dia 08:00:00", 'saida' => "$dia 12:00:00", 'atrasada' => true]);
+    $p->forceFill(['created_at' => now()])->save();
+
+    return $p->fresh();
+}
+
+it('presenca esquecida registada ate 15 min depois da saida do horario nao fica como atrasada', function () {
+    $u = User::factory()->create();
+
+    $this->travelTo('2026-11-23 17:10:00');
+    expect(presencaEsquecida($u, '2026-11-23')->marcadaForaDeTempo())->toBeFalse();
+
+    $this->travelTo('2026-11-23 17:16:00');
+    expect(presencaEsquecida($u, '2026-11-23')->marcadaForaDeTempo())->toBeTrue();
+
+    $this->travelTo('2026-11-25 09:00:00');
+    expect(presencaEsquecida($u, '2026-11-23')->marcadaForaDeTempo())->toBeTrue();
+});
