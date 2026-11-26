@@ -9,6 +9,7 @@ use App\Http\Controllers\DefinicoesConviteController;
 use App\Http\Controllers\DefinicoesPermissoesController;
 use App\Http\Controllers\FichaRhController;
 use App\Http\Controllers\FuncionarioController;
+use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\LimiteController;
 use App\Http\Controllers\OcorrenciaController;
 use App\Http\Controllers\PedidoController;
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/agenda', [AgendaController::class, 'index']);
     Route::get('/aniversarios', [AgendaController::class, 'aniversarios']);
     Route::get('/pontes', [PonteController::class, 'index']);
+    Route::get('/horario', [HorarioController::class, 'show']);
     Route::get('/compromissos', [CompromissoController::class, 'index']);
     Route::post('/compromissos', [CompromissoController::class, 'store'])->middleware(['permissao:criar_compromissos', 'throttle:60,1']);
     Route::delete('/compromissos/{id}', [CompromissoController::class, 'destroy'])->middleware('permissao:criar_compromissos');
@@ -47,6 +49,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('papel:admin')->group(function () {
         Route::get('/definicoes/convite', [DefinicoesConviteController::class, 'show']);
         Route::put('/definicoes/convite', [DefinicoesConviteController::class, 'update']);
+        Route::put('/definicoes/horario', [HorarioController::class, 'update']);
+        Route::get('/definicoes/horarios', [HorarioController::class, 'index']);
+        Route::put('/definicoes/horarios/{id}', [HorarioController::class, 'updatePessoa'])->whereNumber('id');
         Route::get('/ferias-resumo', [LimiteController::class, 'feriasResumo']);
         Route::get('/funcionarios', [FuncionarioController::class, 'index']);
         Route::post('/funcionarios/{id}/aprovar', [FuncionarioController::class, 'aprovar']);
@@ -100,7 +105,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/presencas/entrada', [PresencaController::class, 'entrada']);
             Route::post('/presencas/saida', [PresencaController::class, 'saida']);
             Route::post('/presencas/atrasada', [PresencaController::class, 'atrasada']);
-            Route::put('/me/almoco', [PresencaController::class, 'almoco']);
         });
         Route::post('/ocorrencias', [OcorrenciaController::class, 'store'])->middleware('permissao:registar_ocorrencias');
     });

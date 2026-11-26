@@ -23,6 +23,7 @@ import {
   tocaMes,
   visiveis,
 } from "@/lib/agenda";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import { datasDasPontes, datasDoAno, datasDoDia, type DataEspecial, type PonteDia } from "@/lib/feriados";
 import { useAuth } from "@/lib/auth";
 import { temPermissao } from "@/lib/permissoes";
@@ -189,6 +190,7 @@ export default function Agenda({
   const ativos = contarAtivos(filtros);
   const limpar = () => setFiltros({ tipos: [], estados: [], funcionarioId: null });
 
+  const feriadosV = useFeriadosDoAno(mes.ano);
   const datasDePontes = useMemo(() => datasDasPontes(pontes), [pontes]);
   const especiaisDe = (iso: string) => [...datasDoDia(iso, localidade), ...datasDePontes.filter((d) => d.iso === iso)];
   const datasMes = useMemo(
@@ -196,7 +198,8 @@ export default function Agenda({
       [...datasDoAno(mes.ano, localidade), ...datasDePontes]
         .filter((d) => Number(d.iso.slice(0, 4)) === mes.ano && Number(d.iso.slice(5, 7)) === mes.mes)
         .sort((a, b) => a.iso.localeCompare(b.iso)),
-    [mes, localidade, datasDePontes],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- feriadosV: re-calcula quando chegam feriados da API
+    [mes, localidade, datasDePontes, feriadosV],
   );
 
   const aniversariosDoDia = useMemo(() => {

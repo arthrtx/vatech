@@ -44,19 +44,31 @@ class StorePresencaAtrasadaRequest extends FormRequest
             if ($dia > $agora->toDateString()) {
                 $validator->errors()->add('data', 'Não pode registar presenças em dias futuros.');
             } elseif ($inicio && $dia < $inicio) {
-                $validator->errors()->add('data', 'O dia e anterior ao inicio do estagio.');
-            } elseif (Presenca::where('user_id', $this->user()->id)->where('data', $dia)->exists()) {
-                $validator->errors()->add('data', 'Já existe presença nesse dia.');
+                $validator->errors()->add('data', 'O dia é anterior ao início do estágio.');
             } elseif ($this->input('entrada') >= $this->input('saida')) {
-                $validator->errors()->add('saida', 'A saida tem de ser depois da entrada.');
+                $validator->errors()->add('saida', 'A saída tem de ser depois da entrada.');
+            } elseif ($this->sobrepoe($dia)) {
+                $validator->errors()->add('entrada', 'Esse intervalo sobrepõe-se a outra presença do mesmo dia.');
             } elseif ($dia === $agora->toDateString()) {
                 foreach (['entrada', 'saida'] as $campo) {
                     if ($this->instante($campo) > $agora) {
-                        $validator->errors()->add($campo, 'A hora nao pode estar no futuro.');
+                        $validator->errors()->add($campo, 'A hora não pode estar no futuro.');
                     }
                 }
             }
         }];
+    }
+
+    /** Há outro período da pessoa nesse dia que se cruza com este (um período aberto não tem fim). */
+    private function sobrepoe(string $dia): bool
+    {
+        $fim = $this->instante('saida')->toDateTimeString();
+        $inicio = $this->instante('entrada')->toDateTimeString();
+
+        return Presenca::where('user_id', $this->user()->id)->where('data', $dia)
+            ->where('entrada', '<', $fim)
+            ->where(fn ($q) => $q->whereNull('saida')->orWhere('saida', '>', $inicio))
+            ->exists();
     }
 
     // Hora introduzida em Lisboa, gravada em UTC.

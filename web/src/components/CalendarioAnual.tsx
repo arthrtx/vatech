@@ -7,6 +7,7 @@ import { temPermissao } from "@/lib/permissoes";
 import { hojeIso, mesesPt, nomeDoDia, quemE, visiveis } from "@/lib/agenda";
 import { marcasDoAno } from "@/lib/calendario";
 import { diasUteis } from "@/lib/diasUteis";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { tipos } from "@/lib/rotulos";
@@ -106,12 +107,14 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
   }, [arrasto]);
 
   // A pesquisa filtra datas, aniversários e pedidos; vazia, mostra tudo.
+  const feriadosV = useFeriadosDoAno(ano);
   const marcas = useMemo(() => {
     const datas = filtrar([...datasDoAno(ano, localidade), ...datasDasPontes(pontes)], busca, (d) => [d.nome, rotulosData[d.tipo]]);
     const anivs = filtrar(aniversarios, busca, (a) => [a.user.nome, "aniversario"]);
     const peds = filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]);
     return marcasDoAno(ano, datas, anivs, peds);
-  }, [ano, localidade, pontes, aniversarios, pedidos, busca]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- feriadosV: re-calcula quando chegam feriados da API
+  }, [ano, localidade, pontes, aniversarios, pedidos, busca, feriadosV]);
   const abertoMarcas = aberto ? marcas.get(aberto) : undefined;
   const listaDatas = useMemo(
     () => [...marcas.values()].flatMap((m) => m.datas).sort((a, b) => a.iso.localeCompare(b.iso) || a.nome.localeCompare(b.nome, "pt")),
@@ -173,7 +176,8 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
         if (de <= ate) m.set(id, (m.get(id) ?? 0) + diasUteis(de, ate));
       });
     return m;
-  }, [pedidos, ano]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- feriadosV: re-calcula quando chegam feriados da API
+  }, [pedidos, ano, feriadosV]);
 
   /** Abre a impressão só com o mapa do ano (A4 deitado): em "Destino", escolher "Guardar como PDF". */
   function descarregarPdf() {
@@ -389,7 +393,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                               }}
                               className={`flex h-9 w-full flex-col items-center justify-center leading-none ${foco} ${
                                 iso === hoje ? "bg-primaria text-white" : "text-texto hover:bg-primaria-suave"
-                              } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso || (!!simulacao && diaDestaque === iso) ? "ring-2 ring-inset ring-primaria" : ""} ${naSimulacao(iso) ? "border-2 border-dashed border-texto" : ""}`}
+                              } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso || (!!simulacao && diaDestaque === iso) ? "ring-2 ring-inset ring-primaria" : ""} ${naSimulacao(iso) && iso !== hoje ? "bg-primaria-suave font-semibold" : ""}`}
                             >
                               <span className="text-sm font-semibold tabular-nums">{Number(iso.slice(8, 10))}</span>
                               <span className="mt-0.5 text-[0.625rem] opacity-70">{letraDoDia(iso)}</span>
@@ -486,7 +490,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                           !iso ? (
                             foraDoMes(k)
                           ) : (
-                            <td key={iso} className={`h-7 p-0 ${naSimulacao(iso) ? "border-2 border-dashed border-texto" : "border border-linha-forte/30"}`}>
+                            <td key={iso} className={`h-7 p-0 ${naSimulacao(iso) ? "border border-linha-forte/30 bg-primaria-suave" : "border border-linha-forte/30"}`}>
                               {naSimulacao(iso) && <span className="sr-only">{`Simulação, ${nomeDoDia(iso)}`}</span>}
                             </td>
                           ),

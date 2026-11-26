@@ -6,6 +6,7 @@ import type { Aniversario, PedidoAgenda, Ponte, TipoPedido } from "@/lib/api";
 import { nomeDoDia, quemE, somaDias, visiveis } from "@/lib/agenda";
 import { marcasDoAno } from "@/lib/calendario";
 import { diasUteis } from "@/lib/diasUteis";
+import { useFeriadosDoAno } from "@/lib/useFeriados";
 import { datasDasPontes, datasDoAno } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { formatarData, tipos } from "@/lib/rotulos";
@@ -77,6 +78,7 @@ export default function SimulacaoPainel({ simulacao: s, intervalo, aoMudarInterv
   const ate = intervalo.ate > `${ano}-12-31` ? `${ano}-12-31` : intervalo.ate;
   const original = intervalo.de === s.de && intervalo.ate === s.ate;
 
+  const feriadosV = useFeriadosDoAno(ano, Number(intervalo.de.slice(0, 4)), Number(intervalo.ate.slice(0, 4)));
   const { diaDe, dias, outros } = useMemo(() => {
     // O próprio pedido (já na agenda) e os da mesma pessoa não contam como conflito.
     const alheios = visiveis(pedidos).filter(
@@ -93,7 +95,8 @@ export default function SimulacaoPainel({ simulacao: s, intervalo, aoMudarInterv
     const outros = new Map<number, PedidoAgenda>();
     dias.forEach((d) => d.pedidos.forEach((p) => outros.set(quemE(p) ?? 0, p)));
     return { diaDe, dias, outros };
-  }, [pedidos, aniversarios, pontes, ano, localidade, s.id, s.user, de, ate, ligadas]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- feriadosV: re-calcula quando chegam feriados da API
+  }, [pedidos, aniversarios, pontes, ano, localidade, s.id, s.user, de, ate, ligadas, feriadosV]);
 
   const n = outros.size;
   const diasComConflito = dias.filter((d) => d.conflito).length;

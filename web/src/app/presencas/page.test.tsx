@@ -14,13 +14,15 @@ const atrasada = vi.fn();
 const presencas = vi.fn();
 const ocorrencias = vi.fn();
 const registar = vi.fn();
+const getHorario = vi.fn();
+const H0 = { entrada: "08:00", saida: "17:00", almoco_inicio: "12:00", almoco_min: 60 };
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
   api: {
     presencas: (...a: unknown[]) => presencas(...a),
     funcionarios: vi.fn().mockResolvedValue([]),
     marcarPresencaAtrasada: (...a: unknown[]) => atrasada(...a),
-    definirAlmoco: vi.fn(),
+    getHorario: (...a: unknown[]) => getHorario(...a),
     ocorrencias: (...a: unknown[]) => ocorrencias(...a),
     registarOcorrencia: (...a: unknown[]) => registar(...a),
   },
@@ -33,6 +35,7 @@ beforeEach(() => {
   presencas.mockReset().mockResolvedValue([]);
   ocorrencias.mockReset().mockResolvedValue([]);
   registar.mockReset();
+  getHorario.mockReset().mockResolvedValue({ empresa: H0, meu: H0 });
   atrasada.mockReset();
 });
 afterEach(cleanup);
@@ -127,5 +130,28 @@ describe("Estágio: faltas e atrasos", () => {
     render(<PresencasPage />);
     expect(await screen.findByText("Carro avariado.")).toBeTruthy();
     expect(screen.getByText("Motivo: Imprevisto")).toBeTruthy();
+  });
+});
+
+describe("Horário (só leitura)", () => {
+  it("mostra o horário da pessoa, sem campos editáveis", async () => {
+    getHorario.mockResolvedValue({ empresa: H0, meu: { entrada: "09:30", saida: "18:30", almoco_inicio: "13:00", almoco_min: 90 } });
+    render(<PresencasPage />);
+    expect(await screen.findByText("O teu horário: 09:30 às 18:30, almoço das 13:00 às 14:30")).toBeTruthy();
+    expect(screen.getByText("O tempo de almoço não conta para o total.")).toBeTruthy();
+    expect(screen.queryByLabelText("Entrada")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Alterar nas Definições" })).toBeNull();
+  });
+
+  it("horário da empresa por omissão", async () => {
+    render(<PresencasPage />);
+    expect(await screen.findByText("O teu horário: 08:00 às 17:00, almoço das 12:00 às 13:00")).toBeTruthy();
+  });
+
+  it("o admin vê o link para as Definições", async () => {
+    papel = "admin";
+    render(<PresencasPage />);
+    const l = await screen.findByRole("link", { name: "Alterar nas Definições" });
+    expect(l.getAttribute("href")).toBe("/definicoes");
   });
 });

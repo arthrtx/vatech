@@ -149,7 +149,6 @@ it('marcar presenca exige a permissao', function () {
     $this->postJson('/api/presencas/entrada')->assertForbidden();
     $this->postJson('/api/presencas/saida')->assertForbidden();
     $this->postJson('/api/presencas/atrasada', [])->assertForbidden();
-    $this->putJson('/api/me/almoco', [])->assertForbidden();
 
     Sanctum::actingAs(comPermissoes('funcionario', ['marcar_presenca']));
     $this->postJson('/api/presencas/entrada')->assertCreated();

@@ -12,6 +12,9 @@ class Presenca extends Model
 {
     protected $table = 'presencas';
 
+    /** Relações que o contrato precisa (a empresa dá o horário por defeito): sem N+1 nas listagens. */
+    public const RELACOES = ['user:id,nome,empresa_id,horario_entrada,horario_saida,horario_almoco_inicio,almoco_minutos', 'user.empresa:id,horario_entrada,horario_saida,almoco_inicio,almoco_minutos'];
+
     protected function casts(): array
     {
         return ['data' => 'date:Y-m-d', 'entrada' => 'datetime', 'saida' => 'datetime', 'atrasada' => 'boolean'];
@@ -38,18 +41,18 @@ class Presenca extends Model
     }
 
     /**
-     * Minutos do horário de almoço do estagiário que caem entre a entrada e a saída deste dia.
-     * Se saiu antes do almoço ou entrou depois, não desconta nada; sem saída ainda, também não.
+     * Minutos do almoço efectivo da pessoa (início + duração, horário próprio ou da empresa) que caem
+     * entre a entrada e a saída deste dia. Sem saída ainda, não desconta nada.
      */
     public function minutosDeAlmoco(): int
     {
-        $u = $this->user;
-        if (! $this->saida || ! $u?->almoco_inicio || ! $u->almoco_fim) {
+        if (! $this->saida || ! $this->user?->empresa) {
             return 0;
         }
+        $h = $this->user->horario();
         $dia = $this->data->format('Y-m-d');
-        $inicio = Carbon::parse("$dia {$u->almoco_inicio}", 'Europe/Lisbon');
-        $fim = Carbon::parse("$dia {$u->almoco_fim}", 'Europe/Lisbon');
+        $inicio = Carbon::parse("$dia {$h['almoco_inicio']}", 'Europe/Lisbon');
+        $fim = $inicio->copy()->addMinutes($h['almoco_min']);
         $de = $this->entrada->greaterThan($inicio) ? $this->entrada : $inicio;
         $ate = $this->saida->lessThan($fim) ? $this->saida : $fim;
 

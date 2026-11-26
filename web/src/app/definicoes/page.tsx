@@ -7,9 +7,11 @@ import EscolhaLocalidade from "@/components/EscolhaLocalidade";
 import CampoData from "@/components/CampoData";
 import FormaCanto from "./FormaCanto";
 import EscolhaTema from "@/components/EscolhaTema";
+import CampoHora from "@/components/CampoHora";
 import PermissoesAdmin from "@/components/PermissoesAdmin";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
-import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
+import { ApiError, api, mensagemDeErro, type Horario, type HorarioPessoa, type User } from "@/lib/api";
+import { duracao, jornadaMin, textoAlmoco } from "@/lib/horario";
 import { useAuth } from "@/lib/auth";
 import { rotuloPapel } from "@/lib/rotulos";
 import { primeiroNome } from "@/lib/saudacao";
@@ -17,13 +19,14 @@ import { primeiroNome } from "@/lib/saudacao";
 const cartao = "relative isolate flex flex-col gap-4 rounded-barra border border-linha bg-painel p-5 md:p-7 has-[[role=dialog]]:z-20 has-[[role=combobox][aria-expanded=true]]:z-20";
 const botaoGuardar = `${botao} min-h-10`;
 
-function Campo({ id, rotulo, erros, children }: { id: string; rotulo: string; erros?: string[]; children: React.ReactNode }) {
+function Campo({ id, rotulo, erros, dica, children }: { id: string; rotulo: string; erros?: string[]; dica?: string; children: React.ReactNode }) {
   return (
     <div>
       <label htmlFor={id} className={label}>
         {rotulo}
       </label>
       {children}
+      {dica && <p className="mt-1 text-xs text-texto-suave">{dica}</p>}
       {erros?.length ? (
         <p id={`${id}-erro`} role="alert" className="mt-1 text-sm text-texto">
           {erros.join(" ")}
@@ -60,6 +63,7 @@ function useEnvio(enviar: () => Promise<void>) {
 
   async function submeter(e: React.FormEvent, validar?: () => Record<string, string[]>) {
     e.preventDefault();
+    const form = e.currentTarget;
     setErroGeral(null);
     setOk(false);
     const locais = validar?.() ?? {};
@@ -76,7 +80,12 @@ function useEnvio(enviar: () => Promise<void>) {
       setOk(true);
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) setErroGeral("Demasiadas tentativas. Tente de novo dentro de um minuto.");
-      else if (err instanceof ApiError && err.errors) setErros(err.errors);
+      else if (err instanceof ApiError && err.errors) {
+        const erros = err.errors;
+        setErros(erros);
+        const primeiro = Object.keys(erros)[0];
+        setTimeout(() => form.querySelector<HTMLElement>(`[data-campo="${primeiro}"]`)?.focus(), 0);
+      }
       else setErroGeral(mensagemDeErro(err));
     } finally {
       setEnviando(false);
@@ -485,9 +494,307 @@ function TextoConvite() {
   );
 }
 
+const campoMin = (v: string) => (/^\d+$/.test(v.trim()) ? Number(v) : null);
+
+type Valores = { entrada: string; saida: string; inicio: string; almoco: string };
+const deHorario = (h: Horario): Valores => ({ entrada: h.entrada, saida: h.saida, inicio: h.almoco_inicio, almoco: String(h.almoco_min) });
+const paraHorario = (v: Valores): Horario => ({ entrada: v.entrada, saida: v.saida, almoco_inicio: v.inicio, almoco_min: campoMin(v.almoco) ?? 0 });
+// Por pessoa: só o que difere da empresa fica personalizado; o igual segue a empresa (null).
+const paraPessoa = (v: Valores, e: Horario) => {
+  const h = paraHorario(v);
+  return {
+    entrada: h.entrada === e.entrada ? null : h.entrada,
+    saida: h.saida === e.saida ? null : h.saida,
+    almoco_inicio: h.almoco_inicio === e.almoco_inicio ? null : h.almoco_inicio,
+    almoco_min: h.almoco_min === e.almoco_min ? null : h.almoco_min,
+  };
+};
+const validarValores = (v: Valores): Record<string, string[]> => ({
+  ...(!v.entrada ? { entrada: ["Indique a hora de entrada."] } : {}),
+  ...(!v.saida ? { saida: ["Indique a hora de saída."] } : {}),
+  ...(!v.inicio ? { almoco_inicio: ["Indique a hora de início do almoço."] } : {}),
+  ...(campoMin(v.almoco) === null ? { almoco_min: ["Indique a duração do almoço em minutos (0 se não houver)."] } : {}),
+});
+
+/** Quatro campos do horário: entrada, saída, início do almoço e duração. Com `empresa`, indica por campo se difere dela. */
+function CamposHorario({
+  prefixo,
+  v,
+  onChange,
+  erros,
+  empresa,
+}: {
+  prefixo: string;
+  v: Valores;
+  onChange: (v: Valores) => void;
+  erros: Record<string, string[]>;
+  empresa?: Horario;
+}) {
+  const min = campoMin(v.almoco);
+  const t = min === null ? null : jornadaMin(v.entrada, v.saida, min);
+  const e = empresa ? deHorario(empresa) : null;
+  const dica = (chave: keyof Valores) => (e ? (v[chave] === e[chave] ? "Igual à empresa" : "Personalizado") : undefined);
+  const ligacao = (chave: string, id: string) => ({
+    "aria-invalid": !!erros[chave],
+    "aria-describedby": erros[chave]?.length ? `${id}-erro` : undefined,
+    "data-campo": chave,
+  });
+  return (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Campo id={`${prefixo}-entrada`} rotulo="Entrada" erros={erros.entrada} dica={dica("entrada")}>
+          <CampoHora id={`${prefixo}-entrada`} valor={v.entrada} onChange={(x) => onChange({ ...v, entrada: x })} {...ligacao("entrada", `${prefixo}-entrada`)} />
+        </Campo>
+        <Campo id={`${prefixo}-saida`} rotulo="Saída" erros={erros.saida} dica={dica("saida")}>
+          <CampoHora id={`${prefixo}-saida`} valor={v.saida} onChange={(x) => onChange({ ...v, saida: x })} {...ligacao("saida", `${prefixo}-saida`)} />
+        </Campo>
+        <Campo id={`${prefixo}-inicio`} rotulo="Almoço das" erros={erros.almoco_inicio} dica={dica("inicio")}>
+          <CampoHora id={`${prefixo}-inicio`} valor={v.inicio} onChange={(x) => onChange({ ...v, inicio: x })} {...ligacao("almoco_inicio", `${prefixo}-inicio`)} />
+        </Campo>
+        <Campo id={`${prefixo}-almoco`} rotulo="Durante (minutos)" erros={erros.almoco_min} dica={dica("almoco")}>
+          <input
+            id={`${prefixo}-almoco`}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            className={input}
+            value={v.almoco}
+            {...ligacao("almoco_min", `${prefixo}-almoco`)}
+            onChange={(ev) => onChange({ ...v, almoco: ev.target.value })}
+          />
+        </Campo>
+      </div>
+      <p className="text-sm text-texto-suave">{t === null ? "Jornada por definir." : `${duracao(t)} de trabalho.`}</p>
+    </>
+  );
+}
+
+function HorarioEmpresa({ onGuardado }: { onGuardado: () => void }) {
+  const [v, setV] = useState<Valores>({ entrada: "", saida: "", inicio: "", almoco: "" });
+  const [guardado, setGuardado] = useState<Valores>(v);
+  const [carregado, setCarregado] = useState(false);
+  const [erroCarga, setErroCarga] = useState<string | null>(null);
+  const { erros, erroGeral, ok, enviando, submeter, limparOk } = useEnvio(async () => {
+    aplicar(await api.definirHorarioEmpresa(paraHorario(v)));
+    onGuardado();
+  });
+
+  function aplicar(h: Horario) {
+    setV(deHorario(h));
+    setGuardado(deHorario(h));
+  }
+
+  useEffect(() => {
+    let ativo = true;
+    api
+      .getHorario()
+      .then((r) => {
+        if (!ativo) return;
+        aplicar(r.empresa);
+        setCarregado(true);
+      })
+      .catch((err) => ativo && setErroCarga(mensagemDeErro(err)));
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const sujo = carregado && JSON.stringify(v) !== JSON.stringify(guardado);
+  return (
+    <form onSubmit={(e) => submeter(e, () => validarValores(v))} noValidate aria-labelledby="def-horario" className={cartao}>
+      <div>
+        <FormaCanto tom="violeta" baixo />
+        <h2 id="def-horario" className="text-xl font-bold tracking-tight">
+          Horário da empresa
+        </h2>
+        <p className="text-sm text-texto-suave">
+          Vale para todos, salvo quem tiver horário personalizado. O almoço não conta para o total de horas.
+        </p>
+      </div>
+      {erroCarga && (
+        <p role="alert" className={erroCls}>
+          {erroCarga}
+        </p>
+      )}
+      <CamposHorario
+        prefixo="horario"
+        v={v}
+        erros={erros}
+        onChange={(x) => {
+          setV(x);
+          limparOk();
+        }}
+      />
+      <Rodape erroGeral={erroGeral} ok={ok} enviando={enviando} sujo={sujo} />
+    </form>
+  );
+}
+
+const textoHorario = (h: Horario) => `${h.entrada} às ${h.saida}, ${textoAlmoco(h.almoco_inicio, h.almoco_min)}`;
+
+function LinhaHorario({
+  p,
+  email,
+  empresa,
+  onAtualizado,
+}: {
+  p: HorarioPessoa;
+  email?: string;
+  empresa: Horario;
+  onAtualizado: (p: HorarioPessoa) => void;
+}) {
+  const [aEditar, setAEditar] = useState(false);
+  const [v, setV] = useState<Valores>(deHorario(p.efectivo));
+  const [aVoltar, setAVoltar] = useState(false);
+  const [erroVoltar, setErroVoltar] = useState<string | null>(null);
+  const personalizado = p.entrada !== null || p.saida !== null || p.almoco_inicio !== null || p.almoco_min !== null;
+  const rotulo = email ? `${p.nome} (${email})` : p.nome;
+  const { erros, erroGeral, enviando, submeter, limparOk } = useEnvio(async () => {
+    onAtualizado(await api.definirHorarioPessoa(p.user_id, paraPessoa(v, empresa)));
+    setAEditar(false);
+  });
+
+  async function voltar() {
+    setErroVoltar(null);
+    setAVoltar(true);
+    try {
+      onAtualizado(await api.definirHorarioPessoa(p.user_id, { entrada: null, saida: null, almoco_inicio: null, almoco_min: null }));
+      setAEditar(false);
+    } catch (err) {
+      setErroVoltar(mensagemDeErro(err));
+    } finally {
+      setAVoltar(false);
+    }
+  }
+
+  return (
+    <li className="flex flex-col gap-3 border-t border-linha pt-3 first:border-t-0 first:pt-0">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-medium">{p.nome}</p>
+          {email && <p className="truncate text-sm text-texto-suave">{email}</p>}
+          <p className="text-sm text-texto-suave">{textoHorario(p.efectivo)}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-linha-forte px-2.5 py-0.5 text-xs text-texto-suave">
+            {personalizado ? "Personalizado" : "Segue a empresa"}
+          </span>
+          {!aEditar && (
+            <button
+              type="button"
+              className={botaoSec}
+              aria-label={`Editar horário de ${rotulo}`}
+              onClick={() => {
+                setV(deHorario(p.efectivo));
+                setAEditar(true);
+              }}
+            >
+              Editar
+            </button>
+          )}
+        </div>
+      </div>
+      {aEditar && (
+        <form onSubmit={(e) => submeter(e, () => validarValores(v))} noValidate aria-label={`Horário de ${rotulo}`} className="flex flex-col gap-3">
+          <CamposHorario
+            prefixo={`hp-${p.user_id}`}
+            v={v}
+            erros={erros}
+            empresa={empresa}
+            onChange={(x) => {
+              setV(x);
+              limparOk();
+            }}
+          />
+          {(erroGeral || erroVoltar) && (
+            <p role="alert" className={erroCls}>
+              {erroGeral ?? erroVoltar}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <button type="submit" disabled={enviando || aVoltar} className={botaoGuardar}>
+              {enviando ? "A guardar..." : "Guardar"}
+            </button>
+            <button type="button" disabled={enviando || aVoltar} className={botaoSec} onClick={() => setAEditar(false)}>
+              Cancelar
+            </button>
+            <button type="button" disabled={enviando || aVoltar} className={botaoSec} onClick={() => void voltar()}>
+              {aVoltar ? "A guardar..." : "Voltar ao horário da empresa"}
+            </button>
+          </div>
+        </form>
+      )}
+    </li>
+  );
+}
+
+/** `versao` sobe sempre que o horário da empresa é guardado: a lista e os valores efectivos recarregam. */
+function HorariosPessoas({ versao }: { versao: number }) {
+  const [dados, setDados] = useState<{ lista: HorarioPessoa[]; empresa: Horario } | null>(null);
+  const [emails, setEmails] = useState<Record<number, string>>({});
+  const [erroCarga, setErroCarga] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    Promise.all([api.horarios(), api.getHorario()])
+      .then(([lista, h]) => {
+        if (!ativo) return;
+        setErroCarga(null);
+        setDados({ lista, empresa: h.empresa });
+      })
+      .catch((err) => ativo && setErroCarga(mensagemDeErro(err)));
+    return () => {
+      ativo = false;
+    };
+  }, [versao]);
+
+  useEffect(() => {
+    let ativo = true;
+    api
+      .funcionarios()
+      .then((l) => ativo && setEmails(Object.fromEntries(l.map((u) => [u.id, u.email]))))
+      .catch(() => {}); // sem a lista só falta o email que distingue homónimos
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  return (
+    <section aria-labelledby="def-horarios" className={cartao}>
+      <div>
+        <FormaCanto tom="pessego" />
+        <h2 id="def-horarios" className="text-xl font-bold tracking-tight">
+          Horário por pessoa
+        </h2>
+        <p className="text-sm text-texto-suave">Quem não tiver horário personalizado segue o da empresa.</p>
+      </div>
+      {erroCarga && (
+        <p role="alert" className={erroCls}>
+          {erroCarga}
+        </p>
+      )}
+      {dados && dados.lista.length === 0 && <p className="text-sm text-texto-suave">Sem pessoas.</p>}
+      {dados && dados.lista.length > 0 && (
+        <ul className="flex flex-col gap-3">
+          {dados.lista.map((p) => (
+            <LinhaHorario
+              key={`${p.user_id}-${versao}`}
+              p={p}
+              email={emails[p.user_id]}
+              empresa={dados.empresa}
+              onAtualizado={(n) => setDados((d) => d && { ...d, lista: d.lista.map((x) => (x.user_id === n.user_id ? n : x)) })}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function Conteudo() {
   const { user, atualizarUser } = useAuth();
   const [separador, setSeparador] = useState<"conta" | "geral" | "permissoes">("conta");
+  const [versaoHorario, setVersaoHorario] = useState(0);
   if (!user) return null;
   const admin = user.papel === "admin";
   const aba = admin ? separador : "conta";
@@ -575,6 +882,10 @@ function Conteudo() {
               <p className="text-sm text-texto-suave">Férias: 22 dias úteis por ano, podendo pedir até 25.</p>
             </section>
             <TextoConvite />
+          </div>
+          <div className="flex min-w-0 flex-col gap-6">
+            <HorarioEmpresa onGuardado={() => setVersaoHorario((n) => n + 1)} />
+            <HorariosPessoas versao={versaoHorario} />
           </div>
         </div>
       )}
