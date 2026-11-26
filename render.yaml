@@ -48,6 +48,14 @@ services:
         sync: false
       - key: FRONTEND_URL
         value: https://vatech-eight.vercel.app
+      - key: MAIL_MAILER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: Vatech
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ADMIN_EMAIL

@@ -60,3 +60,7 @@ Cada merge no `main` faz o Render e o Vercel publicarem a versão nova sozinhos.
 
 - A API adormece após 15 minutos sem pedidos. O primeiro pedido a seguir demora cerca de um minuto.
 - O disco do Render apaga-se a cada arranque. Os anexos dos pedidos ficam na base de dados (tabela `anexo_conteudos`, máximo 5 MB por ficheiro; o TiDB limita a linha a 6 MB). As fotos de perfil ainda perdem-se até passarem também para a base de dados.
+
+## Email (Resend)
+
+Os convites e emails de verificação saem pelo Resend (`MAIL_MAILER=resend`). No painel do Render define `RESEND_API_KEY` e `MAIL_FROM_ADDRESS` (endereço de um domínio verificado no Resend; sem domínio verificado o Resend só entrega ao email da própria conta). Em local continua o Mailpit.
