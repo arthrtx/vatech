@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import CalendarioAnual from "@/components/CalendarioAnual";
 import { api, mensagemDeErro, type Aniversario, type PedidoAgenda, type Ponte } from "@/lib/api";
-import { hojeIso } from "@/lib/agenda";
+import { hojeIso, quemE } from "@/lib/agenda";
 import { useAuth } from "@/lib/auth";
 import { podePedir } from "@/lib/permissoes";
+import SimulacaoPainel, { lerSimulacao } from "@/components/SimulacaoPainel";
 import { erro as erroCls } from "@/components/ui";
 
 interface Dados {
@@ -19,7 +21,8 @@ interface Dados {
 
 function Conteudo() {
   const { user } = useAuth();
-  const [ano, setAno] = useState(() => Number(hojeIso().slice(0, 4)));
+  const simulacao = lerSimulacao(useSearchParams());
+  const [ano, setAno] = useState(() => Number((simulacao?.de ?? hojeIso()).slice(0, 4)));
   const [dados, setDados] = useState<Dados | null>(null);
   const [recarga, setRecarga] = useState(0);
 
@@ -45,7 +48,18 @@ function Conteudo() {
           {pronto.erro}
         </p>
       )}
+      {simulacao && pronto && !pronto.erro && (
+        <SimulacaoPainel
+          simulacao={simulacao}
+          ano={ano}
+          pedidos={pronto.pedidos}
+          aniversarios={pronto.aniversarios}
+          pontes={pronto.pontes}
+          nomeDe={pronto.pedidos.find((p) => quemE(p) === simulacao.user)?.user?.nome ?? (user?.id === simulacao.user ? user.nome : undefined)}
+        />
+      )}
       <CalendarioAnual
+        simulacao={simulacao}
         ano={ano}
         aoMudarAno={setAno}
         aCarregar={!pronto}
@@ -62,7 +76,9 @@ function Conteudo() {
 export default function CalendarioPage() {
   return (
     <AppShell>
-      <Conteudo />
+      <Suspense fallback={null}>
+        <Conteudo />
+      </Suspense>
     </AppShell>
   );
 }

@@ -70,13 +70,15 @@ interface Props {
   /** Mostra o botão "Novo pedido" (como na Agenda). */
   podeCriar?: boolean;
   aoCriar?: () => void;
+  /** Intervalo a destacar como simulação (nunca persiste nada). */
+  simulacao?: { de: string; ate: string } | null;
 }
 
 /**
  * Mapa do ano, como a folha de férias da equipa: um quadro por mês, os dias em colunas, uma linha por pessoa,
  * fins de semana a cinzento e feriados e pontes em coluna rosa. À direita, a legenda com a cor e os dias de férias de cada um.
  */
-export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, podeCriar = false, aoCriar }: Props) {
+export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, podeCriar = false, aoCriar, simulacao = null }: Props) {
   const [localidade] = useLocalidade();
   const hoje = hojeIso();
   const anoHoje = Number(hoje.slice(0, 4));
@@ -246,6 +248,9 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
     }
   }
 
+  const naSimulacao = (iso: string) => !!simulacao && iso >= simulacao.de && iso <= simulacao.ate;
+  const simulaNoMes = (mes: number) => !!simulacao && simulacao.de <= `${ano}-${dois(mes)}-31` && simulacao.ate >= `${ano}-${dois(mes)}-01`;
+
   const totalFeriados = listaDatas.filter((d) => d.tipo === "feriado" || d.tipo === "municipal").length;
   const totalPontes = listaDatas.filter((d) => d.tipo === "ponte").length;
 
@@ -337,7 +342,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                   };
                 };
                 const foraDoMes = (k: number) => <td key={`f${k}`} aria-hidden="true" className="h-7 border border-linha-forte/30 bg-campo" />;
-                const nLinhas = 1 + Math.max(linhas.length, 1) + aniversariantes.length;
+                const nLinhas = 1 + Math.max(linhas.length, 1) + aniversariantes.length + (simulaNoMes(mes) ? 1 : 0);
                 return (
                   <Fragment key={nome}>
                   {i > 0 && (
@@ -378,7 +383,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                               onClick={() => setAberto(aberto === iso ? null : iso)}
                               className={`flex h-9 w-full flex-col items-center justify-center leading-none ${foco} ${
                                 iso === hoje ? "bg-primaria text-white" : "text-texto hover:bg-primaria-suave"
-                              } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso ? "ring-2 ring-inset ring-primaria" : ""}`}
+                              } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso ? "ring-2 ring-inset ring-primaria" : ""} ${naSimulacao(iso) ? "border-2 border-dashed border-texto" : ""}`}
                             >
                               <span className="text-sm font-semibold tabular-nums">{Number(iso.slice(8, 10))}</span>
                               <span className="mt-0.5 text-[0.625rem] opacity-70">{letraDoDia(iso)}</span>
@@ -466,6 +471,22 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                         })}
                       </tr>
                     ))}
+                    {simulaNoMes(mes) && (
+                      <tr className="bg-painel/60">
+                        <th scope="row" className="truncate border border-linha-forte/30 px-2 py-1 text-left font-semibold">
+                          Simulação
+                        </th>
+                        {dias.map((iso, k) =>
+                          !iso ? (
+                            foraDoMes(k)
+                          ) : (
+                            <td key={iso} className={`h-7 p-0 ${naSimulacao(iso) ? "border-2 border-dashed border-texto" : "border border-linha-forte/30"}`}>
+                              {naSimulacao(iso) && <span className="sr-only">{`Simulação, ${nomeDoDia(iso)}`}</span>}
+                            </td>
+                          ),
+                        )}
+                      </tr>
+                    )}
                     {aniversariantes.map((pessoa) => (
                       <tr key={`aniv-${pessoa.id}`} className="odd:bg-painel/40 hover:bg-primaria-suave/50">
                         <th scope="row" className="truncate border border-linha-forte/30 px-2 py-1 text-left font-medium" title={pessoa.nome}>

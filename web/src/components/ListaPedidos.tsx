@@ -7,6 +7,7 @@ import { filtrar } from "@/lib/busca";
 import { estados, formatarData, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import AnexosDoPedido from "./AnexosDoPedido";
+import SimulacaoLigacao from "./SimulacaoLigacao";
 import PontoUrgente from "./PontoUrgente";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos } from "./FiltrosPedidosCampos";
@@ -122,6 +123,9 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
               {p.estado === "recusado" && p.motivo_recusa && (
                 <p className="mt-1 break-words text-sm">Motivo da recusa: {p.motivo_recusa}</p>
               )}
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <SimulacaoLigacao pedido={p} />
               </div>
               {onCancelar && p.tipo === "ferias" && p.estado === "aprovado" && (
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
