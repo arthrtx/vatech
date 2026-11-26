@@ -50,7 +50,7 @@ class AgendaController extends Controller
 
         $query = Pedido::where('empresa_id', $user->empresa_id)
             ->whereHas('user')
-            ->with('user:id,nome')
+            ->with('user:id,nome', 'autor:id,nome')
             ->where('data_inicio', '<=', $request->validated('ate'))
             ->where('data_fim', '>=', $request->validated('de'))
             ->orderBy('data_inicio')

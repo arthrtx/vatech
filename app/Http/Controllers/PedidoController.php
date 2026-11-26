@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RecusarPedidoRequest;
 use App\Http\Requests\StorePedidoRequest;
 use App\Models\Pedido;
+use App\Models\User;
 use App\Services\LimitesPedidoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class PedidoController extends Controller
@@ -17,10 +20,13 @@ class PedidoController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->with('anexos')->latest('id');
+        $query = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->with('anexos', 'autor:id,nome')->latest('id');
 
         if ($user->temPermissao('aprovar_pedidos')) {
             $query->with('user:id,nome');
+        } elseif ($user->temPermissao('pedir_por_outros')) {
+            // Vê também o que criou em nome de outros, para o poder editar ou cancelar.
+            $query->with('user:id,nome')->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('criado_por', $user->id));
         } else {
             $query->where('user_id', $user->id);
         }
@@ -39,8 +45,13 @@ class PedidoController extends Controller
 
     public function store(StorePedidoRequest $request): JsonResponse
     {
-        $user = $request->user();
-        $dados = $request->validated();
+        $autor = $request->user();
+        $dados = Arr::except($request->validated(), 'user_id');
+        $porOutro = $request->filled('user_id') && (int) $request->input('user_id') !== $autor->id;
+        // Outra pessoa: só activa e da mesma empresa; 404 não revela quem existe noutras empresas.
+        $user = $porOutro
+            ? User::where('empresa_id', $autor->empresa_id)->where('estado_conta', 'aprovado')->findOrFail((int) $request->input('user_id'))
+            : $autor;
         $this->garantirLimite($user, $dados);
 
         $sobrepoe = Pedido::where('user_id', $user->id)
@@ -55,9 +66,13 @@ class PedidoController extends Controller
         if ($user->isAdmin()) {
             $licenca = ['estado' => 'aprovado', 'decidido_por' => $user->id, 'decidido_em' => now(), 'visto_em' => now()];
         }
-        $pedido = Pedido::create([...$dados, ...$licenca, 'user_id' => $user->id, 'empresa_id' => $user->empresa_id]);
+        // Em nome de outra pessoa nunca se aprova sozinho: fica pendente para alguém decidir (D14).
+        if ($porOutro) {
+            $licenca = [];
+        }
+        $pedido = Pedido::create([...$dados, ...$licenca, 'user_id' => $user->id, 'empresa_id' => $user->empresa_id, 'criado_por' => $autor->id]);
 
-        $resposta = ['data' => $pedido->refresh()->load('anexos')];
+        $resposta = ['data' => $pedido->refresh()->load('anexos', 'autor:id,nome')];
         if ($sobrepoe) {
             $resposta['avisos'] = ['As datas sobrepõem-se a outro pedido seu.'];
         }
@@ -65,12 +80,33 @@ class PedidoController extends Controller
         return response()->json($resposta, 201);
     }
 
+    /** Pessoas activas da empresa em nome de quem se pode pedir (D14). */
+    public function pessoas(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $pessoas = User::where('empresa_id', $user->empresa_id)
+            ->where('estado_conta', 'aprovado')
+            ->whereKeyNot($user->id)
+            ->with('tipo:id,nome')
+            ->orderBy('nome')
+            ->get()
+            ->map(fn (User $u) => [
+                'id' => $u->id,
+                'nome' => $u->nome,
+                'avatar_url' => $u->avatar_path ? Storage::disk('public')->url($u->avatar_path) : null,
+                'papel' => $u->papel,
+                'tipo_nome' => $u->tipo?->nome,
+            ]);
+
+        return response()->json(['data' => $pessoas]);
+    }
+
     /** O funcionario edita um pedido seu enquanto esta pendente. */
     public function update(StorePedidoRequest $request, int $id): JsonResponse
     {
         $pedido = $this->pedidoPendenteDoUtilizador($request, $id);
-        $dados = $request->validated();
-        $this->garantirLimite($request->user(), $dados, $pedido->id);
+        $dados = Arr::except($request->validated(), 'user_id');
+        $this->garantirLimite($pedido->user ?? abort(404), $dados, $pedido->id);
 
         $sobrepoe = Pedido::where('user_id', $pedido->user_id)
             ->where('id', '!=', $pedido->id)
@@ -82,7 +118,7 @@ class PedidoController extends Controller
         // Campos opcionais em falta limpam-se (ex.: mudar de ausencia para ferias remove o subtipo).
         $pedido->update([...$dados, 'subtipo' => $dados['subtipo'] ?? null, 'hora_inicio' => $dados['hora_inicio'] ?? null, 'hora_fim' => $dados['hora_fim'] ?? null, 'observacao' => $dados['observacao'] ?? null, 'urgente' => $dados['urgente'] ?? false, 'cor' => $dados['cor'] ?? null]);
 
-        $resposta = ['data' => $pedido->refresh()->load('anexos')];
+        $resposta = ['data' => $pedido->refresh()->load('anexos', 'autor:id,nome')];
         if ($sobrepoe) {
             $resposta['avisos'] = ['As datas sobrepõem-se a outro pedido seu.'];
         }
@@ -124,10 +160,16 @@ class PedidoController extends Controller
     private function pedidoPendenteDoUtilizador(Request $request, int $id, bool $licencaPorComecar = false): Pedido
     {
         $user = $request->user();
-        // 404 para pedidos de outros utilizadores ou empresas (nao revela existencia).
-        $pedido = Pedido::where('empresa_id', $user->empresa_id)->where('user_id', $user->id)->findOrFail($id);
+        // 404 para pedidos de outros utilizadores ou empresas (nao revela existencia). Quem tem pedir_por_outros
+        // alcança também os que criou em nome de outros.
+        $pedido = Pedido::where('empresa_id', $user->empresa_id)
+            ->where(fn ($q) => $q->where('user_id', $user->id)->when(
+                $user->temPermissao('pedir_por_outros'),
+                fn ($q) => $q->orWhere('criado_por', $user->id),
+            ))->findOrFail($id);
 
-        $cancelavel = $licencaPorComecar && ($user->isAdmin() || ($pedido->tipo === 'licenca'
+        // O cancelamento extra (admin / licença por começar) é só para pedidos próprios.
+        $cancelavel = $licencaPorComecar && $pedido->user_id === $user->id && ($user->isAdmin() || ($pedido->tipo === 'licenca'
             && $pedido->data_inicio->format('Y-m-d') >= now('Europe/Lisbon')->toDateString()));
         abort_if($pedido->estado !== 'pendente' && ! $cancelavel, 409, 'Só é possível alterar pedidos pendentes.');
 
@@ -165,6 +207,6 @@ class PedidoController extends Controller
 
         $pedido->update([...$campos, 'decidido_por' => $user->id, 'decidido_em' => now()]);
 
-        return response()->json(['data' => $pedido->refresh()]);
+        return response()->json(['data' => $pedido->refresh()->load('autor:id,nome')]);
     }
 }

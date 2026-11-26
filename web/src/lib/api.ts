@@ -194,6 +194,17 @@ export interface Pedido {
   /** Só férias: dias úteis acima dos 22 do ano (0 se nenhum). */
   dias_excedentes?: number;
   user?: { id: number; nome: string };
+  /** Preenchido só quando o pedido foi criado por outra pessoa. */
+  criado_por?: { id: number; nome: string } | null;
+}
+
+/** Pessoa em nome de quem se pode pedir (GET /pedidos/pessoas). */
+export interface PessoaPedido {
+  id: number;
+  nome: string;
+  avatar_url: string | null;
+  papel: Papel;
+  tipo_nome: string | null;
 }
 
 /** Aniversário de alguém da empresa num dia do intervalo pedido (a API não revela o ano de nascimento). */
@@ -232,6 +243,8 @@ export interface NovoPedido {
   hora_fim?: string;
   observacao?: string;
   urgente?: boolean;
+  /** Pedir em nome de outra pessoa (precisa de «pedir_por_outros»). */
+  user_id?: number;
   /** Só férias: cor no mapa do ano. */
   cor?: CorFerias;
 }
@@ -419,6 +432,7 @@ export const api = {
   apagarCompromisso: (id: number) => request<void>("DELETE", `/compromissos/${id}`),
   aniversarios: async (de: string, ate: string) =>
     (await request<{ data: Aniversario[] }>("GET", `/aniversarios?de=${de}&ate=${ate}`)).data,
+  pessoasParaPedido: async () => (await request<{ data: PessoaPedido[] }>("GET", "/pedidos/pessoas")).data,
   criarPedido: (b: NovoPedido) =>
     request<{ data: Pedido; avisos?: string[] }>("POST", "/pedidos", b),
   editarPedido: (id: number, b: NovoPedido) =>

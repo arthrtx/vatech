@@ -28,7 +28,7 @@ it('devolve catalogo e predefinidos', function () {
     Sanctum::actingAs(User::factory()->admin()->create());
 
     $r = $this->getJson('/api/definicoes/permissoes')->assertOk();
-    $r->assertJsonCount(13, 'data.catalogo')
+    $r->assertJsonCount(14, 'data.catalogo')
         ->assertJsonPath('data.catalogo.0', ['chave' => 'pedir_ferias', 'rotulo' => 'Pedir férias', 'grupo' => 'dia_a_dia'])
         ->assertJsonPath('data.catalogo.8', ['chave' => 'aprovar_pedidos', 'rotulo' => 'Aprovar e recusar pedidos da equipa', 'grupo' => 'gestao'])
         ->assertJsonPath('data.papeis.funcionario.pedir_ferias', true)
@@ -80,10 +80,10 @@ it('rejeita chaves fora do catalogo, valores nao booleanos e papeis invalidos', 
     $this->putJson('/api/definicoes/permissoes', [])->assertStatus(422);
 });
 
-it('/me traz as permissoes concedidas; o admin traz as 13', function () {
+it('/me traz as permissoes concedidas; o admin traz as 14', function () {
     Sanctum::actingAs(User::factory()->admin()->create());
     $this->getJson('/api/me')->assertOk()
-        ->assertJsonCount(13, 'user.permissoes')
+        ->assertJsonCount(14, 'user.permissoes')
         ->assertJsonFragment(['permissoes' => Empresa::chavesPermissoes()]);
 
     $func = comPermissoes('funcionario', ['pedir_ferias', 'aprovar_pedidos']);

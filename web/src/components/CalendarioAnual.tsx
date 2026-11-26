@@ -72,13 +72,16 @@ interface Props {
   aoCriar?: () => void;
   /** Intervalo a destacar como simulação (nunca persiste nada). */
   simulacao?: { de: string; ate: string } | null;
+  /** Dia realçado pela simulação e aviso de clique num dia (só com simulação). */
+  diaDestaque?: string | null;
+  aoDestacarDia?: (iso: string) => void;
 }
 
 /**
  * Mapa do ano, como a folha de férias da equipa: um quadro por mês, os dias em colunas, uma linha por pessoa,
  * fins de semana a cinzento e feriados e pontes em coluna rosa. À direita, a legenda com a cor e os dias de férias de cada um.
  */
-export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, podeCriar = false, aoCriar, simulacao = null }: Props) {
+export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pedidos, aniversarios, pontes, podeCriar = false, aoCriar, simulacao = null, diaDestaque = null, aoDestacarDia }: Props) {
   const [localidade] = useLocalidade();
   const hoje = hojeIso();
   const anoHoje = Number(hoje.slice(0, 4));
@@ -380,10 +383,13 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                               aria-pressed={aberto === iso}
                               aria-current={iso === hoje ? "date" : undefined}
                               title={descricao}
-                              onClick={() => setAberto(aberto === iso ? null : iso)}
+                              onClick={() => {
+                                setAberto(aberto === iso ? null : iso);
+                                if (simulacao) aoDestacarDia?.(iso);
+                              }}
                               className={`flex h-9 w-full flex-col items-center justify-center leading-none ${foco} ${
                                 iso === hoje ? "bg-primaria text-white" : "text-texto hover:bg-primaria-suave"
-                              } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso ? "ring-2 ring-inset ring-primaria" : ""} ${naSimulacao(iso) ? "border-2 border-dashed border-texto" : ""}`}
+                              } ${comemorativa ? "underline decoration-dotted underline-offset-2" : ""} ${aberto === iso || (!!simulacao && diaDestaque === iso) ? "ring-2 ring-inset ring-primaria" : ""} ${naSimulacao(iso) ? "border-2 border-dashed border-texto" : ""}`}
                             >
                               <span className="text-sm font-semibold tabular-nums">{Number(iso.slice(8, 10))}</span>
                               <span className="mt-0.5 text-[0.625rem] opacity-70">{letraDoDia(iso)}</span>

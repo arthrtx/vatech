@@ -45,3 +45,15 @@ describe("ListaPedidos: Ver no calendário", () => {
     );
   });
 });
+
+describe("ListaPedidos: Criado por", () => {
+  const base = { id: 8, user_id: 3, tipo: "ausencia", data_inicio: "2027-08-03", data_fim: "2027-08-05", estado: "pendente" };
+  it("mostra a etiqueta só quando criado por outra pessoa", () => {
+    const com = { ...base, criado_por: { id: 1, nome: "Rita Admin" } } as unknown as Pedido;
+    const { unmount } = render(<ListaPedidos pedidos={[com]} />);
+    expect(screen.getByText("Criado por Rita Admin")).toBeTruthy();
+    unmount();
+    render(<ListaPedidos pedidos={[{ ...base, criado_por: null } as unknown as Pedido]} />);
+    expect(screen.queryByText(/Criado por/)).toBeNull();
+  });
+});

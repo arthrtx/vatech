@@ -165,3 +165,15 @@
 **Alternativas consideradas:** guardar os bytes na BD como nos anexos dos pedidos (rejeitada: 10 MB por ficheiro pesa demais); disco `public` (rejeitada: documentos pessoais).
 
 **Consequências:** o catálogo passa a 13 permissões (o admin tem as 13). Apagar uma pessoa por hard delete apaga as linhas mas não os ficheiros em disco; hoje as contas só se apagam por soft delete.
+
+## D14: Pedidos em nome de outras pessoas
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** a chefia precisa de marcar férias, ausências ou licenças por alguém que não as marcou (telefone, papel).
+
+**Decisão:** nova permissão `pedir_por_outros` (grupo gestão; só por tipo ou admin, fora das predefinições). `POST /pedidos` aceita `user_id`: o pedido é da pessoa-alvo (mesma empresa, conta aprovada, não apagada; senão 404), fica sempre `pendente` e guarda `pedidos.criado_por` (FK a users, nullOnDelete; pedidos antigos null). Limites, sobreposições e anexos contam na pessoa-alvo; o tipo de pedido exige a permissão `pedir_*` do autor. O JSON traz `criado_por: {id, nome}` só quando o autor não é o dono. `GET /pedidos/pessoas` lista as pessoas elegíveis. Quem aprova continua a não decidir um pedido seu; o autor pode decidir o que criou por outro se tiver `aprovar_pedidos`. O autor edita e apaga esses pedidos enquanto pendentes.
+
+**Alternativas consideradas:** aprovar logo o que o admin cria por outros (rejeitada: a pessoa não o confirmou); mudar o dono no PUT (rejeitada: o dono é fixo).
+
+**Consequências:** o catálogo passa a 14 permissões (o admin tem as 14). Quem tem `pedir_por_outros` sem `aprovar_pedidos` passa a ver em GET `/pedidos` o que criou por outros (necessário para editar/cancelar). O autor com `aprovar_pedidos` pode aprovar o que ele próprio marcou por outra pessoa; é aceite porque o pedido não é dele. Anexos de um pedido por outro continuam só do dono.
