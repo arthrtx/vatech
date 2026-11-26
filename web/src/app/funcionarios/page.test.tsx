@@ -90,9 +90,9 @@ describe("Funcionários: férias por pessoa", () => {
     vi.mocked(api.funcionarios).mockResolvedValue([mk(1, "João", "j@x.pt"), mk(2, "Ana", "ana@y.pt"), mk(3, "Rui", "r@z.pt")]);
     vi.mocked(api.feriasResumo).mockResolvedValue({
       resumo: [
-        { user_id: 1, nome: "João", dias_ano: 22, transitados: 8, usados: 8, por_marcar: 22 },
-        { user_id: 2, nome: "Ana", dias_ano: 22, transitados: 0, usados: 5, por_marcar: 17 },
-        { user_id: 3, nome: "Rui", dias_ano: null, transitados: 0, usados: 0, por_marcar: 0 },
+        { user_id: 1, nome: "João", dias_ano: 22, dias_max: 25, transitados: 8, usados: 8, por_marcar: 22 },
+        { user_id: 2, nome: "Ana", dias_ano: 22, dias_max: 25, transitados: 0, usados: 5, por_marcar: 17 },
+        { user_id: 3, nome: "Rui", dias_ano: null, dias_max: null, transitados: 0, usados: 0, por_marcar: 0 },
       ],
       prazo_ferias: "2026-04-30",
     });

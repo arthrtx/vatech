@@ -85,7 +85,11 @@ export default function PedidoForm({
   const total = limite?.dias_ano != null ? limite.dias_ano + limite.transitados : null;
   const restam = total !== null ? Math.max(0, total - usados) : null;
   const diasPedidos = inicio && fim && fim >= inicio ? diasUteis(inicio, fim) : 0;
-  const excede = restam !== null && diasPedidos > restam;
+  // Férias: pode pedir até dias_max (25); os dias acima de dias_ano (22) são excedente.
+  const maximo = limite?.dias_max != null ? limite.dias_max + limite.transitados : total;
+  const restamMax = maximo !== null ? Math.max(0, maximo - usados) : null;
+  const excede = restamMax !== null && diasPedidos > restamMax;
+  const excedentes = total !== null && !excede ? Math.max(0, usados + diasPedidos - total) : 0;
 
   async function melhorar() {
     setErroTexto(null);
@@ -202,7 +206,8 @@ export default function PedidoForm({
       {limite?.dias_ano != null && (
         <p role="status" className="text-sm text-texto-suave">
           {tipos[tipo]}: {usados} de {total} dias úteis usados em {ano} (
-          {limite.transitados > 0 ? `${limite.dias_ano} do ano + ${limite.transitados} transitados; ` : ""}restam {restam})
+          {limite.transitados > 0 ? `${limite.dias_ano} do ano + ${limite.transitados} transitados; ` : ""}restam {restam}
+          {maximo !== null && maximo !== total ? `; pode pedir até ${maximo}` : ""})
         </p>
       )}
       {tipo === "ausencia" && (
@@ -257,7 +262,13 @@ export default function PedidoForm({
       </div>
       {excede && (
         <p role="alert" className={erroCls}>
-          Este pedido tem {diasPedidos} dias úteis e só restam {restam} de {tipos[tipo].toLowerCase()} em {ano}.
+          Este pedido tem {diasPedidos} dias úteis e só restam {restamMax} de {tipos[tipo].toLowerCase()} em {ano}
+          {maximo !== total ? ` (máximo de ${maximo})` : ""}.
+        </p>
+      )}
+      {excedentes > 0 && (
+        <p role="status" className="rounded-cartao border border-linha-forte bg-painel px-4 py-2 text-sm">
+          Este pedido inclui {excedentes} {excedentes === 1 ? "dia" : "dias"} acima dos {total} de direito (excedente). Pode pedir até {maximo}.
         </p>
       )}
       <div>
@@ -337,7 +348,7 @@ export default function PedidoForm({
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={enviando} className={botao}>
+        <button type="submit" disabled={enviando || excede} className={botao}>
           {enviando ? "A enviar..." : edicao ? "Guardar alterações" : admin ? "Marcar" : tipo === "licenca" ? "Comunicar licença" : "Submeter pedido"}
         </button>
         {edicao && onCancelar && (

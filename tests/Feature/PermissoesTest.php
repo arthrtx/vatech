@@ -28,7 +28,7 @@ it('devolve catalogo e predefinidos', function () {
     Sanctum::actingAs(User::factory()->admin()->create());
 
     $r = $this->getJson('/api/definicoes/permissoes')->assertOk();
-    $r->assertJsonCount(12, 'data.catalogo')
+    $r->assertJsonCount(13, 'data.catalogo')
         ->assertJsonPath('data.catalogo.0', ['chave' => 'pedir_ferias', 'rotulo' => 'Pedir férias', 'grupo' => 'dia_a_dia'])
         ->assertJsonPath('data.catalogo.8', ['chave' => 'aprovar_pedidos', 'rotulo' => 'Aprovar e recusar pedidos da equipa', 'grupo' => 'gestao'])
         ->assertJsonPath('data.papeis.funcionario.pedir_ferias', true)
@@ -80,10 +80,10 @@ it('rejeita chaves fora do catalogo, valores nao booleanos e papeis invalidos', 
     $this->putJson('/api/definicoes/permissoes', [])->assertStatus(422);
 });
 
-it('/me traz as permissoes concedidas; o admin traz as 12', function () {
+it('/me traz as permissoes concedidas; o admin traz as 13', function () {
     Sanctum::actingAs(User::factory()->admin()->create());
     $this->getJson('/api/me')->assertOk()
-        ->assertJsonCount(12, 'user.permissoes')
+        ->assertJsonCount(13, 'user.permissoes')
         ->assertJsonFragment(['permissoes' => Empresa::chavesPermissoes()]);
 
     $func = comPermissoes('funcionario', ['pedir_ferias', 'aprovar_pedidos']);
@@ -269,14 +269,13 @@ it('ver presencas da empresa alarga presencas e ocorrencias', function () {
     $this->getJson('/api/ocorrencias')->assertJsonCount(1, 'data');
 });
 
-it('aprovar contas, limites e definicoes continuam so do admin', function () {
+it('aprovar contas e definicoes continuam so do admin', function () {
     $chefe = comPermissoes('funcionario', Empresa::chavesPermissoes());
     $alvo = User::factory()->create(['empresa_id' => $chefe->empresa_id]);
     Sanctum::actingAs($chefe);
 
     $this->postJson("/api/funcionarios/{$alvo->id}/aprovar")->assertForbidden();
     $this->postJson("/api/funcionarios/{$alvo->id}/recusar")->assertForbidden();
-    $this->putJson('/api/limites', [])->assertForbidden();
     $this->getJson('/api/definicoes/convite')->assertForbidden();
     $this->getJson('/api/definicoes/permissoes')->assertForbidden();
 });

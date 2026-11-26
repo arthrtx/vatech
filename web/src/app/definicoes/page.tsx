@@ -9,9 +9,9 @@ import FormaCanto from "./FormaCanto";
 import EscolhaTema from "@/components/EscolhaTema";
 import PermissoesAdmin from "@/components/PermissoesAdmin";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
-import { ApiError, api, mensagemDeErro, type TipoPedido, type User } from "@/lib/api";
+import { ApiError, api, mensagemDeErro, type User } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { rotuloPapel, tipos } from "@/lib/rotulos";
+import { rotuloPapel } from "@/lib/rotulos";
 import { primeiroNome } from "@/lib/saudacao";
 
 const cartao = "relative isolate flex flex-col gap-4 rounded-barra border border-linha bg-painel p-5 md:p-7 has-[[role=dialog]]:z-20 has-[[role=combobox][aria-expanded=true]]:z-20";
@@ -387,95 +387,6 @@ function DatasEstagio({ user, atualizarUser }: { user: User; atualizarUser: (u: 
   );
 }
 
-const TIPOS_LIMITE: TipoPedido[] = ["ferias", "ausencia", "licenca"];
-
-function LimitesDias() {
-  const [valores, setValores] = useState<Record<TipoPedido, string>>({ ferias: "", ausencia: "", licenca: "" });
-  const [inicial, setInicial] = useState<Record<TipoPedido, string>>({ ferias: "", ausencia: "", licenca: "" });
-  const [carregado, setCarregado] = useState(false);
-  const [erroCarga, setErroCarga] = useState<string | null>(null);
-  const { erros, erroGeral, ok, enviando, submeter, desc, limparOk } = useEnvio(async () => {
-    const guardados = await api.guardarLimites(
-      TIPOS_LIMITE.map((t) => ({ tipo: t, dias_ano: valores[t].trim() === "" ? null : Number(valores[t]) })),
-    );
-    const novos = doServidor(guardados);
-    setValores(novos);
-    setInicial(novos);
-  });
-
-  function doServidor(ls: { tipo: TipoPedido; dias_ano: number | null }[]) {
-    const r: Record<TipoPedido, string> = { ferias: "", ausencia: "", licenca: "" };
-    for (const l of ls) r[l.tipo] = l.dias_ano === null ? "" : String(l.dias_ano);
-    return r;
-  }
-
-  useEffect(() => {
-    let ativo = true;
-    api
-      .limites()
-      .then((r) => {
-        if (!ativo) return;
-        const v = doServidor(r.limites);
-        setValores(v);
-        setInicial(v);
-        setCarregado(true);
-      })
-      .catch((err) => ativo && setErroCarga(mensagemDeErro(err)));
-    return () => {
-      ativo = false;
-    };
-  }, []);
-
-  const sujo = TIPOS_LIMITE.some((t) => valores[t] !== inicial[t]);
-  const validar = (): Record<string, string[]> => {
-    const e: Record<string, string[]> = {};
-    for (const t of TIPOS_LIMITE) {
-      const v = valores[t].trim();
-      if (v !== "" && !/^\d+$/.test(v)) e[t] = ["Indique um número inteiro de dias úteis, ou deixe vazio."];
-    }
-    return e;
-  };
-
-  return (
-    <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-limites" className={cartao}>
-      <div>
-        <FormaCanto tom="violeta" />
-        <h2 id="def-limites" className="text-xl font-bold tracking-tight">
-          Limites de dias úteis por ano
-        </h2>
-        <p className="text-sm text-texto-suave">Máximo de dias úteis (seg-sex, sem feriados nacionais) que cada pessoa pode pedir por ano. Vazio = sem limite.</p>
-      </div>
-      {erroCarga && (
-        <p role="alert" className={erroCls}>
-          {erroCarga}
-        </p>
-      )}
-      {TIPOS_LIMITE.map((t) => (
-        <Campo key={t} id={`limite_${t}`} rotulo={tipos[t]} erros={erros[t]}>
-          <input
-            id={`limite_${t}`}
-            data-campo={t}
-            type="number"
-            inputMode="numeric"
-            min={0}
-            step={1}
-            disabled={!carregado}
-            className={input}
-            value={valores[t]}
-            aria-invalid={!!erros[t]}
-            aria-describedby={desc(t) ? `limite_${t}-erro` : undefined}
-            onChange={(e) => {
-              setValores((v) => ({ ...v, [t]: e.target.value }));
-              limparOk();
-            }}
-          />
-        </Campo>
-      ))}
-      <Rodape erroGeral={erroGeral} ok={ok} enviando={enviando} sujo={sujo} />
-    </form>
-  );
-}
-
 const MAX_TEXTO_CONVITE = 1000;
 
 function TextoConvite() {
@@ -546,7 +457,7 @@ function TextoConvite() {
           rows={5}
           maxLength={MAX_TEXTO_CONVITE}
           disabled={!carregado}
-          className={input}
+          className={`${input} rounded-none!`}
           value={texto}
           aria-invalid={!!erros.texto}
           aria-describedby={desc("texto") ? "texto_convite-erro" : undefined}
@@ -656,7 +567,13 @@ function Conteudo() {
       ) : (
         <div role="tabpanel" id="painel-geral" aria-labelledby="separador-geral" className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
           <div className="flex min-w-0 flex-col gap-6">
-            <LimitesDias />
+            <section aria-labelledby="def-ferias" className={cartao}>
+              <FormaCanto tom="violeta" />
+              <h2 id="def-ferias" className="text-xl font-bold tracking-tight">
+                Férias
+              </h2>
+              <p className="text-sm text-texto-suave">Férias: 22 dias úteis por ano, podendo pedir até 25.</p>
+            </section>
             <TextoConvite />
           </div>
         </div>

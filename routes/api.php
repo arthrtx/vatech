@@ -7,6 +7,7 @@ use App\Http\Controllers\CompromissoController;
 use App\Http\Controllers\ConviteController;
 use App\Http\Controllers\DefinicoesConviteController;
 use App\Http\Controllers\DefinicoesPermissoesController;
+use App\Http\Controllers\FichaRhController;
 use App\Http\Controllers\FuncionarioController;
 use App\Http\Controllers\LimiteController;
 use App\Http\Controllers\OcorrenciaController;
@@ -43,7 +44,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pedidos/{id}/anexos/{anexo}', [AnexoController::class, 'download']);
 
     Route::middleware('papel:admin')->group(function () {
-        Route::put('/limites', [LimiteController::class, 'update']);
         Route::get('/definicoes/convite', [DefinicoesConviteController::class, 'show']);
         Route::put('/definicoes/convite', [DefinicoesConviteController::class, 'update']);
         Route::get('/ferias-resumo', [LimiteController::class, 'feriasResumo']);
@@ -76,6 +76,18 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/pontes', [PonteController::class, 'store']);
             Route::delete('/pontes/{id}', [PonteController::class, 'destroy']);
         });
+    });
+
+    // Fichas de RH: quem tem gerir_rh vê e edita as de toda a empresa.
+    Route::middleware('permissao:gerir_rh')->group(function () {
+        Route::get('/rh/fichas', [FichaRhController::class, 'index']);
+        Route::get('/rh/fichas/{userId}', [FichaRhController::class, 'show']);
+        Route::post('/rh/fichas/{userId}/infos', [FichaRhController::class, 'storeInfo']);
+        Route::put('/rh/infos/{id}', [FichaRhController::class, 'updateInfo']);
+        Route::delete('/rh/infos/{id}', [FichaRhController::class, 'destroyInfo']);
+        Route::post('/rh/fichas/{userId}/ficheiros', [FichaRhController::class, 'storeFicheiro'])->middleware('throttle:30,1');
+        Route::get('/rh/ficheiros/{id}/download', [FichaRhController::class, 'download']);
+        Route::delete('/rh/ficheiros/{id}', [FichaRhController::class, 'destroyFicheiro']);
     });
 
     // Todos marcam a sua presença; o admin vê a da empresa, os outros só a sua.

@@ -24,9 +24,9 @@ vi.mock("@/lib/api", async (orig) => {
 beforeEach(() => {
   vi.mocked(api.limites).mockResolvedValue({
     limites: [
-      { tipo: "ferias", dias_ano: 22, transitados: 0, usados: 8 },
-      { tipo: "ausencia", dias_ano: null, transitados: 0, usados: 0 },
-      { tipo: "licenca", dias_ano: 5, transitados: 0, usados: 0 },
+      { tipo: "ferias", dias_ano: 22, dias_max: 25, transitados: 0, usados: 8 },
+      { tipo: "ausencia", dias_ano: null, dias_max: null, transitados: 0, usados: 0 },
+      { tipo: "licenca", dias_ano: null, dias_max: null, transitados: 0, usados: 0 },
     ],
     prazo_ferias: "2026-04-30",
   });
@@ -92,7 +92,7 @@ describe("PedidoForm limites", () => {
 
   it("mostra o saldo do tipo escolhido e nada quando não há limite", async () => {
     render(<PedidoForm />);
-    expect(await screen.findByText(`Férias: 8 de 22 dias úteis usados em ${ano} (restam 14)`)).toBeTruthy();
+    expect(await screen.findByText(`Férias: 8 de 22 dias úteis usados em ${ano} (restam 14; pode pedir até 25)`)).toBeTruthy();
     fireEvent.click(screen.getByRole("combobox", { name: "Tipo" }));
     fireEvent.click(screen.getByRole("option", { name: "Ausência" }));
     expect(screen.queryByText(/dias úteis usados em/)).toBeNull();
@@ -100,24 +100,36 @@ describe("PedidoForm limites", () => {
 
   it("mostra o cúmulo com os dias transitados e conta-os no aviso de exceder", async () => {
     vi.mocked(api.limites).mockResolvedValue({
-      limites: [{ tipo: "ferias", dias_ano: 22, transitados: 8, usados: 8 }],
+      limites: [{ tipo: "ferias", dias_ano: 22, dias_max: 25, transitados: 8, usados: 8 }],
       prazo_ferias: "2026-04-30",
     });
     render(<PedidoForm />);
-    expect(await screen.findByText(`Férias: 8 de 30 dias úteis usados em ${ano} (22 do ano + 8 transitados; restam 22)`)).toBeTruthy();
+    expect(await screen.findByText(`Férias: 8 de 30 dias úteis usados em ${ano} (22 do ano + 8 transitados; restam 22; pode pedir até 33)`)).toBeTruthy();
     datas(...periodo(22));
     expect(screen.queryByText(/só restam/)).toBeNull();
-    datas(...periodo(23));
-    expect(screen.getByText(`Este pedido tem 23 dias úteis e só restam 22 de férias em ${ano}.`)).toBeTruthy();
+    datas(...periodo(26));
+    expect(screen.getByText(`Este pedido tem 26 dias úteis e só restam 25 de férias em ${ano} (máximo de 33).`)).toBeTruthy();
   });
 
-  it("avisa antes de submeter quando o pedido excede o que resta", async () => {
+  it("bloqueia antes de submeter quando o pedido ultrapassa o máximo de 25", async () => {
     render(<PedidoForm />);
     await screen.findByText(/restam 14/);
     expect(screen.queryByText(/só restam/)).toBeNull();
     datas(...periodo(20));
-    expect(screen.getByText(`Este pedido tem 20 dias úteis e só restam 14 de férias em ${ano}.`)).toBeTruthy();
+    expect(screen.getByText(`Este pedido tem 20 dias úteis e só restam 17 de férias em ${ano} (máximo de 25).`)).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Submeter pedido" }) as HTMLButtonElement).disabled).toBe(true);
     datas(...periodo(10));
+    expect(screen.queryByText(/só restam/)).toBeNull();
+    expect((screen.getByRole("button", { name: "Submeter pedido" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("avisa do excedente quando o pedido passa dos 22 mas não dos 25", async () => {
+    render(<PedidoForm />);
+    await screen.findByText(/restam 14/);
+    datas(...periodo(14));
+    expect(screen.queryByText(/acima dos 22/)).toBeNull();
+    datas(...periodo(16));
+    expect(screen.getByText("Este pedido inclui 2 dias acima dos 22 de direito (excedente). Pode pedir até 25.")).toBeTruthy();
     expect(screen.queryByText(/só restam/)).toBeNull();
   });
 
@@ -147,6 +159,13 @@ describe("PedidosAdmin", () => {
     fireEvent.change(screen.getByLabelText(/Motivo da recusa/), { target: { value: "Sem cobertura" } });
     fireEvent.click(confirmar);
     expect(recusar).toHaveBeenCalledWith(7, "Sem cobertura");
+  });
+
+  it("mostra a etiqueta de excedente nas férias com dias acima dos 22", () => {
+    const { rerender } = render(<PedidosAdmin pedidos={[{ ...pedido, dias_excedentes: 3 }]} onAprovar={vi.fn()} onRecusar={vi.fn()} />);
+    expect(screen.getByText("Inclui 3 dias acima dos 22")).toBeTruthy();
+    rerender(<PedidosAdmin pedidos={[{ ...pedido, dias_excedentes: 0 }]} onAprovar={vi.fn()} onRecusar={vi.fn()} />);
+    expect(screen.queryByText(/acima dos 22/)).toBeNull();
   });
 
   it("mostra data dd/mm/aaaa e foca o motivo ao recusar", () => {
