@@ -9,11 +9,15 @@ import PedidoForm from "@/components/PedidoForm";
 import PedidosAdmin from "@/components/PedidosAdmin";
 import { api, mensagemDeErro, type Pedido } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { podePedir, temPermissao } from "@/lib/permissoes";
 import { erro as erroCls } from "@/components/ui";
 
 function Conteudo() {
   const { user } = useAuth();
   const admin = user?.papel === "admin";
+  // Não-admin com «aprovar pedidos»: decide os pedidos dos outros e mantém a sua própria lista.
+  const gestor = !admin && temPermissao(user, "aprovar_pedidos");
+  const podeNovo = podePedir(user);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -121,11 +125,12 @@ function Conteudo() {
           onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
         />
       ) : (
+        <>
         <ListaPedidos
-          pedidos={pedidos}
+          pedidos={gestor ? pedidos.filter((p) => p.user_id === user?.id) : pedidos}
           carregando={carregando}
           formulario={
-            editando ? (
+            !podeNovo && !editando ? undefined : editando ? (
               <PedidoForm
                 key={editando.id}
                 pedido={editando}
@@ -173,6 +178,20 @@ function Conteudo() {
             }
           }}
         />
+        {gestor && (
+          <section aria-labelledby="equipa_titulo" className="flex flex-col gap-3">
+            <h2 id="equipa_titulo" className="text-lg font-semibold">
+              Pedidos da equipa
+            </h2>
+            <PedidosAdmin
+              pedidos={pedidos.filter((p) => p.user_id !== user?.id)}
+              carregando={carregando}
+              onAprovar={(id) => decidir(() => api.aprovar(id))}
+              onRecusar={(id, motivo) => decidir(() => api.recusar(id, motivo))}
+            />
+          </section>
+        )}
+        </>
       )}
     </div>
   );

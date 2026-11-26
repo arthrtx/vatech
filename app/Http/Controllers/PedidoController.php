@@ -19,7 +19,7 @@ class PedidoController extends Controller
         $user = $request->user();
         $query = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->with('anexos')->latest('id');
 
-        if ($user->isAdmin()) {
+        if ($user->temPermissao('aprovar_pedidos')) {
             $query->with('user:id,nome');
         } else {
             $query->where('user_id', $user->id);
@@ -31,7 +31,10 @@ class PedidoController extends Controller
             $query->where('tipo', 'licenca')->whereNull('visto_em');
         }
 
-        return response()->json(['data' => $query->get()]);
+        $pedidos = $query->get();
+        $this->limites->anexarExcedentes($pedidos);
+
+        return response()->json(['data' => $pedidos]);
     }
 
     public function store(StorePedidoRequest $request): JsonResponse
@@ -157,6 +160,7 @@ class PedidoController extends Controller
         // 404 para pedidos de outra empresa ou de funcionarios apagados (nao revela existencia).
         $pedido = Pedido::where('empresa_id', $user->empresa_id)->whereHas('user')->findOrFail($id);
 
+        abort_if($pedido->user_id === $user->id, 403, 'Não pode decidir um pedido seu.');
         abort_if($pedido->estado !== 'pendente', 409, 'O pedido já foi decidido.');
 
         $pedido->update([...$campos, 'decidido_por' => $user->id, 'decidido_em' => now()]);

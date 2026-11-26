@@ -85,7 +85,7 @@ class PresencaController extends Controller
 
         $query = Presenca::with('user:id,nome,almoco_inicio,almoco_fim')->latest('data')->latest('id');
 
-        if ($user->isAdmin()) {
+        if ($user->temPermissao('ver_presencas_empresa')) {
             $query->whereHas('user', fn ($q) => $q->where('empresa_id', $user->empresa_id));
             if ($request->filled('user_id')) {
                 $query->where('user_id', $request->query('user_id'));

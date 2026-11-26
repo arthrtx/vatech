@@ -6,6 +6,7 @@ import Agenda from "@/components/Agenda";
 import PontesAdmin from "@/components/PontesAdmin";
 import { api, mensagemDeErro, type Ponte, type Aniversario, type Compromisso, type PedidoAgenda, type Presenca } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { podePedir, temPermissao } from "@/lib/permissoes";
 import { estagiosDe, hojeIso, intervaloDoMes, mesDe, type Estagio, type Mes } from "@/lib/agenda";
 import { erro as erroCls } from "@/components/ui";
 
@@ -119,7 +120,7 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
       <h1 className="sr-only">Agenda</h1>
-      {admin && <PontesAdmin aoAlterar={recarregar} />}
+      {temPermissao(user, "gerir_pontes") && <PontesAdmin aoAlterar={recarregar} />}
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}
@@ -143,7 +144,7 @@ function Conteudo() {
         aCarregar={aCarregar}
         comErro={erro !== null}
         aoMudarMes={aoMudarMes}
-        podeCriar={!!user && user.papel !== "admin"}
+        podeCriar={!!user && user.papel !== "admin" && podePedir(user)}
         aoCriar={recarregar}
       />
     </div>

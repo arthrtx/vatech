@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsurePapel;
+use App\Http\Middleware\EnsurePermissao;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['papel' => EnsurePapel::class]);
+        $middleware->alias(['papel' => EnsurePapel::class, 'permissao' => EnsurePermissao::class]);
         // API pura: sem rota `login`, nunca redireccionar convidados (devolve 401).
         $middleware->redirectGuestsTo(fn () => null);
     })

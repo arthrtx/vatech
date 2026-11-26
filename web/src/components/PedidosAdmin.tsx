@@ -96,6 +96,11 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando
                     {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
                     {horasDoPedido(p) && ` · ${horasDoPedido(p)}`}
                   </p>
+                  {p.tipo === "ferias" && (p.dias_excedentes ?? 0) > 0 && (
+                    <p role="note" className="mt-1 inline-block rounded-cartao bg-campo px-2 py-1 text-sm font-semibold">
+                      Inclui {p.dias_excedentes} {p.dias_excedentes === 1 ? "dia" : "dias"} acima dos 22
+                    </p>
+                  )}
                 </div>
               </div>
               {p.estado !== "pendente" ? null : recusando === p.id ? (
