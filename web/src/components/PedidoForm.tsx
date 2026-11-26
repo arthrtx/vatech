@@ -80,7 +80,9 @@ export default function PedidoForm({
     };
   }, []);
 
-  const limite = limites.find((l) => l.tipo === tipo);
+  // GET /limites só devolve o saldo de quem está autenticado: com outra pessoa escolhida
+  // não há saldo local fiável, a validação fica toda no servidor.
+  const limite = emNomeDe ? undefined : limites.find((l) => l.tipo === tipo);
   const ano = hoje.slice(0, 4);
   // Ao editar um pedido do mesmo tipo, os seus dias já estão em «usados».
   const proprios = pedido && pedido.tipo === tipo && pedido.estado !== "recusado" ? diasUteis(pedido.data_inicio, pedido.data_fim) : 0;
