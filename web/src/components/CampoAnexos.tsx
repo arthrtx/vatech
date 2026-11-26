@@ -6,8 +6,8 @@ import { ACEITA, MAX_ANEXOS, tamanhoLegivel, validarFicheiro } from "@/lib/anexo
 import { botaoSec } from "./ui";
 
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
-const linha = "flex items-center justify-between gap-3 rounded-controlo bg-campo px-3 py-2 text-sm";
-const remover = `shrink-0 rounded-controlo px-2 py-1 font-medium text-perigo hover:bg-perigo-suave ${foco}`;
+const linha = "flex items-center justify-between gap-3 rounded-full bg-campo py-2 pl-4 pr-2 text-sm";
+const remover = `shrink-0 rounded-full px-3 py-1 font-medium text-perigo hover:bg-perigo-suave ${foco}`;
 
 interface Props {
   /** Ficheiros escolhidos, ainda por enviar. */
@@ -57,7 +57,7 @@ export default function CampoAnexos({ novos, onNovos, guardados = [], onRemoverG
           setAArrastar(false);
           juntar(e.dataTransfer.files);
         }}
-        className={`flex flex-col gap-3 rounded-controlo border border-dashed p-3 ${
+        className={`flex flex-col gap-3 rounded-cartao border border-dashed p-4 ${
           aArrastar ? "border-primaria bg-primaria-suave" : "border-linha-forte bg-painel/60"
         }`}
       >

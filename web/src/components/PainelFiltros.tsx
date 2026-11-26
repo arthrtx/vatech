@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { botaoSec } from "./ui";
+import { botaoSec, vidro } from "./ui";
 
 interface Props {
   children: ReactNode;
@@ -53,7 +53,7 @@ export default function PainelFiltros({ children, ativos, total, mostrados, rotu
       </button>
       <div
         id={id}
-        className={`${aberto ? "flex" : "hidden"} flex-col gap-3.5 rounded-cartao bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 has-[[role=dialog]]:relative has-[[role=dialog]]:z-20 md:flex md:flex-row md:flex-wrap md:items-end md:gap-x-5 md:gap-y-3.5`}
+        className={`${aberto ? "flex" : "hidden"} flex-col gap-3.5 p-5 ${vidro} has-[[role=dialog]]:relative has-[[role=dialog]]:z-20 md:flex md:flex-row md:flex-wrap md:items-end md:gap-x-5 md:gap-y-3.5`}
       >
         {children}
       </div>

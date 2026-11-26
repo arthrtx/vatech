@@ -6,14 +6,15 @@ import { api, mensagemDeErro, type Presenca, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { dataPt, horaDe } from "@/lib/presencas";
 import { IconeAgenda, IconePedidos } from "../Icones";
-import { acao, acaoDestaque, botaoSec, erro as erroCls, vidro } from "../ui";
+import { acao, acaoDestaque, botaoSec, erro as erroCls } from "../ui";
 import Cabecalho from "./Cabecalho";
 import ConfirmarPresenca from "./ConfirmarPresenca";
+import Forma from "./Forma";
 
 type Estado = { fase: "a-carregar" } | { fase: "erro"; msg: string } | { fase: "ok"; presenca: Presenca | null };
 
 const botaoPresenca =
-  "inline-flex min-h-12 items-center justify-center rounded-full bg-positivo px-8 text-base font-semibold text-barra hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2 disabled:opacity-50";
+  "inline-flex min-h-12 items-center justify-center rounded-full bg-primaria px-8 text-base font-semibold text-white hover:bg-primaria-forte focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2 disabled:opacity-50";
 
 export function CartaoPresenca() {
   const [estado, setEstado] = useState<Estado>({ fase: "a-carregar" });
@@ -56,7 +57,7 @@ export function CartaoPresenca() {
   if (estado.fase === "a-carregar") {
     corpo = (
       <div aria-busy="true" aria-label="A carregar a presença de hoje" className="animate-pulse motion-reduce:animate-none">
-        <div className="h-12 w-48 rounded-full bg-trilho" />
+        <div className="h-12 w-48 rounded-full bg-painel/60" />
       </div>
     );
   } else if (estado.fase === "erro") {
@@ -101,8 +102,13 @@ export function CartaoPresenca() {
   }
 
   return (
-    <section aria-labelledby="presenca-hoje" className={`${vidro} flex flex-col gap-3 p-5 motion-safe:animate-subir`}>
-      <h2 id="presenca-hoje" className="text-lg font-semibold">
+    <section
+      aria-labelledby="presenca-hoje"
+      className="relative isolate flex min-h-64 flex-col justify-between gap-4 overflow-hidden rounded-barra bg-positivo/20 p-6 text-texto motion-safe:animate-subir md:p-8"
+    >
+      <Forma tipo="estrela" className="-right-10 -top-10 -z-10 h-44 w-44 text-positivo/30 dark:text-positivo/15" />
+      <Forma tipo="flor" className="-bottom-12 -left-12 -z-10 h-40 w-40 text-painel/50" />
+      <h2 id="presenca-hoje" className="w-fit rounded-full bg-painel px-4 py-1.5 text-sm font-semibold">
         Presença de hoje
       </h2>
       {corpo}
@@ -127,7 +133,7 @@ export default function DashboardEstagiario({ user }: { user: User }) {
   const { estagio_inicio: inicio, estagio_fim: fim } = user;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <Cabecalho
         nome={user.nome}
         hoje={hoje}

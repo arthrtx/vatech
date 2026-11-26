@@ -57,7 +57,7 @@ export default function ConfirmarPresenca({
         aria-describedby="conf-presenca-d"
         onKeyDown={teclas}
         onMouseDown={(e) => e.stopPropagation()}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-cartao bg-painel p-5 text-texto shadow-suave"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-barra bg-painel p-6 text-texto shadow-suave"
       >
         <h2 id="conf-presenca-t" className="text-lg font-semibold">
           Deseja marcar {saida ? "saída" : "entrada"} às {hora}?

@@ -6,9 +6,9 @@ interface Props<T extends string> {
 }
 
 const base =
-  "min-h-11 rounded-controlo px-4 py-2 text-sm text-texto hover:bg-primaria-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
-const normal = "border border-linha-forte bg-painel font-medium";
-const ativo = "border-2 border-primaria bg-primaria-suave px-[15px] py-[7px] font-bold";
+  "min-h-11 rounded-full border px-4 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2";
+const normal = "border-linha-forte bg-painel font-medium text-texto hover:bg-primaria-suave";
+const ativo = "border-primaria bg-primaria font-semibold text-white hover:bg-primaria-forte";
 
 export default function GrupoChips<T extends string>({ legenda, opcoes, selecionados, onChange }: Props<T>) {
   const alternar = (v: T) =>

@@ -4,6 +4,7 @@ import CampoHora from "./CampoHora";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, mensagemDeErro } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
+import FormaCanto from "../app/definicoes/FormaCanto";
 import { botao, botaoSec, erro as erroCls, input, label, vidro } from "./ui";
 
 interface Props {
@@ -48,9 +49,10 @@ export default function PresencaAtrasada({ min, onRegistado, onCancelar }: Props
       noValidate
       onKeyDown={(e) => e.key === "Escape" && onCancelar()}
       aria-labelledby="pres_atr_titulo"
-      className={`${vidro} grid gap-4 p-4 sm:grid-cols-3`}
+      className={`${vidro} relative isolate grid gap-4 p-5 md:p-6 sm:grid-cols-3`}
     >
-      <h2 id="pres_atr_titulo" className="text-lg font-semibold sm:col-span-3">
+      <FormaCanto tom="rosa" />
+      <h2 id="pres_atr_titulo" className="text-xl font-bold tracking-tight sm:col-span-3">
         Registar presença esquecida
       </h2>
       <div>

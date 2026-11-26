@@ -5,7 +5,7 @@ import { api, mensagemDeErro, type MotivoOcorrencia, type TipoOcorrencia } from 
 import { hojeIso } from "@/lib/agenda";
 import { motivosOcorrencia, tiposOcorrencia } from "@/lib/ocorrencias";
 import Seletor from "./Seletor";
-import { botao, botaoSec, erro as erroCls, input, label, vidro } from "./ui";
+import { areaTexto, botao, botaoSec, erro as erroCls, input, label, vidro } from "./ui";
 
 interface Props {
   onRegistado: () => void;
@@ -93,7 +93,7 @@ export default function RegistarOcorrencia({ onRegistado, onCancelar }: Props) {
           maxLength={2000}
           value={descricao}
           onChange={(e) => setDescricao(e.target.value)}
-          className={input}
+          className={areaTexto}
         />
       </div>
       {msg && (

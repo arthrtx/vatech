@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import AppShell from "@/components/AppShell";
 import CampoData from "@/components/CampoData";
 import HorarioAlmoco from "@/components/HorarioAlmoco";
+import FormaCanto from "../definicoes/FormaCanto";
 import PresencaAtrasada from "@/components/PresencaAtrasada";
 import RegistarOcorrencia from "@/components/RegistarOcorrencia";
 import Seletor from "@/components/Seletor";
@@ -81,7 +82,7 @@ function Conteudo() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Presenças</h1>
+        <h1 className="titulo-bento">Presenças</h1>
         <div className="flex flex-wrap gap-2">
           {!comunicar && (
             <button type="button" className={`${botaoSec} min-h-10`} onClick={() => setComunicar(true)}>
@@ -117,7 +118,8 @@ function Conteudo() {
           }}
         />
       )}
-      <div className={`${vidro} relative z-20 grid gap-4 p-4 ${admin ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+      <div className={`${vidro} relative isolate z-20 grid gap-4 p-5 md:p-6 ${admin ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        <FormaCanto tom="violeta" />
         <div>
           <label htmlFor="pres_de" className={label}>
             De
@@ -163,12 +165,12 @@ function Conteudo() {
         </p>
       )}
       {valido && atual && !erro && linhas.length === 0 && (
-        <p className="rounded-controlo border border-dashed border-linha-forte bg-painel/60 p-4 text-sm text-texto-suave">
+        <p className="rounded-barra border border-dashed border-linha-forte bg-painel p-6 text-sm text-texto-suave">
           Sem presenças neste intervalo.
         </p>
       )}
       {linhas.length > 0 && (
-        <div className={`${vidro} overflow-x-auto p-2`}>
+        <div className={`${vidro} overflow-x-auto p-3`}>
           <table className="w-full min-w-[32rem] text-left text-sm">
             <caption className="sr-only">Horas por dia</caption>
             <thead>
@@ -199,7 +201,7 @@ function Conteudo() {
                   <td className={td}>
                     {dataPt(p.data)}
                     {p.atrasada && (
-                      <span className="ml-2 rounded-controlo border border-linha-forte px-2 py-0.5 text-xs text-texto-suave">
+                      <span className="ml-2 rounded-full border border-linha-forte px-2.5 py-0.5 text-xs text-texto-suave">
                         Atrasada
                       </span>
                     )}

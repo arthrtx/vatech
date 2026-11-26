@@ -47,7 +47,7 @@ function Conteudo() {
 
   return (
     <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
-      <h1 className="text-2xl font-semibold">Pessoas</h1>
+      <h1 className="titulo-bento">Pessoas</h1>
       <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1">
         <div className="flex min-w-0 flex-col gap-3 lg:max-h-full lg:min-h-0">
         {erro && (

@@ -30,7 +30,7 @@ export default function Avatar({
   return (
     <span
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-full font-semibold text-texto ring-1 ring-white/60 dark:ring-white/10 ${fundos[Math.abs(id) % fundos.length]} ${className}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-semibold text-texto ring-1 ring-linha ${fundos[Math.abs(id) % fundos.length]} ${className}`}
     >
       {iniciais(nome)}
     </span>

@@ -32,7 +32,7 @@ export default function CampoBusca({ id, rotulo, valor, onChange, placeholder = 
         ref={ref}
         type="search"
         autoComplete="off"
-        className="h-11 w-full rounded-full bg-painel/55 pl-10 pr-20 text-base text-texto ring-1 ring-white/70 backdrop-blur-xl placeholder:text-texto-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria dark:ring-white/10 [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-11 w-full rounded-full border border-linha-forte bg-painel pl-10 pr-20 text-base text-texto placeholder:text-texto-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria [&::-webkit-search-cancel-button]:appearance-none"
         placeholder={placeholder}
         value={valor}
         onChange={(e) => onChange(e.target.value)}
