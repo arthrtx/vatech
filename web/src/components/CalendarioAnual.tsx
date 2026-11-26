@@ -110,6 +110,20 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
   const visiveisNaPesquisa = useMemo(() => new Set(filtrar(pedidos, busca, (p) => [p.user?.nome, tipos[p.tipo]]).map((p) => quemE(p))), [pedidos, busca]);
   const linhas = pessoas.filter((p) => visiveisNaPesquisa.has(p.id));
 
+  // Aniversário marcado na linha da própria pessoa; quem não tem linha fica na linha "Aniversários".
+  const { anivNaLinha, anivSemLinha } = useMemo(() => {
+    const idsComLinha = new Set(linhas.map((l) => l.id));
+    const naLinha = new Set<string>();
+    const semLinha = new Map<string, string[]>();
+    filtrar(aniversarios, busca, (a) => [a.user.nome, "aniversario"])
+      .filter((a) => Number(a.data.slice(0, 4)) === ano)
+      .forEach((a) => {
+        if (idsComLinha.has(a.user.id)) naLinha.add(`${a.user.id}|${a.data}`);
+        else semLinha.set(a.data, [...(semLinha.get(a.data) ?? []), a.user.nome]);
+      });
+    return { anivNaLinha: naLinha, anivSemLinha: semLinha };
+  }, [aniversarios, busca, ano, linhas]);
+
   // Dias úteis de férias de cada pessoa neste ano (aprovadas e pendentes).
   const diasDeFerias = useMemo(() => {
     const m = new Map<number, number>();
@@ -202,7 +216,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                 const total = diasDoMes(ano, mes);
                 // 31 posições; as que passam do fim do mês ficam vazias.
                 const dias = Array.from({ length: 31 }, (_, k) => (k < total ? `${ano}-${dois(mes)}-${dois(k + 1)}` : null));
-                const aniversariosDoMes = dias.filter((iso) => iso && marcas.get(iso)?.aniversarios.length);
+                const aniversariosDoMes = dias.filter((iso) => iso && anivSemLinha.get(iso)?.length);
                 const celulaDia = (iso: string) => {
                   const m = marcas.get(iso);
                   const feriado = !!m?.datas.some((d) => d.tipo === "feriado" || d.tipo === "municipal");
@@ -282,11 +296,27 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                           if (!iso) return foraDoMes(k);
                           const { m, fundo } = celulaDia(iso);
                           const p = m?.pedidos.find((x) => quemE(x) === pessoa.id);
-                          if (!p) return <td key={iso} className={`h-7 border border-linha-forte/30 ${fundo}`} />;
+                          const aniv = anivNaLinha.has(`${pessoa.id}|${iso}`);
+                          const marcaAniv = aniv ? (
+                            <span
+                              title={`Aniversário de ${pessoa.nome}`}
+                              role="img"
+                              aria-label={`Aniversário de ${pessoa.nome}`}
+                              className="pointer-events-none absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-rosa"
+                            />
+                          ) : null;
+                          if (!p) {
+                            return (
+                              <td key={iso} className={`relative h-7 border border-linha-forte/30 ${fundo}`}>
+                                {marcaAniv}
+                              </td>
+                            );
+                          }
                           const pendente = p.estado === "pendente";
                           const rotulo = `${pessoa.nome}: ${tipos[p.tipo].toLowerCase()}${pendente ? " (pendente)" : ""}, ${nomeDoDia(iso)}`;
                           return (
-                            <td key={iso} className={`h-7 border border-linha-forte/30 p-0 ${fundo}`}>
+                            <td key={iso} className={`relative h-7 border border-linha-forte/30 p-0 ${fundo}`}>
+                              {marcaAniv}
                               <button
                                 type="button"
                                 aria-label={rotulo}
@@ -312,11 +342,12 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
                         </th>
                         {dias.map((iso, k) => {
                           if (!iso) return foraDoMes(k);
-                          const { m, fundo } = celulaDia(iso);
+                          const { fundo } = celulaDia(iso);
+                          const nomes = anivSemLinha.get(iso);
                           return (
                             <td key={iso} className={`h-7 border border-linha-forte/30 text-center ${fundo}`}>
-                              {m?.aniversarios.length ? (
-                                <span title={m.aniversarios.map((n) => `Aniversário de ${n}`).join(", ")} className="inline-block h-2 w-2 rounded-full bg-rosa" />
+                              {nomes?.length ? (
+                                <span title={nomes.map((n) => `Aniversário de ${n}`).join(", ")} className="inline-block h-2 w-2 rounded-full bg-rosa" />
                               ) : null}
                             </td>
                           );
