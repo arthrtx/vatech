@@ -7,12 +7,38 @@ export type TipoPedido = "ferias" | "ausencia" | "licenca";
 export type SubtipoPedido = "medica" | "documentacao" | "falta_justificada";
 export type EstadoPedido = "pendente" | "aprovado" | "recusado" | "cancelado";
 
+export type EstadoConta = "pendente" | "aprovado" | "recusado";
+
+export interface Convite {
+  id: number;
+  nome: string;
+  email: string;
+  papel: Exclude<Papel, "admin">;
+  expira_em: string;
+  /** Link de aceitação (em produção sem SMTP é o admin que o partilha). */
+  link: string;
+}
+
+/** Dados públicos de um convite (GET /convites/{token}); `texto` é a mensagem do administrador. */
+export interface ConvitePublico {
+  nome: string;
+  email: string;
+  texto?: string;
+}
+
+export interface TextoConvite {
+  texto: string;
+  predefinido: boolean;
+}
+
 export interface User {
   id: number;
   nome: string;
   email: string;
   papel: Papel;
   empresa_id: number;
+  /** Ausente em respostas antigas: tratar como «aprovado». */
+  estado_conta?: EstadoConta;
   avatar_url?: string | null;
   /** Opcional (Y-m-d). Aparece na agenda como «Aniversário de …». */
   data_nascimento?: string | null;
@@ -239,8 +265,10 @@ export const api = {
     setToken(r.token);
     return r.user;
   },
-  registo: async (b: { nome: string; email: string; password: string; password_confirmation: string; aceita_termos: boolean }) =>
-    (await request<{ message: string }>("POST", "/registo", b)).message,
+  convite: async (token: string) =>
+    (await request<{ data: ConvitePublico }>("GET", `/convites/${encodeURIComponent(token)}`)).data,
+  aceitarConvite: async (token: string, b: { password: string; password_confirmation: string; aceita_termos: boolean }) =>
+    (await request<{ message: string }>("POST", `/convites/${encodeURIComponent(token)}/aceitar`, b)).message,
   reenviarConfirmacao: async (email: string) =>
     (await request<{ message: string }>("POST", "/email/reenviar", { email })).message,
   esqueciPassword: async (email: string) =>
@@ -273,6 +301,15 @@ export const api = {
   definirAlmoco: async (b: { almoco_inicio: string | null; almoco_fim: string | null }) =>
     (await request<{ user: User }>("PUT", "/me/almoco", b)).user,
   removerAvatar: async () => (await request<{ user: User }>("DELETE", "/me/avatar")).user,
+  convites: {
+    listar: async () => (await request<{ data: Convite[] }>("GET", "/funcionarios/convites")).data,
+    criar: async (b: { nome: string; email: string; papel: Convite["papel"] }) =>
+      (await request<{ data: Convite }>("POST", "/funcionarios/convites", b)).data,
+    reenviar: async (id: number) => (await request<{ data: Convite }>("POST", `/funcionarios/convites/${id}/reenviar`)).data,
+    revogar: (id: number) => request<void>("DELETE", `/funcionarios/convites/${id}`),
+  },
+  aprovarConta: async (id: number) => (await request<{ data: User }>("POST", `/funcionarios/${id}/aprovar`)).data,
+  recusarConta: async (id: number) => (await request<{ data: User }>("POST", `/funcionarios/${id}/recusar`)).data,
   funcionarios: async () => (await request<{ data: User[] }>("GET", "/funcionarios")).data,
   presencaHoje: async () => (await request<{ data: Presenca | null }>("GET", "/presencas/hoje")).data,
   marcarEntrada: async () => (await request<{ data: Presenca }>("POST", "/presencas/entrada")).data,
@@ -319,6 +356,9 @@ export const api = {
     const r = await request<{ data: FeriasResumo[]; prazo_ferias: string }>("GET", "/ferias-resumo");
     return { resumo: r.data, prazo_ferias: r.prazo_ferias };
   },
+  textoConvite: async () => (await request<{ data: TextoConvite }>("GET", "/definicoes/convite")).data,
+  guardarTextoConvite: async (texto: string | null) =>
+    (await request<{ data: TextoConvite }>("PUT", "/definicoes/convite", { texto })).data,
   guardarLimites: async (limites: { tipo: TipoPedido; dias_ano: number | null }[]) =>
     (await request<{ data: Limite[] }>("PUT", "/limites", { limites })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),

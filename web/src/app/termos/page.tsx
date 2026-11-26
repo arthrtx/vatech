@@ -65,8 +65,8 @@ export default function TermosPage() {
             ))}
           </section>
         ))}
-        <Link href="/registo" className="text-sm text-texto-suave underline underline-offset-2 hover:text-texto">
-          Voltar ao registo
+        <Link href="/login" className="text-sm text-texto-suave underline underline-offset-2 hover:text-texto">
+          Voltar ao login
         </Link>
       </article>
     </main>
