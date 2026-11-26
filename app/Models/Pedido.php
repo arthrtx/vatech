@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['empresa_id', 'user_id', 'tipo', 'subtipo', 'data_inicio', 'data_fim', 'hora_inicio', 'hora_fim', 'observacao', 'urgente', 'cor', 'estado', 'decidido_por', 'decidido_em', 'visto_em', 'motivo_recusa'])]
+#[Fillable(['empresa_id', 'user_id', 'tipo', 'subtipo', 'data_inicio', 'data_fim', 'hora_inicio', 'hora_fim', 'observacao', 'urgente', 'cor', 'estado', 'decidido_por', 'decidido_em', 'visto_em', 'motivo_recusa', 'criado_por'])]
 class Pedido extends Model
 {
     use HasFactory;
 
     protected $appends = ['dias_excedentes'];
+
+    protected $hidden = ['autor'];
 
     private ?int $excedentesEmLote = null;
 
@@ -50,5 +52,23 @@ class Pedido extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Quem criou o pedido (relevante só quando foi em nome de outra pessoa). */
+    public function autor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'criado_por');
+    }
+
+    /** `criado_por` sai como {id, nome} (só quando o autor é outra pessoa; precisa de `autor` carregado), senão null. */
+    public function attributesToArray(): array
+    {
+        $dados = parent::attributesToArray();
+        if (array_key_exists('criado_por', $dados)) {
+            $autor = $this->criado_por && $this->criado_por !== $this->user_id && $this->relationLoaded('autor') ? $this->autor : null;
+            $dados['criado_por'] = $autor ? ['id' => $autor->id, 'nome' => $autor->nome] : null;
+        }
+
+        return $dados;
     }
 }

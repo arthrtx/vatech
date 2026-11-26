@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/me/avatar', [AuthController::class, 'destroyAvatar'])->middleware('throttle:10,1');
     Route::post('/texto/melhorar', [TextoController::class, 'melhorar'])->middleware(['permissao:melhorar_texto', 'throttle:10,1']);
     Route::get('/pedidos', [PedidoController::class, 'index']);
+    Route::get('/pedidos/pessoas', [PedidoController::class, 'pessoas'])->middleware('permissao:pedir_por_outros');
     Route::get('/limites', [LimiteController::class, 'index']);
     Route::get('/agenda', [AgendaController::class, 'index']);
     Route::get('/aniversarios', [AgendaController::class, 'aniversarios']);

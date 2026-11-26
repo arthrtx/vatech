@@ -2,12 +2,12 @@
 
 import { useState, type ReactNode } from "react";
 import type { Pedido } from "@/lib/api";
-import { horasDoPedido } from "@/lib/agenda";
 import { filtrar } from "@/lib/busca";
-import { estados, formatarData, subtipos, tipos } from "@/lib/rotulos";
+import { estados, subtipos, tipos } from "@/lib/rotulos";
 import { aplicarFiltrosPedidos, contarAtivos, filtrosVazios } from "@/lib/filtros";
 import AnexosDoPedido from "./AnexosDoPedido";
 import SimulacaoLigacao from "./SimulacaoLigacao";
+import PedidosDatas from "./PedidosDatas";
 import PontoUrgente from "./PontoUrgente";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos } from "./FiltrosPedidosCampos";
@@ -32,13 +32,15 @@ interface Props {
   onCancelar?: (p: Pedido) => Promise<void> | void;
   /** Admin na sua própria lista: pode apagar o que marcou, mesmo já aprovado. */
   apagarAprovados?: boolean;
+  /** Texto do estado vazio (sem nenhum pedido). */
+  textoVazio?: string;
 }
 
 const botaoAcao = `${botaoSec} min-h-9 px-3 py-1`;
 const botaoApagar = `${botaoPerigo} min-h-9 px-3 py-1`;
 
 /** Pesquisa e filtros em cima, a lista por baixo; com `formulario`, o botão "Novo pedido" abre-o numa janela. */
-export default function ListaPedidos({ pedidos, carregando = false, formulario, formAberto = false, aoAbrirForm, aoFecharForm, onEditar, onApagar, onCancelar, apagarAprovados = false }: Props) {
+export default function ListaPedidos({ pedidos, carregando = false, formulario, formAberto = false, aoAbrirForm, aoFecharForm, onEditar, onApagar, onCancelar, apagarAprovados = false, textoVazio = "Ainda não há pedidos." }: Props) {
   const [aCancelar, setACancelar] = useState<number | null>(null);
   const [aApagar, setAApagar] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
@@ -94,103 +96,95 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
           A carregar pedidos...
         </p>
       ) : visiveis.length === 0 ? (
-        <p className="text-texto-suave">
+        <p className="rounded-cartao border border-dashed border-linha-forte bg-painel p-6 text-center text-texto-suave">
           {pedidos.length === 0
-            ? "Ainda não há pedidos."
+            ? textoVazio
             : contarAtivos(efetivos) > 0
               ? "Sem resultados com estes filtros."
               : `Nenhum resultado para "${busca.trim()}"`}
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {visiveis.map((p) => (
-            <li key={p.id} id={`pedido-${p.id}`} className={`${vidro} flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-4 sm:px-5`}>
-              <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold">
-                  {p.urgente && <PontoUrgente />}
-                  {tipos[p.tipo]}
-                  {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}
-                </p>
-                <EtiquetaEstado estado={p.estado} rotulo={p.tipo === "licenca" && p.estado === "aprovado" ? "Comunicada" : undefined} />
-              </div>
-              <p className="mt-1.5 inline-block rounded-full bg-campo px-3 py-1 text-sm text-texto">
-                {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
-                {horasDoPedido(p) && ` · ${horasDoPedido(p)}`}
-              </p>
-              {p.observacao && <p className="mt-1 break-words text-sm">{p.observacao}</p>}
-              <AnexosDoPedido pedidoId={p.id} anexos={p.anexos} />
-              {p.estado === "recusado" && p.motivo_recusa && (
-                <p className="mt-1 break-words text-sm">Motivo da recusa: {p.motivo_recusa}</p>
-              )}
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                <SimulacaoLigacao pedido={p} />
-              </div>
-              {onCancelar && p.tipo === "ferias" && p.estado === "aprovado" && (
-                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                  {aCancelar === p.id ? (
-                    <>
-                      <span className="text-sm font-medium">Apagar estas férias?</span>
-                      <button
-                        type="button"
-                        className={`${botaoApagar} font-semibold`}
-                        onClick={async () => {
-                          await onCancelar(p);
-                          setACancelar(null);
-                        }}
-                      >
-                        Sim, apagar
-                      </button>
-                      <button type="button" className={botaoAcao} onClick={() => setACancelar(null)}>
-                        Voltar
-                      </button>
-                    </>
-                  ) : (
-                    <button type="button" className={botaoApagar} onClick={() => setACancelar(p.id)}>
-                      Apagar
-                    </button>
-                  )}
+        <div className="@container">
+          <ul className="grid gap-4 @3xl:grid-cols-2">
+            {visiveis.map((p) => (
+              <li key={p.id} id={`pedido-${p.id}`} className={`${vidro} flex min-w-0 flex-col gap-4 p-5`}>
+                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                  <p className="min-w-0 text-base font-semibold">
+                    {p.urgente && <PontoUrgente />}
+                    {tipos[p.tipo]}
+                    {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}
+                  </p>
+                  <EtiquetaEstado estado={p.estado} rotulo={p.tipo === "licenca" && p.estado === "aprovado" ? "Comunicada" : undefined} />
                 </div>
-              )}
-              {(p.estado === "pendente" ? onEditar || onApagar : apagarAprovados && onApagar) && (
-                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                  {aApagar === p.id ? (
-                    <>
-                      <span className="text-sm font-medium">Apagar este pedido?</span>
-                      <button
-                        type="button"
-                        className={`${botaoApagar} font-semibold`}
-                        onClick={async () => {
-                          await onApagar?.(p);
-                          setAApagar(null);
-                        }}
-                      >
-                        Sim, apagar
-                      </button>
-                      <button type="button" className={botaoAcao} onClick={() => setAApagar(null)}>
-                        Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {onEditar && p.estado === "pendente" && (
-                        <button type="button" className={botaoAcao} onClick={() => onEditar(p)}>
-                          Editar
+                {p.criado_por && <p className="text-sm text-texto-suave">Criado por {p.criado_por.nome}</p>}
+                <PedidosDatas pedido={p} />
+                {p.observacao && <p className="break-words text-sm">{p.observacao}</p>}
+                <AnexosDoPedido pedidoId={p.id} anexos={p.anexos} />
+                {p.estado === "recusado" && p.motivo_recusa && (
+                  <p className="break-words rounded-cartao bg-rosa-suave px-3 py-2 text-sm">Motivo da recusa: {p.motivo_recusa}</p>
+                )}
+                <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-linha pt-4">
+                  <SimulacaoLigacao pedido={p} />
+                  {onCancelar && p.tipo === "ferias" && p.estado === "aprovado" &&
+                    (aCancelar === p.id ? (
+                      <>
+                        <span className="text-sm font-medium">Apagar estas férias?</span>
+                        <button
+                          type="button"
+                          className={`${botaoApagar} font-semibold`}
+                          onClick={async () => {
+                            await onCancelar(p);
+                            setACancelar(null);
+                          }}
+                        >
+                          Sim, apagar
                         </button>
-                      )}
-                      {onApagar && (
-                        <button type="button" className={botaoApagar} onClick={() => setAApagar(p.id)}>
-                          Apagar
+                        <button type="button" className={botaoAcao} onClick={() => setACancelar(null)}>
+                          Voltar
                         </button>
-                      )}
-                    </>
-                  )}
+                      </>
+                    ) : (
+                      <button type="button" className={botaoApagar} onClick={() => setACancelar(p.id)}>
+                        Apagar
+                      </button>
+                    ))}
+                  {(p.estado === "pendente" ? onEditar || onApagar : apagarAprovados && onApagar) &&
+                    (aApagar === p.id ? (
+                      <>
+                        <span className="text-sm font-medium">Apagar este pedido?</span>
+                        <button
+                          type="button"
+                          className={`${botaoApagar} font-semibold`}
+                          onClick={async () => {
+                            await onApagar?.(p);
+                            setAApagar(null);
+                          }}
+                        >
+                          Sim, apagar
+                        </button>
+                        <button type="button" className={botaoAcao} onClick={() => setAApagar(null)}>
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {onEditar && p.estado === "pendente" && (
+                          <button type="button" className={botaoAcao} onClick={() => onEditar(p)}>
+                            Editar
+                          </button>
+                        )}
+                        {onApagar && (
+                          <button type="button" className={botaoApagar} onClick={() => setAApagar(p.id)}>
+                            Apagar
+                          </button>
+                        )}
+                      </>
+                    ))}
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
