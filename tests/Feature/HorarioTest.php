@@ -209,7 +209,7 @@ it('a tolerancia de 15 minutos: ate la nao ha atraso, depois conta o atraso todo
     expect(presencaHorario($u, '07:50', '12:00', '2026-11-25')->minutosDeAtraso())->toBe(0);
 });
 
-it('so o primeiro periodo do dia conta para o atraso', function () {
+it('a volta do almoco nao conta como atraso', function () {
     $u = User::factory()->create();
     presencaHorario($u, '08:00', '12:00');
 

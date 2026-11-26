@@ -46,22 +46,23 @@ class Presenca extends Model
 
     /**
      * Atraso na chegada, contado desde a hora de entrada do horário. Até TOLERANCIA_MIN depois dessa hora
-     * não há atraso (0); passado esse limite conta o atraso todo. Só o primeiro período do dia conta.
+     * não há atraso (0); passado esse limite conta o atraso todo. Só conta a chegada da manhã (entrada antes
+     * do almoço): a volta do almoço não é atraso. Sem consultas extra (as listagens carregam o horário).
      */
     public function minutosDeAtraso(): int
     {
         if (! $this->user?->empresa) {
             return 0;
         }
-        $inicio = Carbon::parse($this->data->format('Y-m-d').' '.$this->user->horario()['entrada'], 'Europe/Lisbon');
+        $h = $this->user->horario();
+        $dia = $this->data->format('Y-m-d');
+        $inicio = Carbon::parse("$dia {$h['entrada']}", 'Europe/Lisbon');
         $atraso = $inicio->diffInMinutes($this->entrada, false);
-        if ($atraso <= self::TOLERANCIA_MIN) {
+        if ($atraso <= self::TOLERANCIA_MIN || $this->entrada->greaterThanOrEqualTo(Carbon::parse("$dia {$h['almoco_inicio']}", 'Europe/Lisbon'))) {
             return 0;
         }
-        $anterior = static::where('user_id', $this->user_id)->where('data', $this->data->format('Y-m-d'))
-            ->where('entrada', '<', $this->entrada)->exists();
 
-        return $anterior ? 0 : (int) floor($atraso);
+        return (int) floor($atraso);
     }
 
     /**
