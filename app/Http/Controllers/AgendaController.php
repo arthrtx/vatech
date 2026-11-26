@@ -70,6 +70,7 @@ class AgendaController extends Controller
                 'data_inicio' => $pedido->data_inicio->format('Y-m-d'),
                 'data_fim' => $pedido->data_fim->format('Y-m-d'),
                 'estado' => $pedido->estado,
+                'cor' => $pedido->cor,
             ]);
 
         return response()->json(['data' => $data]);

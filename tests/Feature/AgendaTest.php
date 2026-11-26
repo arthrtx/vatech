@@ -51,7 +51,7 @@ it('mostra ao colega so aprovados e sem dados sensiveis', function () {
         ->assertJsonPath('data.0.data_fim', '2026-12-05')
         ->assertJsonPath('data.0.estado', 'aprovado');
     $item = $res->json('data.0');
-    expect(array_keys($item))->toEqualCanonicalizing(['id', 'user', 'tipo', 'data_inicio', 'data_fim', 'estado']);
+    expect(array_keys($item))->toEqualCanonicalizing(['id', 'user', 'tipo', 'data_inicio', 'data_fim', 'estado', 'cor']);
     foreach (['subtipo', 'observacao', 'motivo_recusa', 'user_id', 'empresa_id', 'decidido_por', 'decidido_em'] as $chave) {
         expect($item)->not->toHaveKey($chave);
     }
