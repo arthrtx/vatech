@@ -1,6 +1,7 @@
 "use client";
 
 import { horasDoPedido } from "@/lib/agenda";
+import EtiquetaEstado from "./EtiquetaEstado";
 import PontoUrgente from "./PontoUrgente";
 import { useState } from "react";
 import type { Pedido } from "@/lib/api";
@@ -11,7 +12,7 @@ import Avatar from "./Avatar";
 import AnexosDoPedido from "./AnexosDoPedido";
 import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos, filtrosIniciais } from "./FiltrosPedidosCampos";
-import { botao, botaoSec, input, label } from "./ui";
+import { areaTexto, botao, botaoSec, label, vidro } from "./ui";
 
 interface Props {
   pedidos: Pedido[];
@@ -72,23 +73,25 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando
               : `Nenhum resultado para "${busca.trim()}"`}
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="@container flex flex-col gap-3">
           {visiveis.map((p) => (
             <li
               key={p.id}
               id={`pedido-${p.id}`}
-              className="flex flex-col gap-3 rounded-cartao bg-painel/55 p-4 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 sm:flex-row"
+              className={`${vidro} flex flex-col gap-3 p-4 @2xl:flex-row @2xl:p-5`}
             >
               <div className="flex min-w-0 flex-1 flex-col gap-3">
               <div className="flex items-center gap-3">
-                <Avatar nome={p.user?.nome ?? "?"} id={p.user_id} />
+                <Avatar nome={p.user?.nome ?? "?"} id={p.user_id} className="h-12 w-12 text-base" />
                 <div className="min-w-0">
-                  <p className="font-medium">
-                    {p.urgente && <PontoUrgente />}
-                    {p.user?.nome ?? `Utilizador ${p.user_id}`} · {tipos[p.tipo]}
-                    {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}
-                    {p.estado !== "pendente" && ` · ${estados[p.estado]}`}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold">
+                      {p.urgente && <PontoUrgente />}
+                      {p.user?.nome ?? `Utilizador ${p.user_id}`} · {tipos[p.tipo]}
+                      {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}
+                    </p>
+                    {p.estado !== "pendente" && <EtiquetaEstado estado={p.estado} />}
+                  </div>
                   <p className="text-sm text-texto-suave">
                     {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
                     {horasDoPedido(p) && ` · ${horasDoPedido(p)}`}
@@ -105,7 +108,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando
                     rows={2}
                     required
                     autoFocus
-                    className={input}
+                    className={areaTexto}
                     value={motivo}
                     onChange={(e) => setMotivo(e.target.value)}
                   />
@@ -141,7 +144,7 @@ export default function PedidosAdmin({ pedidos, onAprovar, onRecusar, carregando
                 </div>
               )}
               </div>
-              <div className="rounded-controlo bg-campo/60 p-3 text-sm sm:w-[45%] sm:shrink-0">
+              <div className="rounded-cartao bg-campo p-4 text-sm @2xl:w-[45%] @2xl:shrink-0">
                 <p className="font-mono text-xs font-semibold uppercase tracking-wide text-texto-suave">Descrição</p>
                 {p.observacao ? (
                   <p className="mt-1 break-words">{p.observacao}</p>

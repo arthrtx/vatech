@@ -100,7 +100,7 @@ export default function AnexosDoPedido({ pedidoId, anexos }: { pedidoId: number;
         ))}
       </ul>
       {erro && (
-        <p role="alert" className="mt-1 text-xs text-texto">
+        <p role="alert" className="mt-1 text-center text-xs text-texto">
           {erro}
         </p>
       )}

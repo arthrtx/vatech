@@ -29,7 +29,7 @@ import { useLocalidade } from "@/lib/localidade";
 import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
 import { subtipos, tipos } from "@/lib/rotulos";
 import EscolhaLocalidade from "./EscolhaLocalidade";
-import { botaoSec, label } from "./ui";
+import { botaoSec, label, vidro } from "./ui";
 import GrupoChips from "./GrupoChips";
 import CompromissoForm, { tiposCompromisso } from "./CompromissoForm";
 import { IconeSeta } from "./Icones";
@@ -40,7 +40,7 @@ import PedidoForm from "./PedidoForm";
 import Seletor from "./Seletor";
 
 const botaoSeta =
-  "flex h-9 w-9 items-center justify-center rounded-full bg-painel/70 text-texto shadow-suave ring-1 ring-white/70 transition hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-offset-2 dark:ring-white/10";
+  "flex h-9 w-9 items-center justify-center rounded-full border border-linha-forte bg-painel text-texto transition hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-offset-2";
 
 const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
@@ -237,7 +237,7 @@ export default function Agenda({
       {/* Coluna da esquerda: criar, mês pequeno, filtros e lista do mês (rola por dentro). */}
       <aside
         aria-label="Calendário do mês"
-        className="flex w-full shrink-0 flex-col gap-5 lg:min-h-0 lg:w-[26rem] xl:w-[32rem] lg:overflow-y-auto lg:scroll-fino lg:border-r lg:border-linha lg:pr-5"
+        className="flex w-full shrink-0 flex-col gap-5 lg:min-h-0 lg:w-[26rem] xl:w-[32rem] lg:overflow-y-auto lg:scroll-fino"
       >
         {enviado && (
           <p role="status" className="rounded-controlo bg-primaria-suave px-3 py-2 text-sm text-texto">
@@ -246,7 +246,7 @@ export default function Agenda({
         )}
 
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold" aria-live="polite">
+          <h2 className="text-xl font-semibold" aria-live="polite">
             {mesesPt[mes.mes - 1]} {mes.ano}
           </h2>
         </div>
@@ -282,13 +282,13 @@ export default function Agenda({
         )}
 
         {estagios.length > 0 && (
-          <section aria-labelledby="ag-estagio" className="flex flex-col gap-2">
+          <section aria-labelledby="ag-estagio" className={`${vidro} flex flex-col gap-2 p-5`}>
             <h3 id="ag-estagio" className="text-base font-semibold">
               {admin ? "Períodos de estágio" : "O meu estágio"}
             </h3>
             <ul className="flex flex-col gap-1.5">
               {estagios.map((e) => (
-                <li key={e.id} className="rounded-controlo bg-campo px-3 py-2 text-sm">
+                <li key={e.id} className="rounded-cartao bg-campo px-4 py-2 text-sm">
                   {admin && <span className="block font-medium">{e.nome}</span>}
                   <span className="block text-texto-suave">
                     {e.inicio && e.fim ? `${dataPt(e.inicio)} a ${dataPt(e.fim)}` : "Período ainda não definido."}
@@ -299,7 +299,7 @@ export default function Agenda({
           </section>
         )}
 
-        <section aria-labelledby="ag-lista" className="flex flex-col gap-3">
+        <section aria-labelledby="ag-lista" className={`${vidro} flex flex-col gap-3 p-5`}>
           <h3 id="ag-lista" className="text-base font-semibold">
             Pedidos de {mesesPt[mes.mes - 1]} {mes.ano}
           </h3>
@@ -320,9 +320,9 @@ export default function Agenda({
                         <button
                           type="button"
                           onClick={(e) => abrir(e, { iso: p.data_inicio, pedidoId: p.id })}
-                          className={`flex w-full items-stretch gap-2 rounded-controlo bg-campo p-2 text-left text-sm hover:bg-primaria-suave ${focoCls}`}
+                          className={`flex w-full items-start gap-3 rounded-cartao bg-campo px-4 py-2.5 text-left text-sm hover:bg-primaria-suave ${focoCls}`}
                         >
-                          <span aria-hidden="true" className={`w-1 shrink-0 rounded-full ${barraEstado[p.estado]}`} />
+                          <span aria-hidden="true" className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${barraEstado[p.estado]}`} />
                           <span className="min-w-0">
                             <span className="block truncate font-medium">
                               {nomeDe(p, nomeProprio)} · {descricao(p)}
@@ -340,7 +340,7 @@ export default function Agenda({
             </ol>
           )}
         </section>
-        <section aria-labelledby="ag-datas" className="flex flex-col gap-2">
+        <section aria-labelledby="ag-datas" className={`${vidro} flex flex-col gap-2 p-5`}>
             <h3 id="ag-datas" className="text-base font-semibold">
               Feriados e datas de {mesesPt[mes.mes - 1]}
             </h3>
@@ -354,7 +354,7 @@ export default function Agenda({
                   <button
                     type="button"
                     onClick={(e) => abrir(e, { iso: a.data })}
-                    className={`flex w-full items-center gap-3 rounded-controlo px-2 py-1.5 text-left text-sm hover:bg-campo ${focoCls}`}
+                    className={`flex w-full items-center gap-3 rounded-full px-3 py-1.5 text-left text-sm hover:bg-campo ${focoCls}`}
                   >
                     <span className="w-12 shrink-0 font-medium tabular-nums">{curta(a.data)}</span>
                     <span className="min-w-0 flex-1 truncate">Aniversário de {a.user.nome}</span>
@@ -367,7 +367,7 @@ export default function Agenda({
                   <button
                     type="button"
                     onClick={(e) => abrir(e, { iso: d.iso })}
-                    className={`flex w-full items-center gap-3 rounded-controlo px-2 py-1.5 text-left text-sm hover:bg-campo ${focoCls}`}
+                    className={`flex w-full items-center gap-3 rounded-full px-3 py-1.5 text-left text-sm hover:bg-campo ${focoCls}`}
                   >
                     <span className="w-12 shrink-0 font-medium tabular-nums">{curta(d.iso)}</span>
                     <span className="min-w-0 flex-1 truncate">{d.nome}</span>
@@ -382,9 +382,9 @@ export default function Agenda({
       </aside>
 
       {/* Área principal: a semana no topo e o dia aberto por baixo. */}
-      <div className="flex min-w-0 flex-1 flex-col gap-4 lg:min-h-0">
+      <div className={`${vidro} flex min-w-0 flex-1 flex-col gap-4 p-5 lg:min-h-0`}>
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-lg font-semibold">{tituloSemana(segunda)}</p>
+          <p className="text-xl font-semibold">{tituloSemana(segunda)}</p>
           <div className="flex items-center gap-2">
             <button type="button" className={botaoSeta} aria-label="Semana anterior" title="Semana anterior" onClick={() => irPara({ iso: somaDias(diaAberto, -7) })}>
               <IconeSeta direcao="esquerda" className="h-4 w-4" />
@@ -489,7 +489,7 @@ export default function Agenda({
                 </div>
               </div>
               {pedidoSel ? (
-                <div className="flex max-w-xl flex-col gap-3 rounded-cartao bg-painel p-4 shadow-suave ring-1 ring-linha">
+                <div className="flex max-w-xl flex-col gap-3 rounded-cartao bg-campo p-5">
                   <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
                     <dt className="font-medium">Funcionário</dt>
                     <dd>{nomeDe(pedidoSel, nomeProprio)}</dd>
@@ -550,7 +550,7 @@ export default function Agenda({
                     ) : (
                       <ul className="flex flex-col gap-1.5">
                         {compSel.map((c) => (
-                          <li key={c.id} className="flex flex-wrap items-start justify-between gap-2 rounded-controlo bg-campo px-3 py-2 text-sm">
+                          <li key={c.id} className="flex flex-wrap items-start justify-between gap-2 rounded-cartao bg-campo px-4 py-2 text-sm">
                             <span className="min-w-0 flex-1">
                               <span className="block font-medium [overflow-wrap:anywhere]">{c.titulo}</span>
                               <span className="block text-texto-suave">
@@ -572,7 +572,7 @@ export default function Agenda({
                     )}
                   </section>
                   {especiaisDe(sel.iso).map((d) => (
-                    <p key={d.nome} className={`self-start rounded-controlo px-3 py-2 text-sm ${pilulaData[d.tipo]}`}>
+                    <p key={d.nome} className={`self-start rounded-full px-4 py-2 text-sm ${pilulaData[d.tipo]}`}>
                       <span className="font-semibold">{rotuloData(d)}</span> · {d.nome}
                       {d.tipo === "feriado" && " · dia de descanso obrigatório"}
                       {d.tipo === "ponte" && " · ponte da empresa"}
@@ -580,17 +580,17 @@ export default function Agenda({
                     </p>
                   ))}
                   {aniversariosDoDia(sel.iso).map((nome) => (
-                    <p key={nome} className="self-start rounded-controlo bg-rosa-suave px-3 py-2 text-sm text-texto">
+                    <p key={nome} className="self-start rounded-full bg-rosa-suave px-4 py-2 text-sm text-texto">
                       <span className="font-semibold">Aniversário</span> · Aniversário de {nome}
                     </p>
                   ))}
                   {sobreposicaoSel && (
-                    <p className="rounded-controlo bg-rosa-suave px-3 py-2 text-sm font-medium text-texto">
+                    <p className="rounded-full bg-rosa-suave px-4 py-2 text-sm font-medium text-texto">
                       Sobreposição: mais de uma pessoa fora neste dia.
                     </p>
                   )}
                   {estagiosSel.length > 0 && (
-                    <p className="self-start rounded-controlo border border-linha-forte px-3 py-2 text-sm text-texto">
+                    <p className="self-start rounded-full border border-linha-forte px-4 py-2 text-sm text-texto">
                       <span className="font-semibold">Estágio</span> · {estagiosSel.map((e) => (admin ? e.nome : "em curso")).join(", ")}
                     </p>
                   )}
@@ -601,7 +601,7 @@ export default function Agenda({
                       </h4>
                       <ul className="flex flex-col gap-1.5">
                         {presencasSel.map((pr) => (
-                          <li key={pr.id} className="flex flex-wrap items-center justify-between gap-2 rounded-controlo bg-campo px-3 py-2 text-sm">
+                          <li key={pr.id} className="flex flex-wrap items-center justify-between gap-2 rounded-cartao bg-campo px-4 py-2 text-sm">
                             <span className="font-medium">
                               {pr.user?.nome ?? nomeProprio ?? "Eu"}
                               {pr.atrasada && <span className="ml-2 text-xs font-normal text-texto-suave">Atrasada</span>}
@@ -634,9 +634,8 @@ export default function Agenda({
                             <button
                               type="button"
                               onClick={() => setSel({ iso: sel.iso, pedidoId: p.id })}
-                              className={`flex w-full items-stretch gap-4 rounded-cartao bg-painel p-4 text-left shadow-suave ring-1 ring-linha hover:bg-primaria-suave ${focoCls}`}
+                              className={`flex w-full items-stretch gap-4 rounded-cartao bg-campo p-4 text-left hover:bg-primaria-suave ${focoCls}`}
                             >
-                              <span aria-hidden="true" className={`w-1.5 shrink-0 rounded-full ${barraEstado[p.estado]}`} />
                               <span className="flex min-w-0 flex-1 flex-col gap-2">
                                 <span className="flex flex-wrap items-center justify-between gap-2">
                                   <span className="text-base">

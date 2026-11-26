@@ -20,7 +20,7 @@ import WidgetFeriados from "./WidgetFeriados";
 
 // Poucos itens por bloco para tudo caber no ecrã sem scroll; o resto fica atrás de «Ver ...».
 const MAX = 3;
-const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
+const ligacaoCls = "mt-1 inline-flex min-h-10 items-center self-start whitespace-nowrap rounded-full bg-primaria px-5 text-sm font-semibold text-white hover:bg-primaria-forte focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2";
 
 export default function DashboardAdmin() {
   const { user } = useAuth();
@@ -63,8 +63,8 @@ export default function DashboardAdmin() {
     );
 
   return (
-    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
-      <div className="lg:shrink-0">
+    <div className="flex flex-col gap-6">
+      <div>
           <Cabecalho
             nome={user?.nome ?? ""}
             hoje={hoje}
@@ -83,9 +83,10 @@ export default function DashboardAdmin() {
             }
           />
       </div>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="flex min-w-0 flex-col gap-4">
       <CartaoPresenca />
-      <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
-      <ul className="grid grid-cols-3 gap-2 md:gap-4 lg:min-w-0 lg:flex-[3]">
+      <ul className="grid gap-4 sm:grid-cols-3">
         <CartaoContador
           rotulo="Pedidos pendentes"
           valor={num(pedidos.dados?.length)}
@@ -111,11 +112,9 @@ export default function DashboardAdmin() {
           cor="positivo"
         />
       </ul>
-      <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
-      </div>
       <FeriasPorMarcar />
 
-      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
+      <div className="grid items-start gap-4 2xl:grid-cols-2">
       <BlocoEstado
         efeito="recentes"
         titulo="Ausentes hoje e nos próximos 30 dias"
@@ -130,7 +129,7 @@ export default function DashboardAdmin() {
           <>
             {grupos.map((g) => (
               <div key={g.titulo} className="flex flex-col gap-2">
-                <h3 className="mt-2 font-mono text-xs font-semibold uppercase tracking-wide text-texto-suave">
+                <h3 className="mt-2 w-fit rounded-full bg-campo px-3 py-1 text-xs font-semibold uppercase tracking-wide text-texto">
                   {g.titulo} ({g.lista.length})
                 </h3>
                 {g.lista.length === 0 ? (
@@ -178,6 +177,11 @@ export default function DashboardAdmin() {
           </>
         )}
       </BlocoEstado>
+      </div>
+      </div>
+      <aside className="flex flex-col gap-4">
+        <WidgetFeriados hoje={hoje} quantos={2} />
+      </aside>
       </div>
     </div>
   );

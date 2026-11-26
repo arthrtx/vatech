@@ -266,8 +266,57 @@ body {
  * que fixed, absolute e sticky dos utilitários continuem a mandar na posição.
  */
 @layer components {
-  :where(.rounded-cartao, [class*="backdrop-blur"]):has([role="combobox"][aria-expanded="true"], [role="dialog"]) {
+  :where(.rounded-cartao, .cartao-bento, [class*="backdrop-blur"]):has([role="combobox"][aria-expanded="true"], [role="dialog"]) {
     position: relative;
     z-index: 20;
   }
+}
+
+/*
+ * Estilo bento (nov/2026). Para as páginas:
+ * - cartao-bento: cartão sólido (painel, contorno fino, raio grande, recorta as formas). Usar em vez de vidro quando quiseres decoração.
+ * - forma-canto + forma-rosa | forma-violeta | forma-pessego: mancha redonda a sangrar no canto superior direito do cartao-bento.
+ *   forma-baixo muda-a para o canto inferior esquerdo. Decorativa, aria-hidden; pôr como <span aria-hidden class="forma-canto forma-rosa" />.
+ * - titulo-bento: título grande, peso 700, tracking apertado.
+ * Só usam tokens existentes (--color-*), por isso acompanham o tema escuro.
+ */
+@utility cartao-bento {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-linha);
+  border-radius: var(--radius-barra);
+  background-color: var(--color-painel);
+  padding: 1.5rem;
+}
+@utility forma-canto {
+  position: absolute;
+  top: -3rem;
+  right: -3rem;
+  width: 10rem;
+  height: 10rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+}
+@utility forma-baixo {
+  top: auto;
+  right: auto;
+  bottom: -3rem;
+  left: -3rem;
+}
+@utility forma-rosa {
+  background-color: color-mix(in oklab, var(--color-rosa) 28%, transparent);
+}
+@utility forma-violeta {
+  background-color: color-mix(in oklab, var(--color-violeta) 55%, transparent);
+}
+@utility forma-pessego {
+  background-color: color-mix(in oklab, var(--color-pessego) 70%, transparent);
+}
+@utility titulo-bento {
+  font-size: 1.875rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--color-texto);
 }

@@ -6,7 +6,7 @@ import { hojeIso } from "@/lib/agenda";
 import CampoData from "./CampoData";
 import CampoHora from "./CampoHora";
 import Seletor from "./Seletor";
-import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
+import { areaTexto, botao, botaoSec, erro as erroCls, input, label } from "./ui";
 
 export const tiposCompromisso: Record<TipoCompromisso, string> = {
   reuniao: "Reunião",
@@ -110,7 +110,7 @@ export default function CompromissoForm({
         <label htmlFor="comp-descricao" className={label}>
           Descrição (opcional)
         </label>
-        <textarea id="comp-descricao" rows={3} maxLength={2000} className={input} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+        <textarea id="comp-descricao" rows={3} maxLength={2000} className={areaTexto} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
       </div>
       {erro && (
         <p role="alert" className={erroCls}>

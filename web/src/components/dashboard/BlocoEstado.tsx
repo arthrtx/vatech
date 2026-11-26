@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Fonte } from "@/lib/useFonte";
-import { botaoSec, erro as erroCls, vidro } from "../ui";
+import { botaoSec, erro as erroCls } from "../ui";
+import Forma from "./Forma";
 
 interface Props<T> {
   titulo: string;
@@ -15,11 +16,11 @@ interface Props<T> {
   children: (dados: T) => ReactNode;
   /** Classes extra de grelha (ex.: lg:col-span-2). */
   className?: string;
-  /** "recentes": fundo de cor do HUROH com o conteúdo num painel interior; "vidro": só vidro. */
+  /** Só muda a forma decorativa do canto: "recentes" = flor pêssego, "vidro" = mancha violeta. */
   efeito?: "recentes" | "vidro";
 }
 
-/** Um bloco com os 4 estados: a carregar (skeleton), erro, vazio, com dados. */
+/** Um cartão bento com os 4 estados: a carregar (skeleton), erro, vazio, com dados. */
 export default function BlocoEstado<T>({
   titulo,
   fonte,
@@ -47,12 +48,7 @@ export default function BlocoEstado<T>({
     corpo = (
       <ul aria-busy="true" aria-label={`A carregar: ${titulo}`} className="flex flex-col gap-2">
         {Array.from({ length: linhas }, (_, i) => (
-          <li
-            key={i}
-            aria-hidden="true"
-            data-skeleton
-            className="animate-pulse rounded-controlo bg-painel/70 px-4 py-3 ring-1 ring-linha motion-reduce:animate-none"
-          >
+          <li key={i} aria-hidden="true" data-skeleton className="animate-pulse rounded-cartao bg-campo px-4 py-3 motion-reduce:animate-none">
             <div className="h-4 w-4/5 rounded-controlo bg-trilho" />
             <div className="mt-2 h-3 w-1/2 rounded-controlo bg-trilho" />
           </li>
@@ -61,7 +57,7 @@ export default function BlocoEstado<T>({
     );
   } else if (vazio(fonte.dados)) {
     corpo = (
-      <div className="rounded-controlo border border-dashed border-linha-forte bg-painel/60 p-4 text-sm text-texto-suave">
+      <div className="rounded-cartao border border-dashed border-linha-forte bg-campo p-4 text-sm text-texto-suave">
         <p className="text-base font-medium text-texto">{vazioTitulo}</p>
         <p>{vazioTexto}</p>
         {vazioAcao}
@@ -73,16 +69,15 @@ export default function BlocoEstado<T>({
 
   return (
     <section
-      className={`${vidro} ${efeito === "recentes" ? "arco efeito-recentes" : "brilho-violeta"} flex flex-col gap-3 p-5 motion-safe:animate-subir [animation-delay:120ms] lg:min-h-0 ${className}`}
+      className={`relative isolate flex flex-col gap-4 overflow-hidden rounded-barra border border-linha bg-painel p-6 motion-safe:animate-subir [animation-delay:120ms] ${className}`}
     >
-      <h2 className="text-lg font-semibold">{titulo}</h2>
       {efeito === "recentes" ? (
-        <div className="efeito-interior flex flex-col gap-2 rounded-cartao p-3 ring-1 ring-white/50 dark:ring-white/10 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:scroll-fino">
-          {corpo}
-        </div>
+        <Forma tipo="flor" className="-right-10 -top-10 -z-10 h-36 w-36 text-pessego/70" />
       ) : (
-        <div className="flex flex-col gap-2 lg:-mx-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-1 lg:scroll-fino">{corpo}</div>
+        <Forma tipo="mancha" className="-right-10 -top-10 -z-10 h-36 w-36 text-violeta/55" />
       )}
+      <h2 className="text-2xl font-bold leading-tight tracking-tight">{titulo}</h2>
+      <div className="flex flex-col gap-2">{corpo}</div>
     </section>
   );
 }

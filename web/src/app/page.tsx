@@ -75,7 +75,7 @@ function Conteudo() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-semibold">{admin ? "Pedidos" : "Os meus pedidos"}</h1>
+      <h1 className="titulo-bento">{admin ? "Pedidos" : "Os meus pedidos"}</h1>
       {erro && (
         <p role="alert" className={erroCls}>
           {erro}

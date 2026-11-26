@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, mensagemDeErro, type Ponte } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import CampoData from "./CampoData";
+import FormaCanto from "../app/definicoes/FormaCanto";
 import { botao, botaoPerigo, botaoSec, erro as erroCls, input, label } from "./ui";
 
 const dm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
@@ -74,9 +75,10 @@ export default function PontesAdmin({ aoAlterar }: { aoAlterar?: () => void }) {
         </button>
       </div>
       {aberto && (
-        <div className="flex max-w-3xl flex-col gap-4 rounded-cartao bg-painel/55 p-5 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 has-[[role=dialog]]:relative has-[[role=dialog]]:z-20">
+        <div className="relative isolate flex max-w-3xl flex-col gap-4 rounded-barra border border-linha bg-painel p-5 md:p-7 has-[[role=dialog]]:z-20">
+          <FormaCanto tom="pessego" />
           <div>
-            <h2 className="text-lg font-semibold">Pontes da empresa</h2>
+            <h2 className="text-xl font-bold tracking-tight">Pontes da empresa</h2>
             <p className="text-sm text-texto-suave">
               Depois de confirmar, a ponte aparece no calendário de todos os funcionários e estagiários.
             </p>
@@ -136,7 +138,7 @@ export default function PontesAdmin({ aoAlterar }: { aoAlterar?: () => void }) {
               </div>
             </div>
             {aConfirmar ? (
-              <div role="alertdialog" aria-label="Confirmar ponte" className="flex flex-col gap-2 rounded-controlo bg-campo p-3">
+              <div role="alertdialog" aria-label="Confirmar ponte" className="flex flex-col gap-2 rounded-cartao bg-campo p-4">
                 <p className="text-sm">
                   Confirmar <strong>{nome.trim()}</strong> ({periodo({ data_inicio: inicio, data_fim: fim })})? Toda a equipa vai
                   vê-la no calendário.
@@ -170,7 +172,7 @@ export default function PontesAdmin({ aoAlterar }: { aoAlterar?: () => void }) {
             ) : (
               <ul className="flex flex-col gap-1.5">
                 {lista.map((p) => (
-                  <li key={p.id} className="flex items-center justify-between gap-3 rounded-controlo bg-campo px-3 py-2 text-sm">
+                  <li key={p.id} className="flex items-center justify-between gap-3 rounded-cartao bg-campo px-4 py-2 text-sm">
                     <span className="min-w-0 truncate">
                       <span className="font-medium">{p.nome}</span> <span className="text-texto-suave">· {periodo(p)}</span>
                     </span>

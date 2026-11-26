@@ -5,6 +5,7 @@ import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import EscolhaLocalidade from "@/components/EscolhaLocalidade";
 import CampoData from "@/components/CampoData";
+import FormaCanto from "./FormaCanto";
 import EscolhaTema from "@/components/EscolhaTema";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
 import { ApiError, api, mensagemDeErro, type TipoPedido, type User } from "@/lib/api";
@@ -12,7 +13,7 @@ import { useAuth } from "@/lib/auth";
 import { papeis, tipos } from "@/lib/rotulos";
 import { primeiroNome } from "@/lib/saudacao";
 
-const cartao = "flex flex-col gap-4 rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 p-4 md:p-6";
+const cartao = "relative isolate flex flex-col gap-4 rounded-barra border border-linha bg-painel p-5 md:p-7 has-[[role=dialog]]:z-20 has-[[role=combobox][aria-expanded=true]]:z-20";
 const botaoGuardar = `${botao} min-h-10`;
 
 function Campo({ id, rotulo, erros, children }: { id: string; rotulo: string; erros?: string[]; children: React.ReactNode }) {
@@ -102,7 +103,8 @@ function DadosConta({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
 
   return (
     <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="conta" className={cartao}>
-      <h2 id="conta" className="text-lg font-semibold">
+      <FormaCanto tom="violeta" />
+      <h2 id="conta" className="text-xl font-bold tracking-tight">
         Dados da conta
       </h2>
       <Campo id="nome" rotulo="Nome" erros={erros.nome}>
@@ -201,7 +203,8 @@ function AlterarPalavraPasse({ user, atualizarUser }: { user: User; atualizarUse
 
   return (
     <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="palavra-passe" className={cartao}>
-      <h2 id="palavra-passe" className="text-lg font-semibold">
+      <FormaCanto tom="pessego" />
+      <h2 id="palavra-passe" className="text-xl font-bold tracking-tight">
         Alterar palavra-passe
       </h2>
       <Campo id="password_atual" rotulo="Palavra-passe atual" erros={erros.password_atual}>
@@ -295,7 +298,8 @@ function FotoPerfil({ user, atualizarUser }: { user: User; atualizarUser: (u: Us
 
   return (
     <section aria-labelledby="foto-perfil" className={cartao}>
-      <h2 id="foto-perfil" className="text-lg font-semibold">
+      <FormaCanto tom="rosa" />
+      <h2 id="foto-perfil" className="text-xl font-bold tracking-tight">
         Foto de perfil
       </h2>
       <div className="flex flex-wrap items-center gap-5">
@@ -346,7 +350,8 @@ function DatasEstagio({ user, atualizarUser }: { user: User; atualizarUser: (u: 
 
   return (
     <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-estagio" className={cartao}>
-      <h2 id="def-estagio" className="text-lg font-semibold">
+      <FormaCanto tom="pessego" baixo />
+      <h2 id="def-estagio" className="text-xl font-bold tracking-tight">
         Datas do estágio
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -433,7 +438,8 @@ function LimitesDias() {
   return (
     <form onSubmit={(e) => submeter(e, validar)} noValidate aria-labelledby="def-limites" className={cartao}>
       <div>
-        <h2 id="def-limites" className="text-lg font-semibold">
+        <FormaCanto tom="violeta" />
+        <h2 id="def-limites" className="text-xl font-bold tracking-tight">
           Limites de dias úteis por ano
         </h2>
         <p className="text-sm text-texto-suave">Máximo de dias úteis (seg-sex, sem feriados nacionais) que cada pessoa pode pedir por ano. Vazio = sem limite.</p>
@@ -475,7 +481,7 @@ function Conteudo() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Definições</h1>
+      <h1 className="titulo-bento">Definições</h1>
       {/* Duas colunas que se enchem de forma independente, para não ficarem buracos entre cartões. */}
       <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-6">
@@ -486,7 +492,8 @@ function Conteudo() {
           <AlterarPalavraPasse user={user} atualizarUser={atualizarUser} />
           <section aria-labelledby="def-aparencia" className={cartao}>
             <div>
-              <h2 id="def-aparencia" className="text-lg font-semibold">
+              <FormaCanto tom="violeta" baixo />
+              <h2 id="def-aparencia" className="text-xl font-bold tracking-tight">
                 Aparência
               </h2>
               <p className="text-sm text-texto-suave">
@@ -497,7 +504,8 @@ function Conteudo() {
           </section>
           <section aria-labelledby="def-localidade" className={cartao}>
             <div>
-              <h2 id="def-localidade" className="text-lg font-semibold">
+              <FormaCanto tom="rosa" />
+              <h2 id="def-localidade" className="text-xl font-bold tracking-tight">
                 Localidade
               </h2>
               <p className="text-sm text-texto-suave">

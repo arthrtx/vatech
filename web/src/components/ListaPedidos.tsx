@@ -12,7 +12,8 @@ import CampoBusca from "./CampoBusca";
 import FiltrosPedidosCampos, { filtrosEfetivos } from "./FiltrosPedidosCampos";
 import { ResumoFiltros } from "./PainelFiltros";
 import JanelaFormulario from "./JanelaFormulario";
-import { botao, botaoPerigo, botaoSec } from "./ui";
+import EtiquetaEstado from "./EtiquetaEstado";
+import { botao, botaoPerigo, botaoSec, vidro } from "./ui";
 
 interface Props {
   pedidos: Pedido[];
@@ -102,14 +103,17 @@ export default function ListaPedidos({ pedidos, carregando = false, formulario, 
       ) : (
         <ul className="flex flex-col gap-3">
           {visiveis.map((p) => (
-            <li key={p.id} id={`pedido-${p.id}`} className="rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+            <li key={p.id} id={`pedido-${p.id}`} className={`${vidro} flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-4 sm:px-5`}>
               <div className="min-w-0 flex-1">
-              <p className="font-medium">
-                {p.urgente && <PontoUrgente />}
-                {tipos[p.tipo]}
-                {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""} · {p.tipo === "licenca" && p.estado === "aprovado" ? "Comunicada" : estados[p.estado]}
-              </p>
-              <p className="text-sm text-texto-suave">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-semibold">
+                  {p.urgente && <PontoUrgente />}
+                  {tipos[p.tipo]}
+                  {p.subtipo ? ` (${subtipos[p.subtipo]})` : ""}
+                </p>
+                <EtiquetaEstado estado={p.estado} rotulo={p.tipo === "licenca" && p.estado === "aprovado" ? "Comunicada" : undefined} />
+              </div>
+              <p className="mt-1.5 inline-block rounded-full bg-campo px-3 py-1 text-sm text-texto">
                 {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
                 {horasDoPedido(p) && ` · ${horasDoPedido(p)}`}
               </p>

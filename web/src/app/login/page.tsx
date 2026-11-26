@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api, ApiError, mensagemDeErro } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import AuthQuadro from "./AuthQuadro";
 import { botao, botaoSec, erro as erroCls, input, label } from "@/components/ui";
 
 function Formulario() {
@@ -54,9 +55,8 @@ function Formulario() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-fundo p-4">
-      <div className="flex w-full max-w-sm flex-col gap-6 rounded-cartao bg-painel p-8 shadow-suave">
-        <h1 className="flex items-center gap-3 text-2xl font-semibold">
+    <AuthQuadro>
+        <h1 className="titulo-bento flex items-center gap-3">
           <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-controlo bg-barra">
             <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
           </span>
@@ -129,8 +129,7 @@ function Formulario() {
             Criar conta
           </Link>
         </form>
-      </div>
-    </main>
+    </AuthQuadro>
   );
 }
 

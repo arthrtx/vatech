@@ -10,7 +10,7 @@ import CampoAnexos from "./CampoAnexos";
 import { diasUteis } from "@/lib/diasUteis";
 import CampoData from "./CampoData";
 import Seletor from "./Seletor";
-import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
+import { areaTexto, botao, botaoSec, erro as erroCls, label, vidro } from "./ui";
 
 const subtipos: { v: SubtipoPedido; t: string }[] = [
   { v: "medica", t: "Médica" },
@@ -23,7 +23,7 @@ export default function PedidoForm({
   pedido,
   onCancelar,
   dataInicial = "",
-  className = "flex max-w-xl flex-col gap-4 rounded-cartao p-5 bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 has-[[role=dialog]]:relative has-[[role=dialog]]:z-20",
+  className = `flex max-w-xl flex-col gap-4 p-6 ${vidro} has-[[role=dialog]]:relative has-[[role=dialog]]:z-20`,
 }: {
   /** Chamado depois de criar (ou, em modo de edição, de guardar) o pedido. */
   onCriado?: (avisos: string[]) => void;
@@ -152,7 +152,7 @@ export default function PedidoForm({
   return (
     <form onSubmit={enviar} className={className} aria-labelledby="novo-pedido">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="novo-pedido" className="text-lg font-semibold">
+        <h2 id="novo-pedido" className="text-xl font-bold tracking-tight">
           {edicao ? "Editar pedido" : "Novo pedido"}
         </h2>
         <label htmlFor="urgente" className="flex cursor-pointer items-center gap-2 text-sm font-medium">
@@ -163,7 +163,7 @@ export default function PedidoForm({
             role="switch"
             aria-checked={urgente}
             onClick={() => setUrgente((u) => !u)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${urgente ? "bg-yellow-400" : "bg-white/20 ring-1 ring-white/20"}`}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${urgente ? "bg-yellow-400" : "bg-campo ring-1 ring-linha-forte"}`}
           >
             <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${urgente ? "translate-x-5" : ""}`} />
           </button>
@@ -185,12 +185,12 @@ export default function PedidoForm({
         />
       </div>
       {admin && !edicao && (
-        <p role="note" className="rounded-controlo border border-linha-forte bg-painel/60 px-3 py-2 text-sm">
+        <p role="note" className="rounded-cartao border border-linha-forte bg-painel px-4 py-2 text-sm">
           Fica marcado logo, sem pedido nem aprovação.
         </p>
       )}
       {tipo === "licenca" && !edicao && !admin && (
-        <p role="note" className="rounded-controlo border border-linha-forte bg-painel/60 px-3 py-2 text-sm">
+        <p role="note" className="rounded-cartao border border-linha-forte bg-painel px-4 py-2 text-sm">
           A licença é um direito seu: não precisa de aprovação. O admin recebe um aviso.
         </p>
       )}
@@ -262,7 +262,7 @@ export default function PedidoForm({
         <textarea
           id="observacao"
           rows={3}
-          className={input}
+          className={areaTexto}
           value={obs}
           maxLength={2000}
           onChange={(e) => {

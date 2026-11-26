@@ -32,12 +32,12 @@ export default function Pesquisa({ destinos, onFechar }: { destinos: Destino[]; 
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center bg-barra/40 p-4 pt-24 backdrop-blur-sm" onClick={onFechar}>
+    <div className="fixed inset-0 z-40 flex items-start justify-center bg-barra/40 p-4 pt-24" onClick={onFechar}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Pesquisar"
-        className="w-full max-w-md rounded-cartao bg-painel/80 p-3 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10"
+        className="w-full max-w-md rounded-barra border border-linha bg-painel p-3 shadow-suave"
         onClick={(e) => e.stopPropagation()}
       >
         <form
@@ -58,7 +58,7 @@ export default function Pesquisa({ destinos, onFechar }: { destinos: Destino[]; 
               type="search"
               autoComplete="off"
               placeholder="Pesquisar páginas"
-              className="h-11 w-full rounded-full bg-painel/70 pl-10 pr-4 text-base text-texto ring-1 ring-white/70 placeholder:text-texto-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria dark:ring-white/10 [&::-webkit-search-cancel-button]:appearance-none"
+              className="h-11 w-full rounded-full border border-linha-forte bg-painel pl-10 pr-4 text-base text-texto placeholder:text-texto-suave focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria [&::-webkit-search-cancel-button]:appearance-none"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />

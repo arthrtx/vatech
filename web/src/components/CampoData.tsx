@@ -7,7 +7,7 @@ import { input } from "./ui";
 
 const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const foco = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
-const textoBtn = `min-h-9 rounded-controlo px-3 text-sm font-medium text-texto hover:bg-primaria-suave disabled:opacity-40 ${foco}`;
+const textoBtn = `min-h-9 rounded-full px-3 text-sm font-medium text-texto hover:bg-primaria-suave disabled:opacity-40 ${foco}`;
 
 const valida = (ano: number, mes: number, dia: number) => {
   const d = new Date(Date.UTC(ano, mes - 1, dia));
@@ -129,7 +129,7 @@ export default function CampoData({ id, valor, onChange, min, required, classNam
         aria-label="Abrir calendário"
         aria-expanded={aberto}
         onClick={alternar}
-        className={`absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-controlo text-texto-suave hover:bg-primaria-suave hover:text-texto ${foco}`}
+        className={`absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-texto-suave hover:bg-primaria-suave hover:text-texto ${foco}`}
       >
         <IconeAgenda className="h-4 w-4" />
       </button>
@@ -143,7 +143,7 @@ export default function CampoData({ id, valor, onChange, min, required, classNam
             <p className="text-sm font-semibold" aria-live="polite">
               {mesesPt[mes.mes - 1]} {mes.ano}
             </p>
-            <div className="flex gap-1 rounded-controlo bg-campo p-1">
+            <div className="flex gap-1 rounded-full bg-campo p-1">
               <button type="button" className={textoBtn} onClick={() => setMes(mesAnterior(mes))}>
                 Anterior
               </button>

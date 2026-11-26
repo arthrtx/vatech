@@ -120,7 +120,7 @@ export default function Seletor({ id, valor, opcoes, onChange, className = "", i
                   role="option"
                   aria-selected={ativo}
                   onClick={() => escolher(o.valor)}
-                  className={`w-full rounded-controlo px-3 py-2 text-left text-sm ${foco} ${
+                  className={`w-full rounded-full px-4 py-2 text-left text-sm ${foco} ${
                     ativo ? "bg-primaria font-semibold text-white" : "text-texto hover:bg-primaria-suave"
                   }`}
                 >

@@ -20,7 +20,7 @@ import WidgetFeriados from "./WidgetFeriados";
 const MAX = 5;
 const barraEstado = { aprovado: "bg-positivo", pendente: "bg-primaria", recusado: "bg-rosa", cancelado: "bg-texto-suave" } as const;
 const nDias = (n: number) => `${n} ${n === 1 ? "dia" : "dias"}`;
-const ligacaoCls = "inline-flex min-h-10 items-center self-start text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria";
+const ligacaoCls = "mt-1 inline-flex min-h-10 items-center self-start whitespace-nowrap rounded-full bg-primaria px-5 text-sm font-semibold text-white hover:bg-primaria-forte focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria focus-visible:ring-offset-2";
 
 export default function DashboardFuncionario({ user }: { user: User }) {
   const [hoje] = useState(() => hojeIso());
@@ -29,8 +29,8 @@ export default function DashboardFuncionario({ user }: { user: User }) {
   const n = pedidos.dados ? contarPorEstado(pedidos.dados) : null;
 
   return (
-    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
-      <div className="lg:shrink-0">
+    <div className="flex flex-col gap-6">
+      <div>
           <Cabecalho
             nome={user.nome}
             hoje={hoje}
@@ -61,13 +61,9 @@ export default function DashboardFuncionario({ user }: { user: User }) {
       </div>
       <CartaoPresenca />
       <AvisoFerias comTransitadas />
-      <div className="flex flex-col gap-4 lg:shrink-0 lg:flex-row">
-      <WidgetContagem pedidos={pedidos.dados} hoje={hoje} className="lg:min-w-0 lg:flex-[2]" />
-      <WidgetFeriados hoje={hoje} quantos={2} className="lg:min-w-0 lg:flex-1" />
-      </div>
-
-      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-      <CalendarioMes hoje={hoje} className="lg:self-start" />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid min-w-0 items-start gap-4 2xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+      <CalendarioMes hoje={hoje} />
       <BlocoEstado
         efeito="recentes"
         titulo="Os meus pedidos"
@@ -85,10 +81,10 @@ export default function DashboardFuncionario({ user }: { user: User }) {
       >
         {(d) => (
           <>
-            <ul className="flex flex-col divide-y divide-linha/70 overflow-hidden rounded-controlo bg-painel/30">
+            <ul className="flex flex-col gap-2">
               {d.slice(0, MAX).map((p) => (
-                <li key={p.id} className="flex gap-3 px-4 py-3">
-                  <span aria-hidden="true" className={`w-1 shrink-0 rounded-full ${barraEstado[p.estado]}`} />
+                <li key={p.id} className="flex items-start gap-3 rounded-cartao bg-campo px-4 py-3">
+                  <span aria-hidden="true" className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${barraEstado[p.estado]}`} />
                   <div className="min-w-0">
                     <p className="font-medium [overflow-wrap:anywhere]">
                       {tipos[p.tipo]} · {estados[p.estado]}
@@ -106,6 +102,11 @@ export default function DashboardFuncionario({ user }: { user: User }) {
           </>
         )}
       </BlocoEstado>
+      </div>
+      <aside className="flex flex-col gap-4">
+        <WidgetContagem pedidos={pedidos.dados} hoje={hoje} />
+        <WidgetFeriados hoje={hoje} quantos={2} />
+      </aside>
       </div>
     </div>
   );

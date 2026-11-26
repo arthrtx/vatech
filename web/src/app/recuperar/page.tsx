@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, mensagemDeErro } from "@/lib/api";
+import AuthQuadro from "../login/AuthQuadro";
 import { botao, erro as erroCls, input, label } from "@/components/ui";
 
 function Formulario() {
@@ -74,13 +75,11 @@ function Formulario() {
 
 export default function RecuperarPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-fundo p-4">
-      <div className="flex w-full max-w-sm flex-col gap-6 rounded-cartao bg-painel p-8 shadow-suave">
-        <h1 className="text-2xl font-semibold">Recuperar palavra-passe</h1>
+    <AuthQuadro>
+        <h1 className="titulo-bento">Recuperar palavra-passe</h1>
         <Suspense>
           <Formulario />
         </Suspense>
-      </div>
-    </main>
+    </AuthQuadro>
   );
 }
