@@ -8,7 +8,6 @@ import { diasUteis } from "@/lib/diasUteis";
 import { datasDasPontes, datasDoAno, type TipoData } from "@/lib/feriados";
 import { useLocalidade } from "@/lib/localidade";
 import { tipos } from "@/lib/rotulos";
-import EscolhaLocalidade from "./EscolhaLocalidade";
 import { filtrar } from "@/lib/busca";
 import CampoBusca from "./CampoBusca";
 import { IconeDescarregar, IconeSeta } from "./Icones";
@@ -188,7 +187,6 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
           </button>
         )}
         <div className="ml-auto flex flex-wrap items-end gap-3">
-          <EscolhaLocalidade id="cal-localidade" compacta />
           <button type="button" className={`${botaoSec} inline-flex items-center gap-2`} onClick={descarregarPdf}>
             <IconeDescarregar className="h-4 w-4" />
             Descarregar PDF
