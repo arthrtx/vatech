@@ -5,7 +5,7 @@ import PrecargaFeriados from "@/components/PrecargaFeriados";
 import { scriptTema } from "@/lib/tema";
 
 export const metadata: Metadata = {
-  title: "vatech",
+  title: "FuryNick",
   description: "Gestão de pedidos de férias, ausências e licenças",
 };
 

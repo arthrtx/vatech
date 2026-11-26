@@ -60,7 +60,7 @@ function Formulario() {
           <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-controlo bg-barra">
             <img src="/logo-setuptech.png" alt="" className="h-full w-full object-cover" />
           </span>
-          vatech
+          FuryNick
         </h1>
         {verificado === "1" && (
           <p role="status" className="rounded-controlo border border-linha-forte bg-primaria-suave px-3 py-2 text-sm text-texto">
