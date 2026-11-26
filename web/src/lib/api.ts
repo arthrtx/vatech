@@ -119,6 +119,34 @@ export interface Anexo {
   tamanho: number;
 }
 
+export interface FichaRh extends User {
+  tipo_id?: number | null;
+  tipo_nome?: string | null;
+  n_ficheiros: number;
+  n_infos: number;
+}
+
+export interface InfoRh {
+  id: number;
+  titulo: string;
+  valor: string;
+  criado_em: string;
+}
+
+export interface FicheiroRh {
+  id: number;
+  nome: string;
+  tamanho: number;
+  mime: string;
+  criado_em: string;
+}
+
+export interface FichaRhDetalhe {
+  user: User;
+  infos: InfoRh[];
+  ficheiros: FicheiroRh[];
+}
+
 export type TipoCompromisso = "reuniao" | "chamada" | "lembrete" | "outro";
 
 /** Compromisso da agenda pessoal (só quem o marcou o vê). Horas em HH:MM. */
@@ -163,6 +191,8 @@ export interface Pedido {
   /** Só licenças: quando o admin viu o aviso. */
   visto_em?: string | null;
   motivo_recusa: string | null;
+  /** Só férias: dias úteis acima dos 22 do ano (0 se nenhum). */
+  dias_excedentes?: number;
   user?: { id: number; nome: string };
 }
 
@@ -206,10 +236,12 @@ export interface NovoPedido {
   cor?: CorFerias;
 }
 
-/** Limite anual de dias por tipo de pedido; dias_ano null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */
+/** Dias por tipo de pedido (fixos): férias 22 por ano, até dias_max (25); null = sem limite; usados = pendente+aprovado do utilizador no ano corrente. */
 export interface Limite {
   tipo: TipoPedido;
   dias_ano: number | null;
+  /** Máximo que se pode pedir (férias: 25); os dias acima de dias_ano são excedente. */
+  dias_max: number | null;
   /** Férias não gozadas do ano anterior (só > 0 em «ferias»); somam ao limite do ano. */
   transitados: number;
   usados: number;
@@ -220,6 +252,7 @@ export interface FeriasResumo {
   user_id: number;
   nome: string;
   dias_ano: number | null;
+  dias_max: number | null;
   transitados: number;
   usados: number;
   por_marcar: number;
@@ -412,8 +445,6 @@ export const api = {
   textoConvite: async () => (await request<{ data: TextoConvite }>("GET", "/definicoes/convite")).data,
   guardarTextoConvite: async (texto: string | null) =>
     (await request<{ data: TextoConvite }>("PUT", "/definicoes/convite", { texto })).data,
-  guardarLimites: async (limites: { tipo: TipoPedido; dias_ano: number | null }[]) =>
-    (await request<{ data: Limite[] }>("PUT", "/limites", { limites })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
   cancelarPedido: (id: number) => request<{ data: Pedido }>("POST", `/pedidos/${id}/cancelar`),
   melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
@@ -427,6 +458,28 @@ export const api = {
   urlDoAnexo: async (pedidoId: number, anexoId: number) => {
     const token = getToken();
     const res = await fetch(`${API_URL}/pedidos/${pedidoId}/anexos/${anexoId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new ApiError(res.status, "Não foi possível abrir o ficheiro.");
+    return URL.createObjectURL(await res.blob());
+  },
+  fichasRh: async () => (await request<{ data: FichaRh[] }>("GET", "/rh/fichas")).data,
+  fichaRh: async (userId: number) => (await request<{ data: FichaRhDetalhe }>("GET", `/rh/fichas/${userId}`)).data,
+  criarInfoRh: async (userId: number, b: { titulo: string; valor: string }) =>
+    (await request<{ data: InfoRh }>("POST", `/rh/fichas/${userId}/infos`, b)).data,
+  editarInfoRh: async (id: number, b: { titulo: string; valor: string }) =>
+    (await request<{ data: InfoRh }>("PUT", `/rh/infos/${id}`, b)).data,
+  apagarInfoRh: (id: number) => request<void>("DELETE", `/rh/infos/${id}`),
+  enviarFicheiroRh: async (userId: number, ficheiro: File) => {
+    const f = new FormData();
+    f.append("ficheiro", ficheiro);
+    return (await request<{ data: FicheiroRh }>("POST", `/rh/fichas/${userId}/ficheiros`, f)).data;
+  },
+  apagarFicheiroRh: (id: number) => request<void>("DELETE", `/rh/ficheiros/${id}`),
+  /** Descarrega com o token e devolve um URL temporário (libertar com URL.revokeObjectURL). */
+  urlDoFicheiroRh: async (id: number) => {
+    const token = getToken();
+    const res = await fetch(`${API_URL}/rh/ficheiros/${id}/download`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!res.ok) throw new ApiError(res.status, "Não foi possível abrir o ficheiro.");

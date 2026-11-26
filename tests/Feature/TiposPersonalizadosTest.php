@@ -44,7 +44,7 @@ it('cria, lista, edita e apaga um tipo', function () {
         ->assertJsonPath('data.permissoes.gerir_pontes', false)
         ->assertJsonPath('data.em_uso', 0);
     $id = $r->json('data.id');
-    expect($r->json('data.permissoes'))->toHaveCount(12);
+    expect($r->json('data.permissoes'))->toHaveCount(13);
 
     $this->getJson('/api/definicoes/tipos')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $id);
 

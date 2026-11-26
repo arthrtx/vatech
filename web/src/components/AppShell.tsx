@@ -114,7 +114,7 @@ export default function AppShell({
   if (temPermissao(user, "convidar_pessoas")) {
     links.push({ href: "/funcionarios", texto: "Funcionários", Icone: IconeFuncionarios });
   }
-  if (user.papel === "admin") {
+  if (temPermissao(user, "gerir_rh")) {
     links.push({ href: "/rh", texto: "RH", Icone: IconeFuncionarios });
   }
   links.push({ href: "/presencas", texto: "Presenças", Icone: IconeUtilizador });

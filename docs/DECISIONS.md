@@ -141,3 +141,27 @@
 **Alternativas consideradas:** tipos que substituem o papel (rejeitada: reescrevia as regras de estágio e férias); permissões em tabela pivô (rejeitada: catálogo fixo de 12).
 
 **Consequências:** mudar a base exige criar outro tipo. Admin não tem tipo.
+
+## D12: Férias fixas em 22 dias, máximo 25, sem limites configuráveis
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** o admin definia limites de dias por tipo de pedido (`PUT /limites`). Na prática só interessam as férias, e o direito é sempre o mesmo.
+
+**Decisão:** férias fixas em 22 dias úteis por ano (`LimitesPedidoService::FERIAS_DIAS_POR_ANO`), com um máximo pedível de 25 (`FERIAS_DIAS_MAXIMO`). Os dias acima de 22 são excedente: cada pedido traz `dias_excedentes` para o admin ver ao aprovar. Pedir mais de 25 no ano dá 422. Ausência e licença ficam sem limite. Os transitados continuam calculados sobre 22 e não alargam o máximo. Removido `PUT /limites`; `GET /limites` mantém-se com `dias_max`.
+
+**Alternativas consideradas:** manter os limites configuráveis (rejeitada: o admin pediu para sair); bloquear em 22 (rejeitada: a empresa aceita até 25 com aprovação).
+
+**Consequências:** a tabela `limites_pedido` e o modelo `LimitePedido` ficam órfãos: já ninguém os lê nem escreve, e as linhas existentes são ignoradas. Não se apaga a tabela agora (migration destrutiva); pode sair numa limpeza futura. `dias_excedentes` custa uma query por pedido de férias serializado.
+
+## D13: Fichas de RH por pessoa
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** o RH precisa de uma ficha por pessoa da empresa, com informações livres e documentos anexados.
+
+**Decisão:** nova permissão `gerir_rh` (grupo gestão; só por tipo ou admin, fora das predefinições de funcionário e estagiário). Tabelas `rh_infos` (título + valor livres) e `rh_ficheiros` (metadados), ambas por empresa e pessoa, com FK em cascade. Os ficheiros ficam no disco privado `local` em `rh/{empresa_id}/{user_id}/` com nome gerado; o nome original (sanitizado), o mime e o tamanho ficam na BD. Tipos aceites: pdf, png, jpg, jpeg, docx, xlsx, txt, até 10 MB, validados por extensão e por conteúdo. A descarga é por rota autenticada e o `caminho` nunca sai na API. Tudo escopado pela empresa de quem pede (outra empresa: 404).
+
+**Alternativas consideradas:** guardar os bytes na BD como nos anexos dos pedidos (rejeitada: 10 MB por ficheiro pesa demais); disco `public` (rejeitada: documentos pessoais).
+
+**Consequências:** o catálogo passa a 13 permissões (o admin tem as 13). Apagar uma pessoa por hard delete apaga as linhas mas não os ficheiros em disco; hoje as contas só se apagam por soft delete.

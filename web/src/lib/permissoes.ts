@@ -12,7 +12,8 @@ export type Permissao =
   | "aprovar_pedidos"
   | "ver_presencas_empresa"
   | "gerir_pontes"
-  | "convidar_pessoas";
+  | "convidar_pessoas"
+  | "gerir_rh";
 
 type Quem = Pick<User, "papel" | "permissoes"> | null | undefined;
 
