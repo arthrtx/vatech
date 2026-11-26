@@ -224,3 +224,70 @@
 **Alternativas consideradas:** manter só o cálculo local (rejeitada: manutenção manual quando a lei muda); depender só da API sem fallback (rejeitada: uma falha de rede alterava os limites de férias).
 
 **Consequências:** primeira contagem de cada ano pode fazer 1 pedido HTTP (até ~10 s no pior caso); depois vem da cache. O front-end continua com o seu próprio cálculo e pode divergir se a API mudar uma data.
+
+
+## D18: Período de estágio e instituição de ensino geridos pelo admin
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** as datas de estágio só as definia a própria pessoa em `/me` e não havia instituição de ensino; o admin precisa de as manter na ficha e de ver o período no calendário.
+
+**Decisão:** nova coluna `users.instituicao_ensino` (string 150, nullable), editável só pelo admin em `PUT /api/funcionarios/{id}/estagio` junto com `estagio_inicio`/`estagio_fim` (só estagiários aprovados da empresa). `GET /api/estagios?de&ate` devolve, a qualquer utilizador autenticado, os períodos que se sobrepõem ao intervalo (limites nulos = abertos) sem a instituição, que fica visível apenas ao próprio (`/me`) e ao admin.
+
+**Alternativas consideradas:** deixar a instituição editável em `PUT /me` (rejeitada: dado administrativo); expor a instituição no calendário (rejeitada: privacidade).
+
+**Consequências:** `/me` continua a poder alterar as datas; o último a escrever prevalece. A instituição também sai em `GET /rh/fichas/{id}` e no resumo de RH, ambos só para `gerir_rh`: intencional, é dado de gestão de pessoas.
+
+
+## D19: Anexos do RH têm tipo de documento
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** os anexos da ficha de RH eram uma lista sem classificação; o utilizador quer distinguir declarações, documentos de estágio, contratos e recibos, ou dar um tipo próprio.
+
+**Decisão:** `rh_ficheiros` ganha `categoria` (string 30, default `outro`) e `categoria_nome` (string 60, nullable), de forma aditiva. Valores de `categoria`: `declaracao`, `documentos_estagio`, `contrato`, `recibo`, `outro`, `personalizado` (`RhFicheiro::CATEGORIAS`). `POST /api/rh/fichas/{userId}/ficheiros` aceita ambos; `categoria_nome` é obrigatório (após trim, max 60) só com `personalizado`, nos outros casos é ignorado e gravado null. `toContrato()` devolve os dois campos; ficheiros antigos ficam `outro`.
+
+**Alternativas consideradas:** tabela de tipos por empresa (rejeitada: complexidade sem ganho); texto livre sem lista (rejeitada: sem filtros nem consistência).
+
+**Consequências:** o tipo não é editável depois do carregamento (apagar e voltar a carregar).
+
+
+## D20: Resumo de RH agregado no servidor, PDF gerado no front-end
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** o RH quer exportar um resumo de qualquer pessoa (pedidos, férias, presenças, informações e anexos) em PDF.
+
+**Decisão:** `GET /api/rh/fichas/{userId}/resumo` (permissão `gerir_rh`, pessoa aprovada da mesma empresa, senão 404) devolve os dados já agregados; o PDF faz-se no navegador (jsPDF). Os saldos de férias vêm de `LimitesPedidoService` (mesma fonte de `/ferias-resumo`), as presenças são do ano corrente (horas = saída − entrada − almoço efectivo) e os anexos saem só com metadados, sem `id` nem caminho. Sem `empresa_id`, caminhos nem tokens na resposta.
+
+**Alternativas consideradas:** gerar o PDF no servidor (rejeitada: nova dependência e ficheiros em disco); o front-end juntar 5 endpoints (rejeitada: cálculos de férias duplicados e N pedidos por exportação).
+
+**Consequências:** os pedidos vão até 500 por pessoa; o formato do PDF é só do front-end.
+
+
+## D21: Pontes descontam ao saldo de ferias
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** as pontes da empresa so apareciam na agenda; o pedido foi que, "se uma ponte for marcada, diminui as ferias".
+
+**Decisao:** `LimitesPedidoService::usados(..., 'ferias')` soma aos dias dos pedidos os dias uteis das pontes da empresa (por ano, sem fins de semana nem feriados nacionais, via `LimiteFerias`), para funcionarios (papel `funcionario`); admin e estagiarios ficam a 0. Um dia de ponte ja coberto por ferias pendentes/aprovadas da pessoa conta uma vez; no teste dos 25 dias, dias de um novo pedido que caem numa ponte nao pesam outra vez. O campo novo `pontes` (JSON de `/limites` e `/ferias-resumo`) diz quantos dias de `usados` vem de pontes; assim `por_marcar`, `restantes` e `transitados` ficam certos sem mudar o front-end. Tudo calculado, sem migration.
+
+**Alternativas consideradas:** campo `pontes` a descontar a parte de `usados` (rejeitada: obrigava a mexer em todos os consumidores); guardar um pedido de ferias por ponte e pessoa (rejeitada: dados derivados a sincronizar ao criar/apagar pontes e pessoas).
+
+**Consequencias:** `dias_excedentes` (acima de 22 por pedido) continua a olhar so aos pedidos, sem pontes. Criar uma ponte em ano passado reduz os `transitados` de anos seguintes. Feriados municipais continuam fora (so o front-end sabe a localidade).
+
+
+## D22: Historico de atividade da empresa
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** o admin quer ver quem fez o que (convites, pedidos, contas, RH, estagio, pontes, presencas, definicoes, sessoes).
+
+**Decisao:** tabela `registos_atividade` (empresa_id, user_id actor, tipo, descricao, alvo_user_id, so `created_at`), escrita por `App\Services\RegistoAtividade::registar()` nos controllers, com try/catch + `report()` para nunca partir o pedido. Tipos em `RegistoAtividade::TIPOS`. `GET /api/historico?tipo=&q=&pagina=` e `DELETE /api/historico` so para admin, sempre no escopo da empresa. O DELETE apaga tudo da empresa e deixa uma linha `definicoes` de rasto. Retencao de 6 meses (`config/historico.php`, env `HISTORICO_RETENCAO_MESES`): `php artisan historico:limpar` apaga em lotes de 1000 e corre todos os dias as 03:30 (`routes/console.php`; exige o scheduler activo em producao: `schedule:run` por minuto no cron/container).
+
+**Privacidade:** nunca se grava instituicao de ensino, motivos ou observacoes, conteudo de ficheiros, palavras-passe nem tokens; pedidos so levam tipo e datas. Emails de convite podem constar.
+
+**Alternativas consideradas:** observers nos modelos (rejeitada: sem o actor e sem descricao legivel); log em ficheiro (rejeitada: nao consultavel nem filtravel).
+
+**Consequencias:** presencas geram 1 a 2 linhas por pessoa e dia (as mais volumosas); a limpeza automatica limita o crescimento.

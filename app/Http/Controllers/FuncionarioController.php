@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -35,6 +36,9 @@ class FuncionarioController extends Controller
         if ($estado === 'recusado') {
             $user->tokens()->delete();
         }
+
+        $verbo = $estado === 'aprovado' ? 'aprovou' : 'recusou';
+        RegistoAtividade::registar('conta', "{$request->user()->nome} {$verbo} a conta de {$user->nome}", $request->user(), $user);
 
         return response()->json(['data' => $user->toContrato()]);
     }

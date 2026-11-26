@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { api, mensagemDeErro, type FeriasResumo, type Pedido, type Ponte, type Presenca, type User } from "@/lib/api";
+import { api, mensagemDeErro, type FeriasResumo, type Pedido, type Ponte, type Presenca, type TipoPessoa, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { maisDias } from "@/lib/dashboard";
-import { estados, formatarData, rotuloPapel, tipos } from "@/lib/rotulos";
+import { estados, formatarData, papeis, rotuloPapel, tipos as rotulosPedido } from "@/lib/rotulos";
 import Avatar from "./Avatar";
-import { botaoSec, erro as erroCls } from "./ui";
+import { botao, botaoSec, erro as erroCls, input, label } from "./ui";
 
 const corEstado: Record<Pedido["estado"], string> = {
   pendente: "bg-violeta/25",
@@ -22,11 +22,48 @@ export default function VistaFuncionario({
   user,
   ferias,
   onFechar,
+  tipos = [],
+  onMudarTipo,
+  erroTipo,
+  onAtualizado,
 }: {
   user: User;
   ferias?: FeriasResumo;
   onFechar: () => void;
+  /** Só admin: tipos personalizados e acção para mudar o tipo (tipo_id null = papel base). */
+  tipos?: TipoPessoa[];
+  onMudarTipo?: (tipo_id: number | null, papel?: "funcionario" | "estagiario") => void;
+  erroTipo?: string | null;
+  /** Chamado com a pessoa devolvida pela API depois de guardar o estágio. */
+  onAtualizado?: (user: User) => void;
 }) {
+  const [inicio, setInicio] = useState(user.estagio_inicio?.slice(0, 10) ?? "");
+  const [fim, setFim] = useState(user.estagio_fim?.slice(0, 10) ?? "");
+  const [instituicao, setInstituicao] = useState(user.instituicao_ensino ?? "");
+  const [aGuardar, setAGuardar] = useState(false);
+  const [erroEstagio, setErroEstagio] = useState<string | null>(null);
+  const [guardado, setGuardado] = useState(false);
+  const valorTipo = user.tipo_id ? `t${user.tipo_id}` : user.papel;
+
+  async function guardarEstagio(e: React.FormEvent) {
+    e.preventDefault();
+    setErroEstagio(null);
+    setGuardado(false);
+    setAGuardar(true);
+    try {
+      const nova = await api.definirEstagio(user.id, {
+        estagio_inicio: inicio || null,
+        estagio_fim: fim || null,
+        instituicao_ensino: instituicao.trim() || null,
+      });
+      onAtualizado?.(nova);
+      setGuardado(true);
+    } catch (err) {
+      setErroEstagio(mensagemDeErro(err));
+    } finally {
+      setAGuardar(false);
+    }
+  }
   const [hoje] = useState(() => hojeIso());
   const [pedidos, setPedidos] = useState<Pedido[] | null>(null);
   const [presencas, setPresencas] = useState<Presenca[] | null>(null);
@@ -91,7 +128,10 @@ export default function VistaFuncionario({
             </h2>
             <p className="break-all text-sm text-texto-suave">{user.email}</p>
             {user.cargo && <p className="text-sm text-texto-suave">{user.cargo}</p>}
-            <p className="mt-1 inline-flex rounded-full bg-primaria-suave px-3 py-0.5 text-xs font-semibold">{rotuloPapel(user)}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <p className="inline-flex rounded-full bg-primaria-suave px-3 py-0.5 text-xs font-semibold">{rotuloPapel(user)}</p>
+              <p className="text-xs font-semibold text-texto-suave" data-testid="conta-id">ID {user.id}</p>
+            </div>
           </div>
           <button type="button" ref={fechar} className={botaoSec} onClick={onFechar}>
             Fechar
@@ -104,6 +144,85 @@ export default function VistaFuncionario({
           </p>
         )}
 
+        {onMudarTipo && user.papel !== "admin" && (
+          <section aria-labelledby={`${tituloId}-tipo`} className="flex flex-col gap-2">
+            <h3 id={`${tituloId}-tipo`} className="font-semibold">
+              Definições
+            </h3>
+            <div className="sm:max-w-xs">
+              <label htmlFor={`tipo-${user.id}`} className={label}>
+                Tipo
+              </label>
+              <select
+                id={`tipo-${user.id}`}
+                className={input}
+                value={valorTipo}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v.startsWith("t")) onMudarTipo(Number(v.slice(1)));
+                  else onMudarTipo(null, v as "funcionario" | "estagiario");
+                }}
+              >
+                <option value="funcionario">{papeis.funcionario}</option>
+                <option value="estagiario">{papeis.estagiario}</option>
+                {tipos.map((t) => (
+                  <option key={t.id} value={`t${t.id}`}>
+                    {t.nome}
+                  </option>
+                ))}
+              </select>
+              {erroTipo && (
+                <p role="alert" className="mt-1 text-sm text-perigo">
+                  {erroTipo}
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {user.papel === "estagiario" && onAtualizado && (
+          <form onSubmit={guardarEstagio} aria-labelledby={`${tituloId}-est`} className="flex flex-col gap-3">
+            <h3 id={`${tituloId}-est`} className="font-semibold">
+              Estágio
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor={`est-inicio-${user.id}`} className={label}>
+                  Data de início
+                </label>
+                <input id={`est-inicio-${user.id}`} type="date" className={input} value={inicio} onChange={(e) => setInicio(e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor={`est-fim-${user.id}`} className={label}>
+                  Data de fim
+                </label>
+                <input id={`est-fim-${user.id}`} type="date" className={input} value={fim} onChange={(e) => setFim(e.target.value)} />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor={`est-inst-${user.id}`} className={label}>
+                  Instituição de ensino
+                </label>
+                <input id={`est-inst-${user.id}`} maxLength={150} className={input} value={instituicao} onChange={(e) => setInstituicao(e.target.value)} />
+              </div>
+            </div>
+            {erroEstagio && (
+              <p role="alert" className={erroCls}>
+                {erroEstagio}
+              </p>
+            )}
+            {guardado && (
+              <p role="status" className="text-sm text-texto-suave">
+                Estágio guardado.
+              </p>
+            )}
+            <div>
+              <button type="submit" disabled={aGuardar} className={botao}>
+                {aGuardar ? "A guardar..." : "Guardar estágio"}
+              </button>
+            </div>
+          </form>
+        )}
+
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <li className="rounded-controlo bg-campo/70 p-3">
             <p className="text-xs text-texto-suave">Férias usadas</p>
@@ -111,6 +230,7 @@ export default function VistaFuncionario({
               {ferias?.dias_ano != null ? `${ferias.usados}/${ferias.dias_ano + ferias.transitados}` : "-"}
             </p>
             {ferias?.dias_ano != null && <p className="text-xs text-texto-suave">dias úteis</p>}
+            {!!ferias?.pontes && <p className="text-xs text-texto-suave">Pontes: {ferias.pontes} {ferias.pontes === 1 ? "dia" : "dias"}</p>}
           </li>
           {(["pendente", "aprovado", "recusado"] as const).map((e) => (
             <li key={e} className="rounded-controlo bg-campo/70 p-3">
@@ -133,7 +253,7 @@ export default function VistaFuncionario({
             <ul className="flex flex-col gap-1.5">
               {proximas.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-3 rounded-controlo bg-campo/70 px-3 py-2 text-sm">
-                  <span className="font-medium">{tipos[p.tipo]}</span>
+                  <span className="font-medium">{rotulosPedido[p.tipo]}</span>
                   <span className="text-texto-suave">
                     {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
                   </span>
@@ -177,7 +297,7 @@ export default function VistaFuncionario({
             <ul className="flex flex-col gap-1.5">
               {recentes.map((p) => (
                 <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-controlo bg-campo/70 px-3 py-2 text-sm">
-                  <span className="font-medium">{tipos[p.tipo]}</span>
+                  <span className="font-medium">{rotulosPedido[p.tipo]}</span>
                   <span className="text-texto-suave">
                     {formatarData(p.data_inicio)} a {formatarData(p.data_fim)}
                   </span>

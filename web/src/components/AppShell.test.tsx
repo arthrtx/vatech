@@ -30,6 +30,16 @@ describe("AppShell, menu por papel", () => {
     expect(!!menu().querySelector('a[href="/presencas"]')).toBe(tem);
   });
 
+  it.each([
+    ["admin", true],
+    ["estagiario", false],
+    ["funcionario", false],
+  ] as const)("%s: Histórico no menu = %s", (p, tem) => {
+    papel = p;
+    render(<AppShell>x</AppShell>);
+    expect(!!menu().querySelector('a[href="/historico"]')).toBe(tem);
+  });
+
   it("papeis redireciona quem não tem acesso", () => {
     papel = "funcionario";
     render(<AppShell papeis={["admin", "estagiario"]}>x</AppShell>);

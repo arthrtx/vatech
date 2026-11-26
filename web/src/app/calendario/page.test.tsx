@@ -3,12 +3,13 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 
 const agenda = vi.fn();
 const aniversarios = vi.fn();
+const estagios = vi.fn().mockResolvedValue([]);
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/components/EscolhaLocalidade", () => ({ default: () => null }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: "funcionario", empresa_id: 1 } }) }));
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
-  api: { agenda: (...a: unknown[]) => agenda(...a), aniversarios: (...a: unknown[]) => aniversarios(...a), pontes: async () => [] },
+  api: { agenda: (...a: unknown[]) => agenda(...a), aniversarios: (...a: unknown[]) => aniversarios(...a), pontes: async () => [], estagios: (...a: unknown[]) => estagios(...a) },
 }));
 
 import CalendarioPage from "./page";
@@ -18,6 +19,8 @@ afterEach(() => {
   vi.useRealTimers();
   agenda.mockReset();
   aniversarios.mockReset();
+  estagios.mockReset();
+  estagios.mockResolvedValue([]);
 });
 
 // O quadro do ano tem centenas de células: com a suite toda a correr, 5 s (o limite por omissão) é curto.
@@ -59,6 +62,16 @@ describe("pagina do calendario", () => {
     expect(marca.closest("tr")?.textContent).toContain("Rui");
     expect(screen.queryByRole("rowheader", { name: "Aniversários" })).toBeNull();
   }, LIMITE);
+
+  it("estagiário sem pedidos ganha linha e marcação no período de estágio", async () => {
+    agenda.mockResolvedValue([]);
+    aniversarios.mockResolvedValue([]);
+    estagios.mockResolvedValue([{ user: { id: 8, nome: "Malu" }, inicio: "2026-03-02", fim: "2026-03-06" }]);
+    render(<CalendarioPage />);
+    await screen.findAllByRole("rowheader", { name: /Malu/ });
+    expect(document.querySelectorAll('td[title="Malu: em estágio"]').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/ISEP/)).toBeNull();
+  });
 
   it("mostra o erro da agenda", async () => {
     agenda.mockRejectedValue(new Error("falhou"));

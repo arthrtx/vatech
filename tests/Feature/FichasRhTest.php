@@ -159,7 +159,7 @@ it('carrega, descarrega e apaga um ficheiro em disco privado', function () {
     $p = User::factory()->create(['empresa_id' => $admin->empresa_id]);
     Sanctum::actingAs($admin);
 
-    $r = $this->postJson("/api/rh/fichas/{$p->id}/ficheiros", ['ficheiro' => UploadedFile::fake()->createWithContent('Contrato final.txt', 'conteudo secreto')])
+    $r = $this->postJson("/api/rh/fichas/{$p->id}/ficheiros", ['ficheiro' => UploadedFile::fake()->createWithContent('Contrato final.txt', 'conteudo secreto'), 'categoria' => 'contrato'])
         ->assertCreated()
         ->assertJsonPath('data.nome', 'Contrato final.txt')
         ->assertJsonPath('data.tamanho', 16);
@@ -187,7 +187,7 @@ it('sanitiza o nome original do ficheiro', function () {
     $p = User::factory()->create(['empresa_id' => $admin->empresa_id]);
     Sanctum::actingAs($admin);
 
-    $this->postJson("/api/rh/fichas/{$p->id}/ficheiros", ['ficheiro' => UploadedFile::fake()->create('..\\..\\etc\\<b>x</b>.pdf', 10, 'application/pdf')])
+    $this->postJson("/api/rh/fichas/{$p->id}/ficheiros", ['ficheiro' => UploadedFile::fake()->create('..\\..\\etc\\<b>x</b>.pdf', 10, 'application/pdf'), 'categoria' => 'outro'])
         ->assertCreated();
     $nome = RhFicheiro::first()->nome;
     expect($nome)->not->toContain('/')->not->toContain('\\')->not->toContain('<');
@@ -209,7 +209,51 @@ it('valida tipo e tamanho do ficheiro', function () {
     expect(RhFicheiro::count())->toBe(0);
 
     foreach (['a.pdf' => 'application/pdf', 'a.png' => 'image/png', 'a.jpg' => 'image/jpeg', 'a.jpeg' => 'image/jpeg'] as $nome => $mime) {
-        $this->postJson($url, ['ficheiro' => UploadedFile::fake()->create($nome, 10, $mime)])->assertCreated();
+        $this->postJson($url, ['ficheiro' => UploadedFile::fake()->create($nome, 10, $mime), 'categoria' => 'outro'])->assertCreated();
     }
-    $this->postJson($url, ['ficheiro' => UploadedFile::fake()->create('limite.pdf', 10240, 'application/pdf')])->assertCreated();
+    $this->postJson($url, ['ficheiro' => UploadedFile::fake()->create('limite.pdf', 10240, 'application/pdf'), 'categoria' => 'outro'])->assertCreated();
+});
+
+it('guarda a categoria do ficheiro (obrigatoria) e personalizado com nome', function () {
+    Storage::fake('local');
+    $admin = rhAdmin();
+    $p = User::factory()->create(['empresa_id' => $admin->empresa_id]);
+    Sanctum::actingAs($admin);
+    $url = "/api/rh/fichas/{$p->id}/ficheiros";
+    $ficheiro = fn () => UploadedFile::fake()->createWithContent('a.txt', 'x');
+
+    foreach (['declaracao', 'documentos_estagio', 'contrato', 'recibo', 'outro'] as $c) {
+        $this->postJson($url, ['ficheiro' => $ficheiro(), 'categoria' => $c, 'categoria_nome' => 'ignorado'])
+            ->assertCreated()->assertJsonPath('data.categoria', $c)->assertJsonPath('data.categoria_nome', null);
+    }
+    $this->postJson($url, ['ficheiro' => $ficheiro()])->assertStatus(422)->assertJsonValidationErrors('categoria');
+    $this->postJson($url, ['ficheiro' => $ficheiro(), 'categoria' => 'personalizado', 'categoria_nome' => '  Atestado  '])
+        ->assertCreated()->assertJsonPath('data.categoria', 'personalizado')->assertJsonPath('data.categoria_nome', 'Atestado');
+
+    $this->getJson("/api/rh/fichas/{$p->id}")
+        ->assertJsonPath('data.ficheiros.0.categoria', 'declaracao')
+        ->assertJsonStructure(['data' => ['ficheiros' => [['id', 'nome', 'categoria', 'categoria_nome', 'tamanho', 'mime', 'criado_em']]]]);
+});
+
+it('recusa categoria invalida e personalizado sem nome', function () {
+    Storage::fake('local');
+    $admin = rhAdmin();
+    $p = User::factory()->create(['empresa_id' => $admin->empresa_id]);
+    Sanctum::actingAs($admin);
+    $url = "/api/rh/fichas/{$p->id}/ficheiros";
+    $ficheiro = fn () => UploadedFile::fake()->createWithContent('a.txt', 'x');
+
+    $this->postJson($url, ['ficheiro' => $ficheiro(), 'categoria' => 'xpto'])->assertStatus(422)->assertJsonValidationErrors('categoria');
+    $this->postJson($url, ['ficheiro' => $ficheiro(), 'categoria' => 'personalizado'])->assertStatus(422)->assertJsonValidationErrors('categoria_nome');
+    $this->postJson($url, ['ficheiro' => $ficheiro(), 'categoria' => 'personalizado', 'categoria_nome' => '   '])->assertStatus(422)->assertJsonValidationErrors('categoria_nome');
+    $this->postJson($url, ['ficheiro' => $ficheiro(), 'categoria' => 'personalizado', 'categoria_nome' => str_repeat('a', 61)])->assertStatus(422)->assertJsonValidationErrors('categoria_nome');
+    expect(RhFicheiro::count())->toBe(0);
+});
+
+it('ficheiros antigos sem categoria ficam outro no contrato', function () {
+    $admin = rhAdmin();
+    $p = User::factory()->create(['empresa_id' => $admin->empresa_id]);
+    RhFicheiro::create(['empresa_id' => $admin->empresa_id, 'user_id' => $p->id, 'nome' => 'v.pdf', 'caminho' => 'rh/v', 'mime' => 'application/pdf', 'tamanho' => 1]);
+    Sanctum::actingAs($admin);
+    $this->getJson("/api/rh/fichas/{$p->id}")->assertJsonPath('data.ficheiros.0.categoria', 'outro')->assertJsonPath('data.ficheiros.0.categoria_nome', null);
 });

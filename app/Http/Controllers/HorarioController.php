@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Empresa;
 use App\Models\User;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -49,6 +50,8 @@ class HorarioController extends Controller
             'almoco_minutos' => $dados['almoco_min'],
         ]);
 
+        RegistoAtividade::registar('definicoes', "{$request->user()->nome} alterou o horário da empresa", $request->user());
+
         return response()->json(['data' => $empresa->horario()]);
     }
 
@@ -80,6 +83,7 @@ class HorarioController extends Controller
         $h = $user->horario();
         $this->validarHorario($h['entrada'], $h['saida'], $h['almoco_inicio'], $h['almoco_min']);
         $user->save();
+        RegistoAtividade::registar('definicoes', "{$request->user()->nome} alterou o horário de {$user->nome}", $request->user(), $user);
 
         return response()->json(['data' => $this->item($user)]);
     }

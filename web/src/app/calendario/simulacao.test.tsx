@@ -10,7 +10,7 @@ vi.mock("@/components/EscolhaLocalidade", () => ({ default: () => null }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, nome: "Ana", papel: "funcionario", empresa_id: 1 } }) }));
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
-  api: { agenda: (...a: unknown[]) => agenda(...a), aniversarios: async () => [], pontes: async () => [], criarPedido: (...a: unknown[]) => criarPedido(...a) },
+  api: { agenda: (...a: unknown[]) => agenda(...a), aniversarios: async () => [], pontes: async () => [], estagios: async () => [], criarPedido: (...a: unknown[]) => criarPedido(...a) },
 }));
 
 import CalendarioPage from "./page";

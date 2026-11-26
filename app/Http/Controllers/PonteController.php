@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ponte;
+use App\Services\RegistoAtividade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -39,6 +40,7 @@ class PonteController extends Controller
         ]);
 
         $ponte = Ponte::create([...$dados, 'empresa_id' => $request->user()->empresa_id]);
+        RegistoAtividade::registar('ponte', "{$request->user()->nome} criou a ponte {$ponte->nome} ({$this->intervalo($ponte->data_inicio, $ponte->data_fim)})", $request->user());
 
         return response()->json(['data' => $ponte->refresh()], 201);
     }
@@ -46,8 +48,15 @@ class PonteController extends Controller
     public function destroy(Request $request, int $id): JsonResponse
     {
         // 404 para pontes de outra empresa (não revela existência).
-        Ponte::where('empresa_id', $request->user()->empresa_id)->findOrFail($id)->delete();
+        $ponte = Ponte::where('empresa_id', $request->user()->empresa_id)->findOrFail($id);
+        $ponte->delete();
+        RegistoAtividade::registar('ponte', "{$request->user()->nome} apagou a ponte {$ponte->nome}", $request->user());
 
         return response()->json(null, 204);
+    }
+
+    private function intervalo($inicio, $fim): string
+    {
+        return $inicio->eq($fim) ? $inicio->format('d/m') : $inicio->format('d/m').' a '.$fim->format('d/m');
     }
 }

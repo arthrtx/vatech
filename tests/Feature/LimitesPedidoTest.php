@@ -40,9 +40,9 @@ it('devolve sempre 3 itens com usados do ano actual, ferias fixas 22/25', functi
     Sanctum::actingAs($user);
 
     $this->getJson('/api/limites')->assertOk()->assertExactJson(['data' => [
-        ['tipo' => 'ferias', 'dias_ano' => 22, 'dias_max' => 25, 'transitados' => 0, 'usados' => 7],
-        ['tipo' => 'ausencia', 'dias_ano' => null, 'dias_max' => null, 'transitados' => 0, 'usados' => 0],
-        ['tipo' => 'licenca', 'dias_ano' => null, 'dias_max' => null, 'transitados' => 0, 'usados' => 0],
+        ['tipo' => 'ferias', 'dias_ano' => 22, 'dias_max' => 25, 'transitados' => 0, 'usados' => 7, 'pontes' => 0],
+        ['tipo' => 'ausencia', 'dias_ano' => null, 'dias_max' => null, 'transitados' => 0, 'usados' => 0, 'pontes' => 0],
+        ['tipo' => 'licenca', 'dias_ano' => null, 'dias_max' => null, 'transitados' => 0, 'usados' => 0, 'pontes' => 0],
     ], 'prazo_ferias' => "$ano-04-30"]);
 });
 
@@ -221,8 +221,8 @@ describe('cumulo de ferias', function () {
         Sanctum::actingAs($admin);
 
         $this->getJson('/api/ferias-resumo')->assertOk()->assertExactJson(['data' => [
-            ['user_id' => $a->id, 'nome' => 'Ana', 'dias_ano' => 22, 'dias_max' => 25, 'transitados' => 37, 'usados' => 3, 'por_marcar' => 56],
-            ['user_id' => $b->id, 'nome' => 'Bruno', 'dias_ano' => 22, 'dias_max' => 25, 'transitados' => 44, 'usados' => 0, 'por_marcar' => 66],
+            ['user_id' => $a->id, 'nome' => 'Ana', 'dias_ano' => 22, 'dias_max' => 25, 'transitados' => 37, 'usados' => 3, 'pontes' => 0, 'por_marcar' => 56],
+            ['user_id' => $b->id, 'nome' => 'Bruno', 'dias_ano' => 22, 'dias_max' => 25, 'transitados' => 44, 'usados' => 0, 'pontes' => 0, 'por_marcar' => 66],
         ], 'prazo_ferias' => '2028-04-30']);
     });
 
