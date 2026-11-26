@@ -174,7 +174,7 @@ export default function AppShell({
           </div>
         </aside>
         <div className={`flex min-w-0 flex-1 flex-col ${ecraInteiro ? "gap-4 lg:min-h-0" : "gap-6"}`}>
-          <header className="relative z-30 flex items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr]">
+          <header className="relative z-30 flex items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-8">
             <div className="min-w-0">
               {agora && (
                 <time dateTime={agora.toISOString()} className="block pl-3 text-4xl font-bold leading-none tracking-tight tabular-nums md:text-5xl">
