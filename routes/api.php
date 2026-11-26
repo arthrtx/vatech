@@ -85,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/pedidos/{id}/visto', [PedidoController::class, 'visto']);
             Route::post('/pedidos/{id}/recusar', [PedidoController::class, 'recusar']);
         });
+        Route::delete('/funcionarios/{id}', [FuncionarioController::class, 'destroy'])->whereNumber('id')->middleware('permissao:apagar_pessoas');
         Route::middleware('permissao:gerir_pontes')->group(function () {
             Route::post('/pontes', [PonteController::class, 'store']);
             Route::delete('/pontes/{id}', [PonteController::class, 'destroy']);

@@ -8,6 +8,7 @@ import FuncionarioLinha from "@/components/FuncionarioLinha";
 import VistaFuncionario from "@/components/VistaFuncionario";
 import { botao, erro as erroCls } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { temPermissao } from "@/lib/permissoes";
 
 type Filtro = "todos" | "funcionario" | "estagiario" | "admin";
 const FILTROS: { valor: Filtro; rotulo: string }[] = [
@@ -171,6 +172,15 @@ function Conteudo() {
           tipos={tipos}
           onMudarTipo={(id, papel) => mudarTipo(aVer, id, papel)}
           erroTipo={errosTipo[aVer.id]}
+          onApagar={
+            temPermissao(user, "apagar_pessoas") && aVer.papel !== "admin" && aVer.id !== user?.id
+              ? async () => {
+                  await api.apagarFuncionario(aVer.id);
+                  setLista((l) => (l ? l.filter((x) => x.id !== aVer.id) : l));
+                  setAVerId(null);
+                }
+              : undefined
+          }
           onAtualizado={(nova) => setLista((l) => (l ? l.map((x) => (x.id === nova.id ? { ...x, ...nova } : x)) : l))}
         />
       )}

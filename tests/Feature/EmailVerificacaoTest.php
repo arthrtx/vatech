@@ -60,13 +60,12 @@ it('reenvia a verificacao com resposta igual exista ou nao a conta', function ()
     Notification::assertCount(1);
 });
 
-it('ja nao ha rotas para o admin criar, editar ou apagar funcionarios', function () {
+it('ja nao ha rotas para o admin criar ou editar funcionarios', function () {
     $admin = User::factory()->admin()->create();
     $func = User::factory()->create(['empresa_id' => $admin->empresa_id]);
     Sanctum::actingAs($admin);
 
     $this->postJson('/api/funcionarios', ['nome' => 'X'])->assertStatus(405);
-    $this->putJson("/api/funcionarios/{$func->id}", [])->assertStatus(404);
-    $this->deleteJson("/api/funcionarios/{$func->id}")->assertStatus(404);
+    $this->putJson("/api/funcionarios/{$func->id}", [])->assertStatus(405);
     $this->getJson('/api/funcionarios')->assertOk();
 });

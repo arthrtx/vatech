@@ -567,6 +567,7 @@ export const api = {
   guardarTextoConvite: async (texto: string | null) =>
     (await request<{ data: TextoConvite }>("PUT", "/definicoes/convite", { texto })).data,
   apagarPedido: (id: number) => request<void>("DELETE", `/pedidos/${id}`),
+  apagarFuncionario: (id: number) => request<void>("DELETE", `/funcionarios/${id}`),
   cancelarPedido: (id: number) => request<{ data: Pedido }>("POST", `/pedidos/${id}/cancelar`),
   melhorarTexto: async (texto: string) => (await request<{ texto: string }>("POST", "/texto/melhorar", { texto })).texto,
   enviarAnexos: async (pedidoId: number, ficheiros: File[]) => {
