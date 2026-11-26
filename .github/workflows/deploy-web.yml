@@ -62,4 +62,4 @@ jobs:
 
       - name: Deploy
         if: steps.secrets.outputs.ok == 'true'
-        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: vercel deploy --prebuilt --prod --archive=tgz --token="$VERCEL_TOKEN"
