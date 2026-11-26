@@ -118,7 +118,7 @@ it('regista presenca atrasada com horas de Lisboa gravadas em UTC', function () 
         ->assertJsonPath('data.entrada', '2026-07-08T08:00:00+00:00')->assertJsonPath('data.saida', '2026-07-08T16:30:00+00:00')->assertJsonPath('data.atrasada', true);
 
     $this->postJson('/api/presencas/atrasada', ['data' => '2026-07-10', 'entrada' => '09:00', 'saida' => '10:00'])->assertCreated();
-    $this->getJson('/api/presencas')->assertOk()->assertJsonPath('data.0.atrasada', true);
+    $this->getJson('/api/presencas')->assertOk()->assertJsonPath('data.0.atrasada', false)->assertJsonPath('data.1.atrasada', true);
 });
 
 it('presenca atrasada rejeita futura, anterior ao estagio, sobreposta e horas invalidas', function () {
