@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, mensagemDeErro, type Presenca, type User } from "@/lib/api";
 import { hojeIso } from "@/lib/agenda";
 import { dataPt, horaDe } from "@/lib/presencas";
+import { podePedir, temPermissao } from "@/lib/permissoes";
 import { IconeAgenda, IconePedidos } from "../Icones";
 import { acao, acaoDestaque, botaoSec, erro as erroCls } from "../ui";
 import Cabecalho from "./Cabecalho";
@@ -153,14 +154,16 @@ export default function DashboardEstagiario({ user }: { user: User }) {
               <IconeAgenda className="h-4 w-4" />
               Agenda
             </Link>
-            <Link href="/" className={acaoDestaque}>
-              <IconePedidos className="h-4 w-4" />
-              Novo pedido
-            </Link>
+            {podePedir(user) && (
+              <Link href="/" className={acaoDestaque}>
+                <IconePedidos className="h-4 w-4" />
+                Novo pedido
+              </Link>
+            )}
           </>
         }
       />
-      <CartaoPresenca />
+      {temPermissao(user, "marcar_presenca") && <CartaoPresenca />}
       {!inicio && !fim && (
         <p className="text-sm text-texto-suave">
           Define as datas do teu estágio nas{" "}

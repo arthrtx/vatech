@@ -117,3 +117,15 @@
 **Alternativas consideradas:** manter o registo público com aprovação (rejeitada: o admin quer partir do email que conhece); aprovar já ao aceitar o convite (rejeitada: o admin pediu o passo de autorização).
 
 **Consequências:** sem SMTP em produção (`MAIL_*`) o email não chega e o admin copia o link. Em dev os emails caem no Mailpit (`docker compose`, http://localhost:8025).
+
+## D10: Permissões por papel definidas pelo admin
+
+**Data:** 2026-11-26 · **Estado:** aceite · **Decidido por:** Arthur · **Proposto:** Claude
+
+**Contexto:** as capacidades de Funcionário e Estagiário estavam fixas no código (por exemplo, o estagiário não pedia férias). O admin quer ajustar o que cada papel pode fazer, e delegar tarefas de gestão.
+
+**Decisão:** catálogo fixo de 12 permissões (8 do dia a dia, 4 de gestão) guardado como JSON `permissoes` na empresa, por papel, por cima de predefinidos em código (funcionário: dia a dia; estagiário: o mesmo sem férias). O admin tem sempre tudo. Middleware `permissao:<chave>` nas rotas; os pedidos validam-se por tipo em `StorePedidoRequest`. `/me` devolve `permissoes`. Aprovar e recusar contas, limites e definições ficam só do admin. Quem tem `aprovar_pedidos` não decide pedidos seus.
+
+**Alternativas consideradas:** tabela de papéis e permissões (rejeitada: o catálogo é pequeno e fixo, e os papéis são só dois editáveis); manter regras fixas no código (rejeitada: o admin pediu controlo).
+
+**Consequências:** `aprovar_pedidos` alarga a leitura de pedidos e da agenda a todos os da empresa, e dos anexos deles; `ver_presencas_empresa` faz o mesmo com presenças e ocorrências. Sem permissão, a API responde 403 «Sem permissão.» (o pedido de férias do estagiário deixou de ser 422). Chaves novas no catálogo ficam com o predefinido até o admin as editar.

@@ -4,7 +4,7 @@ import FuncionariosPage from "./page";
 import { api } from "@/lib/api";
 
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1 } }) }));
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: 1, papel: "admin" } }) }));
 vi.mock("@/lib/api", async (orig) => {
   const real = await orig<typeof import("@/lib/api")>();
   return { ...real, api: {

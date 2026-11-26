@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiError } from "@/lib/api";
 
+import { CHAVES_DIA_A_DIA } from "@/lib/permissoes";
+
 let papel = "estagiario";
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: { id: 2, nome: "Ana", papel, estagio_inicio: "2026-01-05" } }),
+  useAuth: () => ({ user: { id: 2, nome: "Ana", papel, permissoes: CHAVES_DIA_A_DIA, estagio_inicio: "2026-01-05" } }),
 }));
 vi.mock("@/components/AppShell", () => ({ default: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
 

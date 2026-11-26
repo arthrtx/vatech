@@ -43,6 +43,7 @@ class AgendaController extends Controller
     public function index(AgendaRequest $request): JsonResponse
     {
         $user = $request->user();
+        $verTodos = $user->temPermissao('aprovar_pedidos');
 
         $query = Pedido::where('empresa_id', $user->empresa_id)
             ->whereHas('user')
@@ -52,7 +53,7 @@ class AgendaController extends Controller
             ->orderBy('data_inicio')
             ->orderBy('id');
 
-        if ($user->isAdmin()) {
+        if ($verTodos) {
             $query->whereIn('estado', ['pendente', 'aprovado']);
         } else {
             // Os proprios (pendentes e aprovados) + aprovados dos colegas.
@@ -61,7 +62,7 @@ class AgendaController extends Controller
                 ->orWhere('estado', 'aprovado'));
         }
 
-        $data = $query->get()->map(fn (Pedido $pedido) => $user->isAdmin() || $pedido->user_id === $user->id
+        $data = $query->get()->map(fn (Pedido $pedido) => $verTodos || $pedido->user_id === $user->id
             ? $pedido
             : [
                 'id' => $pedido->id,

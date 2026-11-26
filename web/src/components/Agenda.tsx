@@ -25,6 +25,7 @@ import {
 } from "@/lib/agenda";
 import { datasDasPontes, datasDoAno, datasDoDia, type DataEspecial, type PonteDia } from "@/lib/feriados";
 import { useAuth } from "@/lib/auth";
+import { temPermissao } from "@/lib/permissoes";
 import { useLocalidade } from "@/lib/localidade";
 import { dataPt, horaDe, totalHoras } from "@/lib/presencas";
 import { subtipos, tipos } from "@/lib/rotulos";
@@ -125,7 +126,9 @@ export default function Agenda({
 }) {
   const [localidade] = useLocalidade();
   // Estagiários não tiram férias: só pedem ausências e licenças.
-  const semFerias = useAuth().user?.papel === "estagiario";
+  const utilizador = useAuth().user;
+  const semFerias = !temPermissao(utilizador, "pedir_ferias");
+  const podeComp = temPermissao(utilizador, "criar_compromissos");
   const [novo, setNovo] = useState<{ data: string } | null>(null);
   const [enviado, setEnviado] = useState(false);
   const [novoComp, setNovoComp] = useState<{ data: string } | null>(null);
@@ -477,7 +480,7 @@ export default function Agenda({
                         ...(podeCriar
                           ? [{ rotulo: semFerias ? "Pedido de ausência ou licença" : "Pedido de férias ou ausência", ajuda: semFerias ? "Ausência ou licença" : "Férias, ausência ou licença", aoEscolher: () => setNovo({ data: sel.iso }) }]
                           : []),
-                        ...(sel.iso >= hoje
+                        ...(podeComp && sel.iso >= hoje
                           ? [{ rotulo: "Compromisso na agenda", ajuda: "Reunião, chamada, lembrete...", aoEscolher: () => setNovoComp({ data: sel.iso }) }]
                           : []),
                       ]}

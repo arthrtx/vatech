@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { temPermissao } from "@/lib/permissoes";
 import AppShell from "@/components/AppShell";
 import CampoData from "@/components/CampoData";
 import HorarioAlmoco from "@/components/HorarioAlmoco";
@@ -22,7 +23,10 @@ const td = "px-3 py-3 tabular-nums";
 
 function Conteudo() {
   const { user } = useAuth();
-  const admin = user?.papel === "admin";
+  // «admin» = vê as presenças de toda a empresa (admin ou permissão concedida).
+  const admin = temPermissao(user, "ver_presencas_empresa");
+  const podeOcorrencias = temPermissao(user, "registar_ocorrencias");
+  const podeMarcar = temPermissao(user, "marcar_presenca");
   const [de, setDe] = useState(() => `${hojeIso().slice(0, 8)}01`);
   const [ate, setAte] = useState(() => hojeIso());
   const [userId, setUserId] = useState("");
@@ -84,12 +88,12 @@ function Conteudo() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="titulo-bento">Presenças</h1>
         <div className="flex flex-wrap gap-2">
-          {!comunicar && (
+          {podeOcorrencias && !comunicar && (
             <button type="button" className={`${botaoSec} min-h-10`} onClick={() => setComunicar(true)}>
               Falta ou atraso
             </button>
           )}
-          {!esqueci && (
+          {podeMarcar && !esqueci && (
             <button type="button" className={`${botao} min-h-10`} onClick={() => setEsqueci(true)}>
               Esqueci de marcar presença
             </button>
@@ -99,7 +103,7 @@ function Conteudo() {
       <section aria-label="Horário de almoço" className={`${vidro} p-4`}>
         <HorarioAlmoco onGuardado={() => setVolta((v) => v + 1)} />
       </section>
-      {comunicar && (
+      {podeOcorrencias && comunicar && (
         <RegistarOcorrencia
           onCancelar={() => setComunicar(false)}
           onRegistado={() => {
@@ -108,7 +112,7 @@ function Conteudo() {
           }}
         />
       )}
-      {esqueci && (
+      {podeMarcar && esqueci && (
         <PresencaAtrasada
           min={user?.estagio_inicio}
           onCancelar={() => setEsqueci(false)}
