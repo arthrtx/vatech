@@ -122,7 +122,7 @@ describe("RH, grelha de fichas", () => {
     fireEvent.change(campo, { target: { files: [ok] } });
     expect((await screen.findByRole("alert")).textContent).toContain("Escolha o tipo de documento");
     expect(mocks.enviarFicheiroRh).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText("Tipo de documento"), { target: { value: "outro" } });
+    fireEvent.change(screen.getByLabelText(/^Tipo de documento/), { target: { value: "outro" } });
     expect((screen.getByRole("button", { name: "Adicionar ficheiro" }) as HTMLButtonElement).disabled).toBe(false);
     fireEvent.change(campo, { target: { files: [ok] } });
     await waitFor(() => expect(mocks.enviarFicheiroRh).toHaveBeenCalledWith(2, ok, "outro", undefined));
@@ -134,7 +134,7 @@ describe("RH, grelha de fichas", () => {
     render(<RhPage />);
     fireEvent.click(await screen.findByRole("button", { name: "Abrir ficha de Ana Dias" }));
     await screen.findByText("contrato.pdf");
-    const tipo = screen.getByLabelText("Tipo de documento");
+    const tipo = screen.getByLabelText(/^Tipo de documento/);
     expect(Array.from((tipo as HTMLSelectElement).options).map((o) => o.text)).toEqual(["Escolha o tipo…", "Declaração", "Documentos de estágio", "Contrato", "Recibo", "Outro", "Personalizado"]);
 
     fireEvent.change(tipo, { target: { value: "recibo" } });
@@ -148,7 +148,7 @@ describe("RH, grelha de fichas", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("nome do tipo");
     expect(mocks.enviarFicheiroRh).toHaveBeenCalledTimes(1);
 
-    fireEvent.change(screen.getByLabelText("Nome do tipo"), { target: { value: " Atestado " } });
+    fireEvent.change(screen.getByLabelText(/^Nome do tipo/), { target: { value: " Atestado " } });
     fireEvent.change(screen.getByLabelText("Escolher ficheiro"), { target: { files: [x] } });
     await waitFor(() => expect(mocks.enviarFicheiroRh).toHaveBeenCalledWith(2, x, "personalizado", "Atestado"));
     expect((await screen.findAllByText("Atestado")).length).toBeGreaterThan(0);

@@ -65,7 +65,7 @@ describe("VistaFuncionario", () => {
     const onFechar = vi.fn();
     render(<VistaFuncionario user={ana} onFechar={onFechar} />);
     fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
-    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     expect(onFechar).toHaveBeenCalledTimes(2);
   });
 });

@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, api, mensagemDeErro, type CategoriaFicheiroRh, type FichaRhDetalhe, type FicheiroRh, type InfoRh } from "@/lib/api";
 import { tamanhoLegivel } from "@/lib/anexos";
 import { formatarData } from "@/lib/rotulos";
-import Avatar from "./Avatar";
-import JanelaFormulario from "./JanelaFormulario";
-import { areaTexto, botao, botaoPerigo, botaoSec, erro as erroCls, input, label } from "./ui";
+import { Avatar, Badge, Button } from "@/design-system/primitives";
+import { Field, Input, NativeSelect, Textarea } from "@/design-system/forms";
+import { Alert, ConfirmDialog, Drawer } from "@/design-system/overlays";
 
 // Limite do contrato do backend: 10 MB por ficheiro.
 export const MAX_BYTES_RH = 10 * 1024 * 1024;
@@ -188,42 +188,34 @@ export default function FichaRhPainel({ userId, onFechar, onAlterada }: { userId
   const user = ficha?.user;
   const tituloJanela = user ? `Ficha de ${user.nome}` : "Ficha de RH";
 
+  const infoPendente = aApagar?.startsWith("i") ? ficha?.infos.find((i) => `i${i.id}` === aApagar) : undefined;
+  const ficheiroPendente = aApagar?.startsWith("f") ? ficha?.ficheiros.find((f) => `f${f.id}` === aApagar) : undefined;
+  const opcoesTipo = CATEGORIAS_RH.map((c) => ({ value: c.valor, label: c.rotulo }));
+  const opcoesFiltro = [{ value: "todos", label: "Todos" }, ...CATEGORIAS_RH.filter((c) => categoriasPresentes.has(c.valor)).map((c) => ({ value: c.valor, label: c.rotulo }))];
+  const linha = "flex flex-wrap gap-2 rounded-md bg-surface-2 px-3 py-2 text-sm";
+
   return (
-    <JanelaFormulario titulo={tituloJanela} aoFechar={onFechar}>
-      <div className="flex flex-col gap-5 rounded-cartao bg-painel p-5 text-texto shadow-suave ring-1 ring-linha md:p-6">
+    <Drawer open onOpenChange={(aberto) => !aberto && onFechar()} title={tituloJanela}>
+      <div className="flex flex-col gap-5 text-text-1">
         <div className="flex flex-wrap items-start gap-4">
-          {user && <Avatar nome={user.nome} id={user.id} foto={user.avatar_url} className="h-14 w-14 text-lg" />}
+          {user && <Avatar name={user.nome} src={user.avatar_url ?? undefined} size="lg" />}
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-semibold">{tituloJanela}</h2>
-            {user && <p className="break-all text-sm text-texto-suave">{user.email}</p>}
-            {user?.cargo && <p className="text-sm text-texto-suave">{user.cargo}</p>}
+            {user && <p className="break-all text-sm text-text-2">{user.email}</p>}
+            {user?.cargo && <p className="text-sm text-text-2">{user.cargo}</p>}
             {user && (
-              <p className="mt-1 text-xs font-semibold text-texto-suave" data-testid="conta-id">
+              <p className="mt-1 text-xs font-semibold text-text-2" data-testid="conta-id">
                 ID {user.id}
               </p>
             )}
           </div>
-          <div className="flex flex-wrap justify-end gap-2">
-            <button type="button" className={botaoSec} onClick={exportarResumo} disabled={aExportar || !ficha} aria-busy={aExportar}>
-              {aExportar ? "A gerar..." : "Exportar resumo (PDF)"}
-            </button>
-            <button type="button" className={botaoSec} onClick={onFechar}>
-              Fechar
-            </button>
-          </div>
+          <Button variant="outline" tone="neutral" onClick={exportarResumo} disabled={aExportar || !ficha} isLoading={aExportar}>
+            {aExportar ? "A gerar..." : "Exportar resumo (PDF)"}
+          </Button>
         </div>
 
-        {erroCarga && (
-          <p role="alert" className={erroCls}>
-            {erroCarga}
-          </p>
-        )}
-        {erro && (
-          <p role="alert" className={erroCls}>
-            {erro}
-          </p>
-        )}
-        {!ficha && !erroCarga && <p className="text-sm text-texto-suave">A carregar...</p>}
+        {erroCarga && <Alert tone="critical" title={erroCarga} />}
+        {erro && <Alert tone="critical" title={erro} />}
+        {!ficha && !erroCarga && <p className="text-sm text-text-2">A carregar...</p>}
 
         {ficha && (
           <>
@@ -233,66 +225,49 @@ export default function FichaRhPainel({ userId, onFechar, onAlterada }: { userId
                   Informações
                 </h3>
                 {editando === null && (
-                  <button type="button" className={botaoSec} onClick={() => abrir(null)}>
+                  <Button variant="outline" tone="neutral" onClick={() => abrir(null)}>
                     Adicionar informação
-                  </button>
+                  </Button>
                 )}
               </div>
 
               {editando !== null && (
-                <form onSubmit={guardar} className="flex flex-col gap-3 rounded-controlo bg-campo/70 p-3">
-                  <div>
-                    <label htmlFor="rh-info-titulo" className={label}>
-                      Título
-                    </label>
-                    <input id="rh-info-titulo" className={input} maxLength={80} value={titulo} onChange={(e) => setTitulo(e.target.value)} autoFocus />
-                  </div>
-                  <div>
-                    <label htmlFor="rh-info-valor" className={label}>
-                      Valor
-                    </label>
-                    <textarea id="rh-info-valor" className={areaTexto} rows={3} maxLength={2000} value={valor} onChange={(e) => setValor(e.target.value)} />
-                  </div>
+                <form onSubmit={guardar} className="flex flex-col gap-3 rounded-md bg-surface-2 p-3">
+                  <Field label="Título" controlId="rh-info-titulo">
+                    <Input maxLength={80} value={titulo} onChange={(e) => setTitulo(e.target.value)} autoFocus />
+                  </Field>
+                  <Field label="Valor" controlId="rh-info-valor">
+                    <Textarea rows={3} maxLength={2000} value={valor} onChange={(e) => setValor(e.target.value)} />
+                  </Field>
                   <div className="flex gap-2">
-                    <button type="submit" className={botao} disabled={aGuardar}>
+                    <Button type="submit" isLoading={aGuardar}>
                       {aGuardar ? "A guardar..." : "Guardar"}
-                    </button>
-                    <button type="button" className={botaoSec} onClick={() => setEditando(null)}>
+                    </Button>
+                    <Button variant="outline" tone="neutral" onClick={() => setEditando(null)}>
                       Cancelar
-                    </button>
+                    </Button>
                   </div>
                 </form>
               )}
 
               {ficha.infos.length === 0 && editando === null ? (
-                <p className="text-sm text-texto-suave">Ainda não há informações nesta ficha.</p>
+                <p className="text-sm text-text-2">Ainda não há informações nesta ficha.</p>
               ) : (
-                <ul className="flex flex-col gap-1.5">
+                <ul className="flex flex-col gap-2">
                   {ficha.infos.map((i) => (
-                    <li key={i.id} className="flex flex-wrap items-start gap-2 rounded-controlo bg-campo/70 px-3 py-2 text-sm">
+                    <li key={i.id} className={`${linha} items-start`}>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium">{i.titulo}</p>
-                        <p className="whitespace-pre-wrap break-words text-texto-suave">{i.valor}</p>
+                        <p className="whitespace-pre-wrap break-words text-text-2">{i.valor}</p>
                       </div>
-                      {aApagar === `i${i.id}` ? (
-                        <div className="flex gap-2">
-                          <button type="button" className={botaoPerigo} onClick={() => apagarInfo(i)}>
-                            Confirmar apagar
-                          </button>
-                          <button type="button" className={botaoSec} onClick={() => setAApagar(null)}>
-                            Cancelar
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <button type="button" className={botaoSec} aria-label={`Editar ${i.titulo}`} onClick={() => abrir(i)}>
-                            Editar
-                          </button>
-                          <button type="button" className={botaoPerigo} aria-label={`Apagar ${i.titulo}`} onClick={() => setAApagar(`i${i.id}`)}>
-                            Apagar
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex gap-2">
+                        <Button variant="outline" tone="neutral" aria-label={`Editar ${i.titulo}`} onClick={() => abrir(i)}>
+                          Editar
+                        </Button>
+                        <Button variant="outline" tone="critical" aria-label={`Apagar ${i.titulo}`} onClick={() => setAApagar(`i${i.id}`)}>
+                          Apagar
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -304,99 +279,64 @@ export default function FichaRhPainel({ userId, onFechar, onAlterada }: { userId
                 <h3 id="rh-ficheiros" className="font-semibold">
                   Ficheiros
                 </h3>
-                <button
-                  type="button"
-                  className={botaoSec}
-                  disabled={aEnviar || !categoria || (categoria === "personalizado" && !categoriaNome.trim())}
+                <Button
+                  variant="outline"
+                  tone="neutral"
+                  disabled={!categoria || (categoria === "personalizado" && !categoriaNome.trim())}
+                  isLoading={aEnviar}
                   aria-describedby="rh-ficheiro-dica"
                   onClick={() => entrada.current?.click()}
                 >
                   {aEnviar ? "A enviar..." : "Adicionar ficheiro"}
-                </button>
+                </Button>
                 <input ref={entrada} type="file" className="sr-only" aria-label="Escolher ficheiro" tabIndex={-1} onChange={enviar} />
               </div>
-              <p id="rh-ficheiro-dica" className="text-sm text-texto-suave">
+              <p id="rh-ficheiro-dica" className="text-sm text-text-2">
                 Escolha o tipo de documento para poder anexar.
               </p>
               <div className="flex flex-wrap items-end gap-3">
-                <div className="min-w-[10rem] flex-1">
-                  <label htmlFor="rh-ficheiro-tipo" className={label}>
-                    Tipo de documento
-                  </label>
-                  <select id="rh-ficheiro-tipo" className={input} value={categoria} required onChange={(e) => setCategoria(e.target.value as CategoriaFicheiroRh | "")}>
-                    <option value="" disabled>
-                      Escolha o tipo…
-                    </option>
-                    {CATEGORIAS_RH.map((c) => (
-                      <option key={c.valor} value={c.valor}>
-                        {c.rotulo}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Field label="Tipo de documento" controlId="rh-ficheiro-tipo" required className="min-w-40 flex-1">
+                  <NativeSelect options={opcoesTipo} placeholder="Escolha o tipo…" value={categoria} onChange={(e) => setCategoria(e.target.value as CategoriaFicheiroRh | "")} />
+                </Field>
                 {categoria === "personalizado" && (
-                  <div className="min-w-[10rem] flex-1">
-                    <label htmlFor="rh-ficheiro-tipo-nome" className={label}>
-                      Nome do tipo
-                    </label>
-                    <input id="rh-ficheiro-tipo-nome" className={input} maxLength={60} required value={categoriaNome} onChange={(e) => setCategoriaNome(e.target.value)} />
-                  </div>
+                  <Field label="Nome do tipo" controlId="rh-ficheiro-tipo-nome" required className="min-w-40 flex-1">
+                    <Input maxLength={60} value={categoriaNome} onChange={(e) => setCategoriaNome(e.target.value)} />
+                  </Field>
                 )}
               </div>
-              <p className="text-xs text-texto-suave">Escolha o tipo antes de adicionar. Máximo de 10 MB por ficheiro.</p>
+              <p className="text-xs text-text-2">Escolha o tipo antes de adicionar. Máximo de 10 MB por ficheiro.</p>
               {categoriasPresentes.size > 1 && (
-                <div className="max-w-xs">
-                  <label htmlFor="rh-ficheiro-filtro" className={label}>
-                    Ver por tipo
-                  </label>
-                  <select id="rh-ficheiro-filtro" className={input} value={filtroAtivo} onChange={(e) => setFiltro(e.target.value as CategoriaFicheiroRh | "todos")}>
-                    <option value="todos">Todos</option>
-                    {CATEGORIAS_RH.filter((c) => categoriasPresentes.has(c.valor)).map((c) => (
-                      <option key={c.valor} value={c.valor}>
-                        {c.rotulo}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Field label="Ver por tipo" controlId="rh-ficheiro-filtro" className="max-w-xs">
+                  <NativeSelect options={opcoesFiltro} value={filtroAtivo} onChange={(e) => setFiltro(e.target.value as CategoriaFicheiroRh | "todos")} />
+                </Field>
               )}
               {ficha.ficheiros.length === 0 ? (
-                <p className="text-sm text-texto-suave">Ainda não há ficheiros nesta ficha.</p>
+                <p className="text-sm text-text-2">Ainda não há ficheiros nesta ficha.</p>
               ) : (
-                <ul className="flex flex-col gap-1.5">
+                <ul className="flex flex-col gap-2">
                   {ficheirosVisiveis.map((f) => (
-                    <li key={f.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-controlo bg-campo/70 px-3 py-2 text-sm">
-                      <div className="min-w-[12rem] flex-1">
+                    <li key={f.id} className={`${linha} items-center gap-x-3`}>
+                      <div className="min-w-48 flex-1">
                         <p className="break-words font-medium [overflow-wrap:anywhere]" title={f.nome}>
                           {f.nome}
                         </p>
-                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-texto-suave">
-                          <span className="rounded-full bg-primaria-suave px-2 py-0.5 font-semibold text-texto" data-testid="tipo-ficheiro">
+                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-2">
+                          <Badge tone="accent" size="sm" data-testid="tipo-ficheiro">
                             {etiquetaCategoria(f)}
-                          </span>
+                          </Badge>
                           <span>
                             {tamanhoLegivel(f.tamanho)} · {formatarData(f.criado_em.slice(0, 10))}
                           </span>
                         </p>
                       </div>
-                      {aApagar === `f${f.id}` ? (
-                        <div className="flex flex-wrap gap-2">
-                          <button type="button" className={botaoPerigo} onClick={() => apagarFicheiro(f)}>
-                            Confirmar apagar
-                          </button>
-                          <button type="button" className={botaoSec} onClick={() => setAApagar(null)}>
-                            Cancelar
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          <button type="button" className={botaoSec} aria-label={`Descarregar ${f.nome}`} onClick={() => descarregar(f)}>
-                            Descarregar
-                          </button>
-                          <button type="button" className={botaoPerigo} aria-label={`Apagar ${f.nome}`} onClick={() => setAApagar(`f${f.id}`)}>
-                            Apagar
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" tone="neutral" aria-label={`Descarregar ${f.nome}`} onClick={() => descarregar(f)}>
+                          Descarregar
+                        </Button>
+                        <Button variant="outline" tone="critical" aria-label={`Apagar ${f.nome}`} onClick={() => setAApagar(`f${f.id}`)}>
+                          Apagar
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -405,6 +345,18 @@ export default function FichaRhPainel({ userId, onFechar, onAlterada }: { userId
           </>
         )}
       </div>
-    </JanelaFormulario>
+
+      <ConfirmDialog
+        open={aApagar !== null}
+        onOpenChange={(aberto) => !aberto && setAApagar(null)}
+        title={infoPendente ? `Apagar a informação "${infoPendente.titulo}"?` : ficheiroPendente ? `Apagar o ficheiro "${ficheiroPendente.nome}"?` : "Apagar?"}
+        description="Esta acção não pode ser desfeita."
+        confirmLabel="Confirmar apagar"
+        onConfirm={() => {
+          if (infoPendente) void apagarInfo(infoPendente);
+          else if (ficheiroPendente) void apagarFicheiro(ficheiroPendente);
+        }}
+      />
+    </Drawer>
   );
 }

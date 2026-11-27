@@ -6,7 +6,10 @@ import FichaRhCartao from "@/components/FichaRhCartao";
 import FichaRhPainel from "@/components/FichaRhPainel";
 import VistaFuncionario from "@/components/VistaFuncionario";
 import { api, mensagemDeErro, type FichaRh } from "@/lib/api";
-import { erro as erroCls } from "@/components/ui";
+import { Badge, Heading } from "@/design-system/primitives";
+import { Grid, PageHeader, Section, Stack } from "@/design-system/layout";
+import { EmptyState, Skeleton } from "@/design-system/data";
+import { Alert } from "@/design-system/overlays";
 
 export default function RhPage() {
   const [fichas, setFichas] = useState<FichaRh[] | null>(null);
@@ -25,29 +28,42 @@ export default function RhPage() {
 
   return (
     <AppShell soAdmin permissao="gerir_rh">
-      <div className="flex flex-col gap-4">
-        <h1 className="titulo-bento">RH</h1>
-        <section aria-labelledby="rh-fichas" className="flex flex-col gap-2">
-          <h2 id="rh-fichas" className="text-xl font-bold tracking-tight">
-            Fichas
-            {fichas && <span className="ml-2 rounded-full bg-campo px-3 py-0.5 text-sm text-texto-suave">{fichas.length}</span>}
-          </h2>
-          {erro && (
-            <p role="alert" className={erroCls}>
-              {erro}
-            </p>
-          )}
-          {!fichas && !erro && <p className="text-sm text-texto-suave">A carregar...</p>}
-          {fichas && fichas.length === 0 && <p className="text-sm text-texto-suave">Ainda não há pessoas no sistema.</p>}
-          {fichas && fichas.length > 0 && (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {fichas.map((f) => (
-                <FichaRhCartao key={f.id} ficha={f} onVista={() => setVista(f)} onAbrir={() => setAberta(f.id)} />
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+      <Stack gap="lg">
+        <PageHeader title="RH" />
+        <Section aria-labelledby="rh-fichas" className="py-0 lg:py-0">
+          <Stack gap="sm">
+            <Heading level={2} id="rh-fichas" className="flex items-center gap-2">
+              Fichas
+              {fichas && <Badge tone="neutral" size="sm">{fichas.length}</Badge>}
+            </Heading>
+            {erro && <Alert tone="critical" title={erro} />}
+            {!fichas && !erro && (
+              <div role="status" aria-busy="true">
+                <span className="ds-sr-only">A carregar...</span>
+                <Grid asChild cols={3} gap="md">
+                  <ul aria-hidden="true">
+                    {[0, 1, 2].map((i) => (
+                      <li key={i}>
+                        <Skeleton shape="block" />
+                      </li>
+                    ))}
+                  </ul>
+                </Grid>
+              </div>
+            )}
+            {fichas && fichas.length === 0 && <EmptyState title="Ainda não há pessoas no sistema." />}
+            {fichas && fichas.length > 0 && (
+              <Grid asChild cols={3} gap="md">
+                <ul>
+                  {fichas.map((f) => (
+                    <FichaRhCartao key={f.id} ficha={f} onVista={() => setVista(f)} onAbrir={() => setAberta(f.id)} />
+                  ))}
+                </ul>
+              </Grid>
+            )}
+          </Stack>
+        </Section>
+      </Stack>
       {vista && <VistaFuncionario user={vista} onFechar={fecharVista} />}
       {aberta !== null && <FichaRhPainel userId={aberta} onFechar={fecharFicha} onAlterada={carregar} />}
     </AppShell>
