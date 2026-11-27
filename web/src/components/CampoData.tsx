@@ -152,6 +152,14 @@ export default function CampoData({ id, valor, onChange, min, required, classNam
               </button>
             </div>
           </div>
+          <div className="flex gap-1 rounded-full bg-campo p-1">
+            <button type="button" className={`${textoBtn} flex-1`} onClick={() => setMes({ ano: mes.ano - 1, mes: mes.mes })}>
+              Ano anterior
+            </button>
+            <button type="button" className={`${textoBtn} flex-1`} onClick={() => setMes({ ano: mes.ano + 1, mes: mes.mes })}>
+              Ano seguinte
+            </button>
+          </div>
           <div role="grid" aria-label={`${mesesPt[mes.mes - 1]} ${mes.ano}`} className="grid grid-cols-7 gap-1">
             {diasSemana.map((d) => (
               <div key={d} role="columnheader" className="text-center text-[0.6875rem] font-medium uppercase text-texto-suave">
