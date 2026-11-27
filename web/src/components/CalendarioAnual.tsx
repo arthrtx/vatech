@@ -340,7 +340,7 @@ export default function CalendarioAnual({ ano, aoMudarAno, aCarregar = false, pe
         <h2 className="hidden text-lg font-semibold print:block">Mapa de férias {ano}</h2>
       <div className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div
-          className={`min-w-0 overflow-hidden rounded-cartao bg-painel/55 shadow-suave ring-1 ring-white/70 backdrop-blur-xl dark:ring-white/10 ${aCarregar ? "opacity-60" : ""}`}
+          className={`min-w-0 ${aCarregar ? "opacity-60" : ""}`}
           aria-busy={aCarregar}
         >
           <div className="overflow-x-auto scroll-fino print:overflow-visible">
